@@ -19,3 +19,5 @@ pharmacy
 doctor
 er
 emergency room
+parking
+parking lot
