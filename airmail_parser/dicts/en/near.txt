@@ -8,4 +8,6 @@ around me
 close to
 close to me
 close by
+nearest
+on
 in

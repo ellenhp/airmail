@@ -159,27 +159,19 @@ fn parse_component<C: TriviallyConstructibleComponent>(
 }
 
 macro_rules! define_component {
-    ($name:ident, $parser:ident, $base_penalty:literal) => {
+    ($name:ident, $parser:ident, $penalty_lambda:expr) => {
         #[derive(Debug, Clone)]
         pub struct $name {
             text: String,
-            penalty_mult: f32,
         }
 
         impl TriviallyConstructibleComponent for $name {
             fn new(text: String) -> Self {
-                Self {
-                    text,
-                    penalty_mult: $base_penalty,
-                }
+                Self { text }
             }
         }
 
         impl $name {
-            pub fn new_with_penalty(text: String, penalty_mult: f32) -> Self {
-                Self { text, penalty_mult }
-            }
-
             pub fn parse(text: &str) -> Vec<(Self, &str)> {
                 parse_component::<Self>(text, $parser)
             }
@@ -202,7 +194,7 @@ macro_rules! define_component {
                 stringify!($name)
             }
             fn penalty_mult(&self) -> f32 {
-                self.penalty_mult
+                ($penalty_lambda)(&self.text)
             }
         }
     };
@@ -216,13 +208,14 @@ fn parse_category(text: &str) -> IResult<&str, &str> {
     )
 }
 
-define_component!(CategoryComponent, parse_category, 1.0f32);
+define_component!(CategoryComponent, parse_category, |_| 1.0f32);
 
 fn parse_near(text: &str) -> IResult<&str, &str> {
     parse_fst(&NEARBY_WORDS_FST, FstMatchMode::GreedyLevenshtein(0), text)
 }
 
-define_component!(NearComponent, parse_near, 2f32);
+define_component!(NearComponent, parse_near, |text: &str| 1.5f32
+    .powi(text.split_whitespace().count() as i32));
 
 fn parse_intersection_join_word(text: &str) -> IResult<&str, &str> {
     parse_fst(
@@ -235,7 +228,7 @@ fn parse_intersection_join_word(text: &str) -> IResult<&str, &str> {
 define_component!(
     IntersectionJoinWordComponent,
     parse_intersection_join_word,
-    1.0f32
+    |_| 1.0f32
 );
 
 // define_component!(HouseNameComponent);
@@ -245,7 +238,7 @@ fn parse_house_number(text: &str) -> IResult<&str, &str> {
     take_while(|c: char| c.is_ascii_digit())(text)
 }
 
-define_component!(HouseNumberComponent, parse_house_number, 1.0f32);
+define_component!(HouseNumberComponent, parse_house_number, |_| 1.0f32);
 
 #[derive(Debug, Clone)]
 pub struct RoadComponent {
@@ -354,25 +347,25 @@ fn parse_sublocality(text: &str) -> IResult<&str, &str> {
     parse_fst(&SUBLOCALITY_FST, FstMatchMode::GreedyLevenshtein(0), text)
 }
 
-define_component!(SublocalityComponent, parse_sublocality, 0.9f32);
+define_component!(SublocalityComponent, parse_sublocality, |_| 0.9f32);
 
 fn parse_locality(text: &str) -> IResult<&str, &str> {
     parse_fst(&LOCALITIES_FST, FstMatchMode::GreedyLevenshtein(0), text)
 }
 
-define_component!(LocalityComponent, parse_locality, 1.5f32);
+define_component!(LocalityComponent, parse_locality, |_| 1.5f32);
 
 fn parse_region(text: &str) -> IResult<&str, &str> {
     parse_fst(&REGIONS_FST, FstMatchMode::GreedyLevenshtein(0), text)
 }
 
-define_component!(RegionComponent, parse_region, 1.0f32);
+define_component!(RegionComponent, parse_region, |_| 1.0f32);
 
 fn parse_country(text: &str) -> IResult<&str, &str> {
     parse_fst(&COUNTRIES_FST, FstMatchMode::GreedyLevenshtein(0), text)
 }
 
-define_component!(CountryComponent, parse_country, 1.0f32);
+define_component!(CountryComponent, parse_country, |_| 1.0f32);
 
 #[derive(Debug, Clone)]
 pub struct IntersectionComponent {

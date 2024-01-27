@@ -17,9 +17,34 @@ pub
 bank
 pharmacy
 doctor
+dentist
 er
 emergency room
 parking
 parking lot
 bowling
 bowling alley
+gym
+atm
+transit center
+train station
+bus stop
+ice cream
+gelato
+library
+bathroom
+bathrooms
+restroom
+charging station
+ev charger
+gas station
+service station
+petrol station
+vet
+nightclub
+club
+theater
+theatre
+police station
+fire station
+post office

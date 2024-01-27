@@ -238,6 +238,22 @@ fn sublocality_must_preceed_locality(scenario: &QueryScenario) -> f32 {
     1.0
 }
 
+// "On" and "In" are both country/region codes too.
+fn near_not_last_if_not_category(scenario: &QueryScenario) -> f32 {
+    let mut components = scenario.as_vec();
+    if let Some(component) = components.pop() {
+        if component.name() != "NearComponent" {
+            return 1.0;
+        }
+    }
+    if let Some(component) = components.pop() {
+        if component.name() != "CategoryComponent" {
+            return 0.01;
+        }
+    }
+    1.0
+}
+
 pub struct QueryScenarioScorer {
     score_mult: fn(query: &QueryScenario) -> f32,
 }
@@ -294,6 +310,9 @@ lazy_static! {
         },
         QueryScenarioScorer {
             score_mult: sublocality_must_preceed_locality,
+        },
+        QueryScenarioScorer {
+            score_mult: near_not_last_if_not_category,
         },
     ];
 }
