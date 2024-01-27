@@ -1,17 +1,5 @@
 use crate::query::QueryScenario;
 
-pub struct QueryScenarioScorer {
-    score_mult: fn(query: &QueryScenario) -> f32,
-}
-
-inventory::collect!(QueryScenarioScorer);
-
-impl QueryScenarioScorer {
-    pub fn score(&self, scenario: &QueryScenario) -> f32 {
-        (self.score_mult)(scenario)
-    }
-}
-
 // Penalizing multiple roads in one query is fine because we have a separate component for intersections.
 fn max_one_road(scenario: &QueryScenario) -> f32 {
     let mut has_road = false;
@@ -25,11 +13,6 @@ fn max_one_road(scenario: &QueryScenario) -> f32 {
     }
     1.0
 }
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: max_one_road,
-    }
-}
 
 fn max_one_house_num(scenario: &QueryScenario) -> f32 {
     let mut has_house_num = false;
@@ -42,11 +25,6 @@ fn max_one_house_num(scenario: &QueryScenario) -> f32 {
         }
     }
     1.0
-}
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: max_one_house_num,
-    }
 }
 
 fn house_num_road_together(scenario: &QueryScenario) -> f32 {
@@ -65,12 +43,6 @@ fn house_num_road_together(scenario: &QueryScenario) -> f32 {
     1.0f32
 }
 
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: house_num_road_together,
-    }
-}
-
 fn max_one_unit(scenario: &QueryScenario) -> f32 {
     let mut has_unit = false;
     for component in scenario.as_vec() {
@@ -82,12 +54,6 @@ fn max_one_unit(scenario: &QueryScenario) -> f32 {
         }
     }
     1.0
-}
-
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: max_one_unit,
-    }
 }
 
 fn max_one_locality(scenario: &QueryScenario) -> f32 {
@@ -103,12 +69,6 @@ fn max_one_locality(scenario: &QueryScenario) -> f32 {
     1.0
 }
 
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: max_one_locality,
-    }
-}
-
 fn max_one_region(scenario: &QueryScenario) -> f32 {
     let mut has_region = false;
     for component in scenario.as_vec() {
@@ -120,12 +80,6 @@ fn max_one_region(scenario: &QueryScenario) -> f32 {
         }
     }
     1.0
-}
-
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: max_one_region,
-    }
 }
 
 fn max_one_country(scenario: &QueryScenario) -> f32 {
@@ -141,12 +95,6 @@ fn max_one_country(scenario: &QueryScenario) -> f32 {
     1.0
 }
 
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: max_one_country,
-    }
-}
-
 fn country_not_before_locality(scenario: &QueryScenario) -> f32 {
     let mut has_locality = false;
     let mut country_first = false;
@@ -160,16 +108,10 @@ fn country_not_before_locality(scenario: &QueryScenario) -> f32 {
             has_locality = true;
         }
     }
-    if country_first {
+    if country_first && has_locality {
         return 0.0;
     }
     1.0
-}
-
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: country_not_before_locality,
-    }
 }
 
 fn region_not_before_locality(scenario: &QueryScenario) -> f32 {
@@ -185,16 +127,10 @@ fn region_not_before_locality(scenario: &QueryScenario) -> f32 {
             has_locality = true;
         }
     }
-    if region_first {
+    if region_first && has_locality {
         return 0.0;
     }
     1.0
-}
-
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: region_not_before_locality,
-    }
 }
 
 fn country_not_before_region(scenario: &QueryScenario) -> f32 {
@@ -210,16 +146,29 @@ fn country_not_before_region(scenario: &QueryScenario) -> f32 {
             has_region = true;
         }
     }
-    if country_first {
+    if country_first && has_region {
         return 0.0;
     }
     1.0
 }
 
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: country_not_before_region,
+fn housenum_not_before_placename(scenario: &QueryScenario) -> f32 {
+    let mut has_placename = false;
+    let mut housenum_first = false;
+    for component in scenario.as_vec() {
+        if component.name() == "HouseNumberComponent" {
+            if !has_placename {
+                housenum_first = true;
+            }
+        }
+        if component.name() == "PlaceNameComponent" {
+            has_placename = true;
+        }
     }
+    if housenum_first && has_placename {
+        return 0.01;
+    }
+    1.0
 }
 
 fn naked_road_unlikely(scenario: &QueryScenario) -> f32 {
@@ -234,15 +183,9 @@ fn naked_road_unlikely(scenario: &QueryScenario) -> f32 {
         }
     }
     if has_road && !has_house_num {
-        return 0.2;
+        return 0.05;
     }
     1.0
-}
-
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: naked_road_unlikely,
-    }
 }
 
 fn no_naked_house_num(scenario: &QueryScenario) -> f32 {
@@ -263,12 +206,6 @@ fn no_naked_house_num(scenario: &QueryScenario) -> f32 {
     1.0
 }
 
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: no_naked_house_num,
-    }
-}
-
 fn no_naked_unit(scenario: &QueryScenario) -> f32 {
     let mut has_road = false;
     let mut has_unit = false;
@@ -281,20 +218,71 @@ fn no_naked_unit(scenario: &QueryScenario) -> f32 {
         }
     }
     if !has_road && has_unit {
-        return 0.0;
+        return 0.01;
     }
     1.0
 }
 
-inventory::submit! {
-    QueryScenarioScorer {
-        score_mult: no_naked_unit,
+pub struct QueryScenarioScorer {
+    score_mult: fn(query: &QueryScenario) -> f32,
+}
+
+impl QueryScenarioScorer {
+    pub fn score(&self, scenario: &QueryScenario) -> f32 {
+        (self.score_mult)(scenario)
     }
+}
+
+lazy_static! {
+    pub static ref QUERY_SCENARIO_SCORERS: Vec<QueryScenarioScorer> = vec![
+        QueryScenarioScorer {
+            score_mult: max_one_road,
+        },
+        QueryScenarioScorer {
+            score_mult: max_one_house_num,
+        },
+        QueryScenarioScorer {
+            score_mult: house_num_road_together,
+        },
+        QueryScenarioScorer {
+            score_mult: max_one_unit,
+        },
+        QueryScenarioScorer {
+            score_mult: max_one_locality,
+        },
+        QueryScenarioScorer {
+            score_mult: max_one_region,
+        },
+        QueryScenarioScorer {
+            score_mult: max_one_country,
+        },
+        QueryScenarioScorer {
+            score_mult: country_not_before_locality,
+        },
+        QueryScenarioScorer {
+            score_mult: region_not_before_locality,
+        },
+        QueryScenarioScorer {
+            score_mult: country_not_before_region,
+        },
+        QueryScenarioScorer {
+            score_mult: housenum_not_before_placename,
+        },
+        QueryScenarioScorer {
+            score_mult: naked_road_unlikely,
+        },
+        QueryScenarioScorer {
+            score_mult: no_naked_house_num,
+        },
+        QueryScenarioScorer {
+            score_mult: no_naked_unit,
+        },
+    ];
 }
 
 pub fn score_scenario(scenario: &QueryScenario) -> f32 {
     let mut score = 1.0;
-    for scorer in inventory::iter::<QueryScenarioScorer> {
+    for scorer in QUERY_SCENARIO_SCORERS.iter() {
         score *= scorer.score(scenario);
     }
     score

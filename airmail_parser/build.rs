@@ -86,11 +86,26 @@ fn main() {
         ],
         &[],
     );
+    // We need a synonym system.
     helper.build_fst(
         "dicts/en/wof_localities.txt",
         "dicts/en/wof_localities.fst",
         &[],
-        &[],
+        &[
+            ("saint", "st"),
+            ("north", "n"),
+            ("south", "s"),
+            ("east", "e"),
+            ("west", "w"),
+            ("northwest", "nw"),
+            ("northeast", "ne"),
+            ("southwest", "sw"),
+            ("southeast", "se"),
+            ("north-west", "nw"),
+            ("north-east", "ne"),
+            ("south-west", "sw"),
+            ("south-east", "se"),
+        ],
     );
     helper.build_fst(
         "dicts/en/wof_regions.txt",

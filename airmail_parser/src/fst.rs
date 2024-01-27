@@ -1,10 +1,10 @@
-use std::{cell::RefCell, sync::Mutex};
+use std::{cell::RefCell, num::NonZeroUsize, sync::Mutex};
 
 use fst::{
     automaton::{Levenshtein, Str},
     Automaton, IntoStreamer, Streamer,
 };
-use hashlink::LruCache;
+use lru::LruCache;
 use nom::IResult;
 
 use crate::common::{query_sep, query_term};
@@ -47,7 +47,7 @@ pub enum FstMatchMode {
 }
 
 thread_local! {
-    static MEMOIZED_FST_MATCH : RefCell<LruCache<(FstKey, FstMatchMode, String), Option<usize>>> = RefCell::new(LruCache::new(1024*128));
+    static MEMOIZED_FST_MATCH : RefCell<LruCache<(FstKey, FstMatchMode, String), Option<usize>>> = RefCell::new(LruCache::new(NonZeroUsize::new(1024*128).unwrap()));
 }
 
 pub fn parse_fst<'a>(
@@ -55,33 +55,40 @@ pub fn parse_fst<'a>(
     match_mode: FstMatchMode,
     input: &'a str,
 ) -> IResult<&'a str, &'a str> {
-    if let Some(matched_len) = MEMOIZED_FST_MATCH.with_borrow_mut(|cache| {
-        cache
+    let memoized_result = MEMOIZED_FST_MATCH.with(|memoized_match| {
+        let mut memoized_match = memoized_match.borrow_mut();
+        if let Some(matched_len) = memoized_match
             .get(&(fst.key(), match_mode, input.to_owned()))
             .cloned()
-    }) {
-        if let Some(matched_len) = matched_len {
-            return Ok((&input[matched_len..], &input[0..matched_len]));
+        {
+            Some(if let Some(matched_len) = matched_len {
+                Ok((&input[matched_len..], &input[0..matched_len]))
+            } else {
+                Err(nom::Err::Error(nom::error::Error::new(
+                    input,
+                    nom::error::ErrorKind::Fail,
+                )))
+            })
         } else {
-            return Err(nom::Err::Error(nom::error::Error::new(
-                input,
-                nom::error::ErrorKind::Fail,
-            )));
+            None
         }
+    });
+    if let Some(memoized_result) = memoized_result {
+        return memoized_result;
     }
+
     let result = parse_fst_inner(fst, match_mode, input);
-    if let Ok((_, matched)) = result {
-        MEMOIZED_FST_MATCH.with_borrow_mut(|cache| {
-            cache.insert(
+    MEMOIZED_FST_MATCH.with(|memoized_match| {
+        let mut memoized_match = memoized_match.borrow_mut();
+        if let Ok((remainder, _matched)) = result {
+            memoized_match.push(
                 (fst.key(), match_mode, input.to_owned()),
-                Some(matched.len()),
+                Some(input.len() - remainder.len()),
             );
-        });
-    } else {
-        MEMOIZED_FST_MATCH.with_borrow_mut(|cache| {
-            cache.insert((fst.key(), match_mode, input.to_owned()), None);
-        });
-    }
+        } else {
+            memoized_match.push((fst.key(), match_mode, input.to_owned()), None);
+        }
+    });
     result
 }
 

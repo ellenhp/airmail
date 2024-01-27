@@ -34,7 +34,7 @@ abington
 abiquiu
 abita springs
 abitibi indian reserve no. 70
-ablon-sur-seine
+ablon sur seine
 abram
 abrams
 absarokee
@@ -85,7 +85,7 @@ addison (webster springs)
 addy
 addyston
 adel
-adelaide-metcalfe
+adelaide metcalfe
 adelanto
 adeline
 adelino
@@ -93,7 +93,7 @@ adell
 adelphi
 adena
 adin
-adjala-tosorontio
+adjala tosorontio
 admaston/bromley
 admire
 adona
@@ -120,7 +120,7 @@ agency village
 agenda
 agios epiktitos
 aglakumna 4a
-aglakumna-la 2
+aglakumna la 2
 agoura hills
 agra
 agua dulce
@@ -148,7 +148,7 @@ ahtanum
 ahuimanu
 ahuk 1
 ahwahnee
-ah-we-cha-ol-to 16
+ah we cha ol to 16
 aiea
 aiffres
 aiken
@@ -171,14 +171,14 @@ ajax
 ajo
 akaska
 ak chin
-ak-chin village
+ak chin village
 akeley
 akhiok
 akiachak
 akiak
 akins
 aklavik
-ak-mechet
+ak mechet
 akron
 akureyri
 akutan
@@ -225,7 +225,7 @@ alberton
 albertson
 albertville
 albia
-albigny-sur-saône
+albigny sur saône
 albin
 albion
 albisola superiore
@@ -381,7 +381,7 @@ allentown
 allenville
 allenwood
 allerton
-alleyn-et-cawood
+alleyn et cawood
 allgood
 alliance
 alligator
@@ -487,7 +487,7 @@ amaua
 amay
 amaya
 amazonia
-ambarès-et-lagrave
+ambarès et lagrave
 amber
 amberg
 amberley
@@ -512,7 +512,7 @@ amesbury town
 ames lake
 amesti
 amesville
-amfreville-la-mi-voie
+amfreville la mi voie
 amherst
 amherstburg
 amherst center
@@ -540,7 +540,7 @@ amqui
 amstelveen
 amsterdam
 anacoco
-anaconda-deer lodge county
+anaconda deer lodge county
 anacortes
 anacua
 anadarko
@@ -601,19 +601,19 @@ andy cahoose meadow 16
 anegam
 aneta
 aneth
-ange-gardien
+ange gardien
 angel fire
 angelica
 angels
 angers
-angerville-la-campagne
+angerville la campagne
 angie
 angier
 angle inlet
 angleton
 angliers
 angola
-angola-on-the-lake
+angola on the lake
 angoon
 anguilla
 angus
@@ -637,7 +637,7 @@ annapolis neck
 ann arbor
 annawan
 annecy
-annecy-le-vieux
+annecy le vieux
 annetta
 annetta north
 annetta south
@@ -659,7 +659,7 @@ antares
 antelope
 antelope hills
 antelope park no. 322
-antelope valley-crestview
+antelope valley crestview
 anthem
 anthon
 anthony
@@ -718,7 +718,7 @@ appomattox
 apra harbor
 apsagayu 1a
 aptos
-aptos hills-larkin valley
+aptos hills larkin valley
 aquadale
 aquadeo
 aquasco
@@ -747,7 +747,7 @@ arcadia lakes
 arcadia university
 arcanum
 arcata
-ar-ce-wy-ee 4
+ar ce wy ee 4
 archbald
 archbold
 archdale
@@ -847,7 +847,7 @@ arpelar
 arpin
 arradon
 arran
-arran-elderslie
+arran elderslie
 arrecife
 arrey
 arriba
@@ -862,7 +862,7 @@ arroyo gardens
 arroyo grande
 arroyo hondo
 arroyo seco
-ars-sur-moselle
+ars sur moselle
 artas
 artemus
 artesia
@@ -896,7 +896,7 @@ asher
 asherton
 asherville
 asheville
-ashfield-colborne-wawanosh
+ashfield colborne wawanosh
 ash flat
 ashford
 ash fork
@@ -912,15 +912,15 @@ ashmore
 ashnola 10
 ashtabula
 ashton
-ashton-sandy spring
-ashton-under-lyne
+ashton sandy spring
+ashton under lyne
 ashville
 ashwaubenon
 asili
 asimakaniseekan askiy i.r. 102a
 askewville
 askov
-asnières-sur-seine
+asnières sur seine
 asotin
 aspen
 aspen hill
@@ -928,7 +928,7 @@ aspen park
 aspen springs
 aspermont
 aspers
-asphodel-norwood
+asphodel norwood
 aspinwall
 asquith
 assabaska indian reserve
@@ -941,7 +941,7 @@ assiniboine i.r. 76
 assumption
 astatula
 asti
-aston-jonction
+aston jonction
 astor
 astoria
 astumbo
@@ -956,7 +956,7 @@ athelstan
 athena
 athens
 atherton
-athis-mons
+athis mons
 athol
 atholville
 atikokan
@@ -972,7 +972,7 @@ atlantic highlands
 atlantis
 atlas
 atlasburg
-atlin-teslin indian cemetery 4
+atlin teslin indian cemetery 4
 atmautluak
 atmore
 atoka
@@ -1016,7 +1016,7 @@ augusta springs
 aulander
 aullville
 aulnat
-aulnay-sous-bois
+aulnay sous bois
 ault
 auma
 aumi
@@ -1039,18 +1039,18 @@ austintown
 austwell
 autaugaville
 authier
-authier-nord
+authier nord
 auto
 autryville
 auvergne no. 76
-auvers-sur-oise
+auvers sur oise
 auxier
 auxvasse
-auzeville-tolosane
+auzeville tolosane
 ava
 avaio
 avalon
-avanne-aveney
+avanne aveney
 avant
 avella
 avenal
@@ -1074,7 +1074,7 @@ aviston
 avoca
 avocado heights
 avon
-avon-by-the-sea
+avon by the sea
 avondale
 avondale estates
 avonia
@@ -1147,15 +1147,15 @@ bagtown
 baia mare
 baia sprie
 baidland
-baie-comeau
-baie-des-sables
-baie-du-febvre
-baie-d'urfé
-baie-james
-baie-johan-beetz
-baie-sainte-catherine
-baie-saint-paul
-baie-trinité
+baie comeau
+baie des sables
+baie du febvre
+baie d'urfé
+baie james
+baie johan beetz
+baie sainte catherine
+baie saint paul
+baie trinité
 baildon no. 131
 bailey
 bailey lakes
@@ -1174,7 +1174,7 @@ bairdstown
 bairoil
 baiting hollow
 baker
-baker-brook
+baker brook
 baker city
 bakerhill
 baker lake
@@ -1201,7 +1201,7 @@ balgonie
 bal harbour
 ball
 ballainvilliers
-ballan-miré
+ballan miré
 ballantine
 ballard
 ball club
@@ -1293,7 +1293,7 @@ barnegat
 barnegat light
 barnes
 barnes city
-barnes lake-millers lake
+barnes lake millers lake
 barneston
 barnesville
 barnet
@@ -1307,7 +1307,7 @@ barnsdall
 barnsley
 barnstable town
 barnston island 3
-barnston-ouest
+barnston ouest
 barnum
 barnum island
 bar nunn
@@ -1349,7 +1349,7 @@ bartow
 barview
 barwick
 basalt
-bas-caraquet
+bas caraquet
 basco
 bascom
 bascov
@@ -1364,7 +1364,7 @@ baška
 baskerville
 baskin
 basque 18
-basse-goulaine
+basse goulaine
 bassens
 bassett
 bassfield
@@ -1373,7 +1373,7 @@ bastrop
 basye
 batavia
 batchtown
-batesburg-leesville
+batesburg leesville
 bates city
 batesland
 batesville
@@ -1383,7 +1383,7 @@ bath corner
 bathgate
 bathurst
 batiscan
-bat-l-ki 3
+bat l ki 3
 baton rouge
 battle creek
 battlefield
@@ -1393,7 +1393,7 @@ battle lake
 battlement mesa
 battle mountain
 battle river no. 438
-batz-sur-mer
+batz sur mer
 baudette
 baumstown
 bauxite
@@ -1447,7 +1447,7 @@ bay view gardens
 bay village
 bayville
 baywood
-baywood-los osos
+baywood los osos
 bazile mills
 bazine
 beach
@@ -1512,11 +1512,11 @@ beauchamp
 beaucouzé
 beaufort
 beauharnois
-beaulac-garthby
+beaulac garthby
 beaulieu
-beaulieu-sur-mer
+beaulieu sur mer
 beaumont
-beaumont-sur-oise
+beaumont sur oise
 beaupré
 beauregard
 beausejour
@@ -1630,7 +1630,7 @@ bella bella 1
 bella coola 1
 bell acres
 bellaire
-bellair-meadowbrook terrace
+bellair meadowbrook terrace
 bella lake exchange lands
 bellamy
 bell arthur
@@ -1698,11 +1698,11 @@ belmond
 belmont
 belmont estates
 belmore
-bel-nor
+bel nor
 beloeil
 beloit
 belpre
-bel-ridge
+bel ridge
 belspring
 belt
 belton
@@ -1803,7 +1803,7 @@ bernalillo
 bernard
 bernardsville
 berne
-bernes-sur-oise
+bernes sur oise
 bernice
 bernie
 bernville
@@ -1815,13 +1815,13 @@ berry hill
 berrysburg
 berryville
 bertha
-berthier-sur-mer
+berthier sur mer
 berthierville
 berthold
 berthoud
 bertram
 bertrand
-bertsch-oceanview
+bertsch oceanview
 berwick
 berwind
 berwyn
@@ -1893,7 +1893,7 @@ biedermannsdorf
 biehle
 biel/bienne
 bielefeld
-bielsko-biala
+bielsko biala
 biencourt
 bienfait
 bienville
@@ -1974,7 +1974,7 @@ bihorel
 bijou hills
 bila tserkva
 bilbao
-bilhorod-dnistrovskyi
+bilhorod dnistrovskyi
 billingham
 billings
 billingsley
@@ -2011,7 +2011,7 @@ birch tree
 birchwood
 birchwood lakes
 bird city
-bird-in-hand
+bird in hand
 bird island
 birdsboro
 birdseye
@@ -2080,12 +2080,12 @@ black lick
 blacklick estates
 black mountain
 black oak
-black point-green point
+black point green point
 blackpool
 black river
 black river 9
 black river falls
-black river-matheson
+black river matheson
 black rock
 blacksburg
 blacks harbour
@@ -2113,7 +2113,7 @@ blaine
 blaine lake
 blaine lake no. 434
 blainville
-blainville-sur-orne
+blainville sur orne
 blair
 blairs
 blairsburg
@@ -2128,11 +2128,11 @@ blanchard
 blanchardville
 blanchester
 blanco
-blanc-sablon
+blanc sablon
 bland
 blandburg
 blandford
-blandford-blenheim
+blandford blenheim
 blanding
 blandinsville
 blandon
@@ -2273,21 +2273,21 @@ bogue chitto
 bohars
 bohemia
 bohners lake
-boigny-sur-bionne
+boigny sur bionne
 boileau
 boiling spring lakes
 boiling springs
 boisbriand
 boischatel
-bois-colombes
-bois-d'arcy
-bois-des-filion
+bois colombes
+bois d'arcy
+bois des filion
 boise city
-bois-franc
-bois-guillaume
+bois franc
+bois guillaume
 boissevain
-boissise-le-roi
-boissy-saint-léger
+boissise le roi
+boissy saint léger
 bokchito
 bokeelia
 bokoshe
@@ -2305,11 +2305,11 @@ bolivar peninsula
 bolivia
 bolt
 bolton
-bolton-est
+bolton est
 bolton landing
-bolton-ouest
+bolton ouest
 bombay beach
-bonadelle ranchos-madera ranchos
+bonadelle ranchos madera ranchos
 bon air
 bonanza
 bonanza city
@@ -2319,7 +2319,7 @@ bonaparte
 bonaparte 3
 bon aqua junction
 bonaventure
-bonchamp-lès-laval
+bonchamp lès laval
 bondoufle
 bonduel
 bondues
@@ -2340,14 +2340,14 @@ bonneau
 bonneau beach
 bonneauville
 bonnechere valley
-bonne-espérance
+bonne espérance
 bonners ferry
 bonner springs
-bonner-west riverside
+bonner west riverside
 bonne terre
 bonnetsville
-bonneuil-en-france
-bonneuil-sur-marne
+bonneuil en france
+bonneuil sur marne
 bonney
 bonney lake
 bonnie
@@ -2384,7 +2384,7 @@ bordelonville
 borden
 bordentown
 borger
-bormes-les-mimosas
+bormes les mimosas
 bornem
 boron
 boronda
@@ -2423,7 +2423,7 @@ bouchette
 bouctouche
 bougival
 bouguenais
-boujan-sur-libron
+boujan sur libron
 boulder
 boulder city
 boulder creek
@@ -2434,21 +2434,21 @@ boulder junction
 boulevard
 boulevard gardens
 boulevard park
-boulogne-billancourt
+boulogne billancourt
 bound brook
 bountiful
 bourbon
 bourbonnais
 bourg
 bourges
-bourg-la-reine
-bourg-lès-valence
-bourgtheroulde-infreville
+bourg la reine
+bourg lès valence
+bourgtheroulde infreville
 bourne
 bournemouth
 bourneville
 bouse
-boussy-saint-antoine
+boussy saint antoine
 bouton
 boutte
 bovey
@@ -2542,7 +2542,7 @@ braidwood
 braila
 brainard
 brainards
-braine-l'alleud
+braine l'alleud
 brainerd
 braintree town
 braman
@@ -2625,8 +2625,8 @@ brest
 bret harte
 brethour
 brethren
-brétigny-sur-orge
-bretteville-sur-odon
+brétigny sur orge
+bretteville sur odon
 breugel
 brevard
 bréviandes
@@ -2665,7 +2665,7 @@ bridgeville
 bridgewater
 bridgman
 bridgton
-brie-comte-robert
+brie comte robert
 brielle
 brier
 briercrest
@@ -2700,7 +2700,7 @@ bristow
 bristow cove
 britannia no. 502
 britt
-brittany farms-the highlands
+brittany farms the highlands
 britton
 brno
 broadalbin
@@ -2754,7 +2754,7 @@ bronwood
 bronxville
 brook
 brookdale
-brooke-alvinston
+brooke alvinston
 brooker
 brookeville
 brookfield
@@ -2797,7 +2797,7 @@ brooten
 brossard
 broughton
 broussard
-brou-sur-chantereine
+brou sur chantereine
 brovary
 browerville
 brown city
@@ -2815,7 +2815,7 @@ brownsboro
 brownsboro farm
 brownsboro village
 brownsburg
-brownsburg-chatham
+brownsburg chatham
 brownsdale
 brownsfield
 browns lake
@@ -2834,7 +2834,7 @@ bruce mines
 bruceton
 bruceton mills
 bruceville
-bruceville-eddy
+bruceville eddy
 brudenell, lyndoch and raglan
 bruges
 bruin
@@ -2862,7 +2862,7 @@ brushy creek
 brusly
 brussels
 brutus
-bruyères-le-châtel
+bruyères le châtel
 bryan
 bryanka
 bryans road
@@ -2873,11 +2873,11 @@ bryce canyon city
 bryceland
 bryn athyn
 bryn mawr
-bryn mawr-skyway
+bryn mawr skyway
 bryson
 bryson city
-bry-sur-marne
-b-say-tah
+bry sur marne
+b say tah
 buc
 buchanan
 buchanan dam
@@ -2993,7 +2993,7 @@ burden
 burdett
 burdette
 bureau junction
-bures-sur-yvette
+bures sur yvette
 burgas
 burgaw
 burgess
@@ -3064,7 +3064,7 @@ bushton
 bushyhead
 bussey
 bussum
-bussy-saint-georges
+bussy saint georges
 busti
 busto arsizio
 butler
@@ -3072,7 +3072,7 @@ butler beach
 butlertown
 butlerville
 butner
-butry-sur-oise
+butry sur oise
 butte
 butte city
 butte creek canyon
@@ -3082,7 +3082,7 @@ butte meadows
 butterfield
 butternut
 butters
-butte-silver bow
+butte silver bow
 butte valley
 butteville
 buttonwillow
@@ -3143,13 +3143,13 @@ cadiz
 cadott
 cadwell
 cagliari
-cagnes-sur-mer
+cagnes sur mer
 cagny
 cahokia
 cahoose 10
 cahoose 12
 cahoose 8
-cailloux-sur-fontaines
+cailloux sur fontaines
 cainsville
 cairnbrook
 cairo
@@ -3188,7 +3188,7 @@ calio
 calion
 calipatria
 calistoga
-calixa-lavallée
+calixa lavallée
 callaghan
 callahan
 callander
@@ -3203,11 +3203,11 @@ callimont
 callisburg
 calmar
 caln
-cal-nev-ari
+cal nev ari
 calpella
 calpine
 caltanissetta
-caluire-et-cuire
+caluire et cuire
 calumet
 calumet city
 calumet park
@@ -3238,7 +3238,7 @@ cambridge
 cambridge bay
 cambridge city
 cambridge indian reserve no. 32
-cambridge-narrows
+cambridge narrows
 cambridge springs
 camden
 camden on gauley
@@ -3313,7 +3313,7 @@ canastota
 canby
 candiac
 candle lake
-candler-mcafee
+candler mcafee
 candlewood lake
 cando
 candor
@@ -3387,7 +3387,7 @@ canyon lake
 canyon lake 7
 canyonville
 capac
-cap-chat
+cap chat
 cape canaveral
 cape carteret
 cape charles
@@ -3412,11 +3412,11 @@ capitola
 capitol heights
 caplan
 capon bridge
-cap-pelé
-cappelle-la-grande
+cap pelé
+cappelle la grande
 capron
-cap-saint-ignace
-cap-santé
+cap saint ignace
+cap santé
 captain cook
 captains cove
 captiva
@@ -3426,7 +3426,7 @@ caraway
 carberry
 carbon
 carbonado
-carbon-blanc
+carbon blanc
 carbon cliff
 carbondale
 carbon hill
@@ -3448,12 +3448,12 @@ carl
 carle place
 carleton
 carleton place
-carleton-sur-mer
+carleton sur mer
 carlin
 carling
 carlinville
 carlisle
-carlisle-rockledge
+carlisle rockledge
 carl junction
 carlock
 carlos
@@ -3470,7 +3470,7 @@ carman
 carmanah 6
 carm creek 38
 carmel
-carmel-by-the-sea
+carmel by the sea
 carmel hamlet
 carmel valley village
 carmen
@@ -3487,7 +3487,7 @@ carnelian bay
 carnesville
 carney
 carneys point
-carnot-moon
+carnot moon
 carnuel
 caro
 caroga lake
@@ -3515,8 +3515,8 @@ carrara
 carrboro
 carrick
 carrier
-carrières-sous-poissy
-carrières-sur-seine
+carrières sous poissy
+carrières sur seine
 carrier lake 15
 carrier mills
 carrington
@@ -3532,45 +3532,45 @@ carrollwood
 carrot river
 carrot river i.r. 29a
 carrsville
-carry the kettle nakoda first nation 76-20
-carry the kettle nakoda first nation 76-22
-carry the kettle nakoda first nation 76-23
-carry the kettle nakoda first nation 76-24
-carry the kettle nakoda first nation 76-25
-carry the kettle nakoda first nation ir 76-37
-carry the kettle nakoda first nation ir 76-38
-carry the kettle nakoda first nation no. 76-21
-carry the kettle nakoda first nation no. 76-30
-carry the kettle nakoda first nation no. 76-35
-carry the kettle nakoda first nation no. 76-36
-carry the kettle nakoda first nation no. 76-40
-carry the kettle nakoda first nation no. 76-41
-carry the kettle nakoda first nation no. 76-42
-carry the kettle nakoda first nation no. 76-43
-carry the kettle nakoda first nation no. 76-5
-carry the kettle nakoda first nation no. 76-9
-carry the kettle nakoda i.r. 76-10
-carry the kettle nakoda i.r. 76-11
-carry the kettle nakoda i.r. 76-12
-carry the kettle nakoda i.r. 76-13
-carry the kettle nakoda i.r. 76-14
-carry the kettle nakoda i.r. 76-15
-carry the kettle nakoda i.r. 76-17
-carry the kettle nakoda i.r. 76-18
-carry the kettle nakoda i.r. 76-19
-carry the kettle nakoda i.r. 76-28
-carry the kettle nakoda i.r. 76-29
-carry the kettle nakoda i.r. 76-3
-carry the kettle nakoda i.r. 76-31
-carry the kettle nakoda i.r. 76-32
-carry the kettle nakoda i.r. 76-33
-carry the kettle nakoda i.r. 76-34
-carry the kettle nakoda i.r. 76-4
-carry the kettle nakoda i.r. 76-6
-carry the kettle nakoda i.r. 76-7
-carry the kettle nakoda i.r. 76-8
-carry the kettle nakota i.r. 76-1
-carry the kettle nakota i.r. 76-2
+carry the kettle nakoda first nation 76 20
+carry the kettle nakoda first nation 76 22
+carry the kettle nakoda first nation 76 23
+carry the kettle nakoda first nation 76 24
+carry the kettle nakoda first nation 76 25
+carry the kettle nakoda first nation ir 76 37
+carry the kettle nakoda first nation ir 76 38
+carry the kettle nakoda first nation no. 76 21
+carry the kettle nakoda first nation no. 76 30
+carry the kettle nakoda first nation no. 76 35
+carry the kettle nakoda first nation no. 76 36
+carry the kettle nakoda first nation no. 76 40
+carry the kettle nakoda first nation no. 76 41
+carry the kettle nakoda first nation no. 76 42
+carry the kettle nakoda first nation no. 76 43
+carry the kettle nakoda first nation no. 76 5
+carry the kettle nakoda first nation no. 76 9
+carry the kettle nakoda i.r. 76 10
+carry the kettle nakoda i.r. 76 11
+carry the kettle nakoda i.r. 76 12
+carry the kettle nakoda i.r. 76 13
+carry the kettle nakoda i.r. 76 14
+carry the kettle nakoda i.r. 76 15
+carry the kettle nakoda i.r. 76 17
+carry the kettle nakoda i.r. 76 18
+carry the kettle nakoda i.r. 76 19
+carry the kettle nakoda i.r. 76 28
+carry the kettle nakoda i.r. 76 29
+carry the kettle nakoda i.r. 76 3
+carry the kettle nakoda i.r. 76 31
+carry the kettle nakoda i.r. 76 32
+carry the kettle nakoda i.r. 76 33
+carry the kettle nakoda i.r. 76 34
+carry the kettle nakoda i.r. 76 4
+carry the kettle nakoda i.r. 76 6
+carry the kettle nakoda i.r. 76 7
+carry the kettle nakoda i.r. 76 8
+carry the kettle nakota i.r. 76 1
+carry the kettle nakota i.r. 76 2
 carson
 carson city
 carsonville
@@ -3596,18 +3596,18 @@ casa
 casa blanca
 casa colorada
 casa conejo
-casa de oro-mount helix
+casa de oro mount helix
 casa grande
 casar
 casas
 casas adobes
 cascade
-cascade-chipita park
+cascade chipita park
 cascade locks
 cascades
 cascade valley
 cascadia
-cascapédia - saint-jules
+cascapédia   saint jules
 casco
 casdeded 8
 caserta
@@ -3652,7 +3652,7 @@ castelginest
 castellammare di stabia
 castelldefels
 castello de la plana
-castelnau-le-lez
+castelnau le lez
 castile
 castine
 castle
@@ -3669,20 +3669,20 @@ castle point
 castle rock
 castle shannon
 castleton
-castleton-on-hudson
+castleton on hudson
 castle valley
 castlewood
 castor
 castorland
 castrillón
-castrop-rauxel
+castrop rauxel
 castro valley
 castroville
 caswell beach
 catahoula
 catalina
 catalina foothills
-cătămărești-deal
+cătămărești deal
 catania
 catanzaro
 cataract
@@ -3716,11 +3716,11 @@ causapscal
 causey
 cavalero
 cavalier
-cavan-monaghan
+cavan monaghan
 cave
 cave city
 cave creek
-cave-in-rock
+cave in rock
 cave junction
 cavendish
 cave spring
@@ -3744,7 +3744,7 @@ cazenovia
 cearfoss
 cébazat
 cecil
-cecil-bishop
+cecil bishop
 cecilia
 cecilton
 cedar
@@ -3821,7 +3821,7 @@ central frontenac
 central garage
 central gardens
 centralhatchee
-central heights-midland city
+central heights midland city
 central high
 central huron
 centralia
@@ -3854,7 +3854,7 @@ cerro gordo
 cerulean
 cesar chavez
 cesson
-cesson-sévigné
+cesson sévigné
 cestas
 cetronia
 ceuta
@@ -3872,7 +3872,7 @@ chaguian
 chain lake
 chain of rocks
 chain o' lakes
-chain-o-lakes
+chain o lakes
 chalan pago
 chalcis
 chalco
@@ -3882,14 +3882,14 @@ chalfont
 chalifert
 chalkhill
 chalkyitsik
-challenge-brownsville
-challes-les-eaux
+challenge brownsville
+challes les eaux
 challetkohum 5
 challetkohum 9
 challis
 chalmers
 chalmette
-chalon-sur-saône
+chalon sur saône
 chama
 chamalières
 chamberino
@@ -3902,7 +3902,7 @@ chamblee
 chambly
 chambord
 chambourcy
-chambray-lès-tours
+chambray lès tours
 chamisal
 chamita
 chamizal
@@ -3912,14 +3912,14 @@ champagne and aishihik first nations
 champaign
 champforgeuil
 champigneulles
-champigny-sur-marne
+champigny sur marne
 champion
 champion heights
 champlain
 champlan
 champlin
 champneuf
-champs-sur-marne
+champs sur marne
 chance
 chancellor
 chandler
@@ -3934,7 +3934,7 @@ channel lake
 channelview
 channing
 chanoodandidalch 14
-chanteloup-les-vignes
+chanteloup les vignes
 chantilly
 chanute
 chapais
@@ -3942,7 +3942,7 @@ chaparral
 chaparrito
 chapel hill
 chapel island indian reserve no. 5
-chapelle-lez-herlaimont
+chapelle lez herlaimont
 chapel park 28
 chapeno
 chapin
@@ -3967,7 +3967,7 @@ chapple
 charco
 chardon
 charenton
-charenton-le-pont
+charenton le pont
 charette
 chariton
 charlack
@@ -4004,7 +4004,7 @@ chaseburg
 chase city
 chase crossing
 chaska
-chasse-sur-rhône
+chasse sur rhône
 chassieu
 chataignier
 chataway lake/knife lake
@@ -4012,15 +4012,15 @@ châteaufort
 chateaugay
 châteaugay
 châteauguay
-châteauneuf-grasse
-château-richer
-châtel-saint-germain
-châtenay-malabry
-châtenoy-le-royal
+châteauneuf grasse
+château richer
+châtel saint germain
+châtenay malabry
+châtenoy le royal
 chatfield
 chatham
 chatham islands 4
-chatham-kent
+chatham kent
 châtillon
 chatmoss
 chatom
@@ -4082,7 +4082,7 @@ chenequa
 chénéville
 cheney
 cheneyville
-chennevières-sur-marne
+chennevières sur marne
 chenoa
 chenôve
 chenoweth
@@ -4121,7 +4121,7 @@ chesapeake ranch estates
 cheshire
 cheshire village
 chesilhurst
-ches-la-kee 3
+ches la kee 3
 cheslatta 1 (incls. 11 pcls)
 chesnee
 chessy
@@ -4152,8 +4152,8 @@ chetwynd
 chevak
 cheval
 cheverly
-chevigny-saint-sauveur
-chevilly-larue
+chevigny saint sauveur
+chevilly larue
 cheviot
 chevreuse
 chevy chase
@@ -4198,14 +4198,14 @@ chiefland
 chief morris 13
 chief's point indian reserve no. 28
 chieti
-chig-in-kaht 8
+chig in kaht 8
 chignik
 chignik lagoon
 chignik lake
 chilchinbito
 chilco lake 1
 chilco lake 1a
-chilcoot-vinton
+chilcoot vinton
 childersburg
 child lake 164a
 childress
@@ -4217,7 +4217,7 @@ chilili
 chillicothe
 chilliwack
 chillum
-chilly-mazarin
+chilly mazarin
 chilo
 chiloquin
 chilton
@@ -4275,7 +4275,7 @@ chocowinity
 choctaw
 choctaw lake
 choiceland
-choisy-le-roi
+choisy le roi
 chokio
 chokoloskee
 cholet
@@ -4340,8 +4340,8 @@ churchtown
 churchville
 churdan
 churubusco
-chute-aux-outardes
-chute-saint-philippe
+chute aux outardes
+chute saint philippe
 chuz ghun 8
 chuz teeslee 41
 cibecue
@@ -4359,7 +4359,7 @@ cinco ranch
 cinisello balsamo
 cinnamon lake
 circle
-circle d-kc estates
+circle d kc estates
 circle pines
 circleville
 cisco
@@ -4379,7 +4379,7 @@ city of the sun
 city view
 ciudad real
 clacks canyon
-clacton-on-sea
+clacton on sea
 claflin
 claiborne
 clair
@@ -4402,7 +4402,7 @@ claremont
 claremore
 clarence
 clarence center
-clarence-rockland
+clarence rockland
 clarendon
 clarendon hills
 clarinda
@@ -4428,7 +4428,7 @@ clarkson valley
 clarks point
 clarks summit
 clarkston
-clarkston heights-vineland
+clarkston heights vineland
 clarksville
 clarksville city
 clarkton
@@ -4441,7 +4441,7 @@ clatse 5
 clatskanie
 clatux 9
 claude
-claverack-red mills
+claverack red mills
 clavet
 clawson
 claxton
@@ -4505,7 +4505,7 @@ clever
 cleves
 clewiston
 clichy
-clichy-sous-bois
+clichy sous bois
 clienna 14
 cliff
 cliffdell
@@ -4556,7 +4556,7 @@ cluchuta lake 10a
 cluchuta lake 10b
 cludolicum 9
 cludolicum 9a
-cluj-napoca
+cluj napoca
 clustalach 5
 cluster springs
 clute
@@ -4715,8 +4715,8 @@ collinsburg
 collinston
 collinsville
 collinwood
-collonge-bellerive
-collonges-au-mont-d'or
+collonge bellerive
+collonges au mont d'or
 collyer
 colma
 colman
@@ -4780,7 +4780,7 @@ combee settlement
 combes
 combine
 combined locks
-combs-la-ville
+combs la ville
 comer
 comfort
 comfrey
@@ -4813,9 +4813,9 @@ concorde hills
 concordia
 concow
 concrete
-condat-sur-vienne
+condat sur vienne
 conde
-condé-sainte-libiaire
+condé sainte libiaire
 condon
 conehatta
 conejos
@@ -4825,7 +4825,7 @@ conesus lake
 conesville
 conetoe
 coney island
-conflans-sainte-honorine
+conflans sainte honorine
 confluence
 conger
 congers
@@ -4876,7 +4876,7 @@ conyngham
 cook
 cooke city
 cookeville
-cookshire-eaton
+cookshire eaton
 cooksville
 cool
 cooleemee
@@ -4937,7 +4937,7 @@ coralville
 coram
 coraopolis
 corbas
-corbeil-essonnes
+corbeil essonnes
 corbin
 corbin city
 corcoran
@@ -4955,8 +4955,8 @@ corkscrew creek 10
 corkscrew creek 9
 corley
 corman park no. 344
-cormeilles-en-parisis
-cormelles-le-royal
+cormeilles en parisis
+cormelles le royal
 cormontreuil
 corn
 corn creek
@@ -5018,12 +5018,12 @@ costa mesa
 costilla
 cotati
 coteau beach
-coteau-du-lac
+coteau du lac
 coteau no. 255
 cote i.r. 64
 cote no. 271
-côte-nord-du-golfe-du-saint-laurent
-côte-saint-luc
+côte nord du golfe du saint laurent
+côte saint luc
 cotesfield
 coto de caza
 cotopaxi
@@ -5051,7 +5051,7 @@ coucoucache indian reserve no. 24a
 couderay
 coudersport
 couëron
-couilly-pont-aux-dames
+couilly pont aux dames
 coulaines
 coulee city
 coulee dam
@@ -5083,7 +5083,7 @@ courbevoie
 courcelles
 courcouronnes
 courdimanche
-cournon-d'auvergne
+cournon d'auvergne
 courtdale
 courtenay
 courtland
@@ -5092,7 +5092,7 @@ cous 3
 coushatta
 cousins island
 couzeix
-couzon-au-mont-d'or
+couzon au mont d'or
 cove
 cove city
 cove creek
@@ -5161,7 +5161,7 @@ crane
 crane river 51
 cranesville
 cranfills gap
-cran-gevrier
+cran gevrier
 cranston
 craponne
 crary
@@ -5173,7 +5173,7 @@ crawfordville
 crawley
 crayne
 creal springs
-crécy-la-chapelle
+crécy la chapelle
 creedmoor
 creekside
 cree lake i.r. 192g
@@ -5221,13 +5221,13 @@ crisman
 cristești
 crittenden
 crivitz
-c-road
+c road
 crocker
 crockett
 crofton
 croghan
-croissy-beaubourg
-croissy-sur-seine
+croissy beaubourg
+croissy sur seine
 croix
 cromberg
 crompond
@@ -5273,7 +5273,7 @@ crossville
 croswell
 crothersville
 crotone
-croton-on-hudson
+croton on hudson
 crouch
 crow agency
 crowder
@@ -5379,7 +5379,7 @@ cushing
 cushman
 cusick
 cusseta
-cusseta-chattahoochee county
+cusseta chattahoochee county
 custar
 custer
 custer city
@@ -5448,7 +5448,7 @@ dale city
 daleville
 dalhart
 dalhousie
-dalk-ka-gila-quoeux 2
+dalk ka gila quoeux 2
 dallas
 dallas center
 dallas city
@@ -5468,7 +5468,7 @@ damariscotta
 damascus
 dames quarter
 damiansville
-dammarie-lès-lys
+dammarie lès lys
 dammeron valley
 damon
 dana
@@ -5541,7 +5541,7 @@ davison
 daviston
 davy
 dawn
-dawn-euphemia
+dawn euphemia
 dawson
 dawson creek
 dawson springs
@@ -5588,7 +5588,7 @@ decatur city
 decaturville
 decherd
 děčín
-décines-charpieu
+décines charpieu
 decker
 deckerville
 declo
@@ -5764,8 +5764,8 @@ des allemands
 des arc
 desbiens
 descanso
-deschaillons-sur-saint-laurent
-deschambault-grondines
+deschaillons sur saint laurent
+deschambault grondines
 deschutes river woods
 deseret
 deseronto
@@ -5796,15 +5796,15 @@ de tour village
 detroit
 detroit beach
 detroit lakes
-deuil-la-barre
-deux-montagnes
+deuil la barre
+deux montagnes
 deva
 de valls bluff
 devens
 deventer
 devers
 deville
-déville-lès-rouen
+déville lès rouen
 devil's gate 220
 devils lake
 devine
@@ -5817,7 +5817,7 @@ dewart
 deweese
 dewey
 dewey beach
-dewey-humboldt
+dewey humboldt
 deweyville
 de witt
 dewitt
@@ -5877,7 +5877,7 @@ dillonvale
 dillsboro
 dillsburg
 dillwyn
-dil-ma-sow 5
+dil ma sow 5
 dilworth
 dimitrov
 dimmitt
@@ -5911,7 +5911,7 @@ dixie
 dixie inn
 dixmoor
 dixon
-dixon lane-meadow creek
+dixon lane meadow creek
 dixonville
 dixville
 dlah koh 31
@@ -5951,10 +5951,10 @@ dokis indian reserve no. 9
 dola
 doland
 dolan springs
-dolbeau-mistassini
+dolbeau mistassini
 dolgeville
 dollar bay
-dollard-des ormeaux
+dollard des ormeaux
 dollar point
 dollars corner
 dolliver
@@ -6038,7 +6038,7 @@ douglass hills
 douglassville
 douglasville
 dour
-douro-dummer
+douro dummer
 dousman
 dove creek
 dove island 12
@@ -6046,7 +6046,7 @@ dover
 dover base housing
 dover beaches north
 dover beaches south
-dover-foxcroft
+dover foxcroft
 dover hill
 dover plains
 dove valley
@@ -6059,7 +6059,7 @@ dowling
 downers grove
 downey
 downieville
-downieville-lawson-dumont
+downieville lawson dumont
 downing
 downingtown
 downs
@@ -6087,7 +6087,7 @@ dravosburg
 drayton
 dresden
 dresser
-dreuil-lès-amiens
+dreuil lès amiens
 drew
 drew harbour 9
 drexel
@@ -6100,7 +6100,7 @@ driggs
 drinkwater
 dripping springs
 driscoll
-drobeta-turnu severin
+drobeta turnu severin
 drohobych
 drongen
 drowning creek
@@ -6159,12 +6159,12 @@ dufferin 10
 dufferin no. 190
 duffield
 dufur
-dug-da-myse 12
+dug da myse 12
 dugger
 dugny
 dugway
 duhamel
-duhamel-ouest
+duhamel ouest
 duisburg
 dulac
 dulce
@@ -6240,7 +6240,7 @@ durant
 durbin
 düren
 durham
-durham-sud
+durham sud
 durhamville
 durtol
 duryea
@@ -6296,10 +6296,10 @@ eagles lake i.r. 165c
 eagles mere
 eagleton village
 eagletown
-eagle-vail
+eagle vail
 eagleview
 eagle village
-eagle village first nation - kipawa
+eagle village first nation   kipawa
 eagleville
 eakles mills
 eakly
@@ -6422,7 +6422,7 @@ east kilbride
 east kingston
 east lake
 eastlake
-east lake-orient park
+east lake orient park
 eastland
 east lansdowne
 east lansing
@@ -6533,7 +6533,7 @@ east whittier
 east williston
 eastwood
 east york
-east zorra-tavistock
+east zorra tavistock
 eaton
 eaton estates
 eatonia
@@ -6645,7 +6645,7 @@ effingham
 effort
 efland
 egan
-egan-sud
+egan sud
 egegik
 egeland
 egeria bay 19
@@ -6655,7 +6655,7 @@ egg harbor city
 eglin afb
 Égly
 egypt
-egypt lake-leto
+egypt lake leto
 ehatis 11
 ehrenberg
 ehrenfeld
@@ -6736,7 +6736,7 @@ elfros
 elfros no. 307
 elgin
 el granada
-elias-fela solis
+elias fela solis
 elida
 elim
 el indio
@@ -6745,7 +6745,7 @@ elizabeth city
 elizabeth lake
 elizabethton
 elizabethtown
-elizabethtown-kitley
+elizabethtown kitley
 elizabethville
 elizaville
 el jebel
@@ -6931,7 +6931,7 @@ emporia
 emporium
 emsworth
 encampment
-encantada-ranchito el calaboz
+encantada ranchito el calaboz
 enchanted oaks
 encinal
 encinitas
@@ -6951,7 +6951,7 @@ enfield
 enfield no. 194
 engelen
 engelhard
-enghien-les-bains
+enghien les bains
 england
 englefeld
 englehart
@@ -6972,7 +6972,7 @@ enhaut
 enid
 enigma
 enlow
-ennetières-en-weppes
+ennetières en weppes
 ennis
 enniskillen
 enniskillen no. 3
@@ -6993,7 +6993,7 @@ enterprise
 enterprise no. 142
 entiat
 entlqwekkinh 19
-entraigues-sur-la-sorgue
+entraigues sur la sorgue
 entrelacs
 enumclaw
 enville
@@ -7004,9 +7004,9 @@ epes
 ephesus
 ephraim
 ephrata
-Épinay-sous-sénart
-Épinay-sur-orge
-Épinay-sur-seine
+Épinay sous sénart
+Épinay sur orge
+Épinay sur seine
 Épône
 epping
 epps
@@ -7030,7 +7030,7 @@ erie
 eriksdale
 erin
 erin springs
-erlands point-kitsap lake
+erlands point kitsap lake
 erlangen
 erlanger
 erlau
@@ -7076,7 +7076,7 @@ española
 esparto
 esperance
 espoo
-esprit-saint
+esprit saint
 espy
 esquimalt
 essa
@@ -7088,7 +7088,7 @@ essex fells
 essex junction
 essex village
 essexville
-essey-lès-nancy
+essey lès nancy
 esslingen am neckar
 estacada
 estancia
@@ -7109,7 +7109,7 @@ estill
 estill springs
 esto
 eston
-est-patrolas 4
+est patrolas 4
 estral beach
 ethan
 ethel
@@ -7214,7 +7214,7 @@ fabens
 fabius
 fabrica
 făcăi
-faches-thumesnil
+faches thumesnil
 factory island indian reserve no. 1
 factoryville
 faga'alu
@@ -7279,7 +7279,7 @@ fairport harbor
 fairton
 fairview
 fairview beach
-fairview-ferndale
+fairview ferndale
 fairview heights
 fairview park
 fairview shores
@@ -7372,7 +7372,7 @@ fate
 fatumafuti
 faulkton
 faunsdale
-fauquier-strickland
+fauquier strickland
 fawn grove
 fawn lake forest
 faxon
@@ -7414,8 +7414,8 @@ feodosiya
 ferdinand
 fergus falls
 ferguson
-ferland-et-boilleau
-ferme-neuve
+ferland et boilleau
+ferme neuve
 fermont
 fern acres
 fernandina beach
@@ -7423,7 +7423,7 @@ fernando salinas
 fernan lake village
 ferndale
 ferney
-ferney-voltaire
+ferney voltaire
 fern forest
 fernie
 fernitz
@@ -7435,7 +7435,7 @@ fernway
 ferrara
 ferrelview
 ferriday
-ferrières-en-brie
+ferrières en brie
 ferris
 ferrol
 ferron
@@ -7449,7 +7449,7 @@ fertile belt no. 183
 fertile valley no. 285
 fessenden
 festus
-fetters hot springs-agua caliente
+fetters hot springs agua caliente
 feytiat
 feyzin
 fgura
@@ -7468,7 +7468,7 @@ fife lake
 fifth street
 fifth ward
 fifty lakes
-fifty-six
+fifty six
 filer
 filer city
 filley
@@ -7562,20 +7562,20 @@ fleetwood
 fleischmanns
 fleming
 fleming island
-fleming-neon
+fleming neon
 flemingsburg
 flemington
 flensburg
 fletcher
 flett's springs no. 429
-fleurieu-sur-saône
+fleurieu sur saône
 fleurus
-fleury-les-aubrais
-fleury-mérogis
-fleury-sur-orne
-fléville-devant-nancy
+fleury les aubrais
+fleury mérogis
+fleury sur orne
+fléville devant nancy
 flin flon
-flins-sur-seine
+flins sur seine
 flint
 flint creek
 flint hill
@@ -7595,7 +7595,7 @@ flora vista
 flordell hills
 flor del rio
 florence
-florence-graham
+florence graham
 florenceville
 floresville
 florham park
@@ -7654,21 +7654,21 @@ fond du lac i.r. 233
 fondettes
 fondeur 9
 fontaine
-fontaine-Étoupefour
-fontaine-la-mallet
-fontaine-lès-dijon
-fontaine-l'Évêque
-fontaines-saint-martin
-fontaines-sur-saône
+fontaine Étoupefour
+fontaine la mallet
+fontaine lès dijon
+fontaine l'Évêque
+fontaines saint martin
+fontaines sur saône
 fontana
-fontana-on-geneva lake
+fontana on geneva lake
 fontanelle
 fontanet
-fontanil-cornillon
+fontanil cornillon
 fontas 1
 fontenay
-fontenay-aux-roses
-fontenay-sous-bois
+fontenay aux roses
+fontenay sous bois
 fontenelle
 foosland
 foothill farms
@@ -7755,7 +7755,7 @@ fort clark springs
 fort cobb
 fort coffee
 fort collins
-fort-coulonge
+fort coulonge
 fort covington hamlet
 fort davis
 fort defiance
@@ -7808,7 +7808,7 @@ fort loramie
 fort loudon
 fort lupton
 fort madison
-fort-mardyck
+fort mardyck
 fort mcdermitt
 fort mckay 174
 fort mckay 174c
@@ -7882,7 +7882,7 @@ forty fort
 fort yukon
 foscoe
 foss
-fossambault-sur-le-lac
+fossambault sur le lac
 fossil
 fosston
 foster
@@ -7910,7 +7910,7 @@ fountainbleau
 fountain city
 fountain creek 8
 fountain green
-fountainhead-orchard hills
+fountainhead orchard hills
 fountain hill
 fountain hills
 fountain inn
@@ -7938,7 +7938,7 @@ foxboro
 foxburg
 fox chapel
 fox chase
-fox farm-college
+fox farm college
 foxfield
 foxfire
 foxholm
@@ -8005,7 +8005,7 @@ frankton
 franktown
 frannie
 franquelin
-franqueville-saint-pierre
+franqueville saint pierre
 fraser
 fraser island 6
 fraser lake
@@ -8064,7 +8064,7 @@ french river
 french river indian reserve no. 13
 french settlement
 frenchtown
-frenchtown-rumbly
+frenchtown rumbly
 french valley
 frépillon
 fresnes
@@ -8148,7 +8148,7 @@ funkley
 funkstown
 funny river
 funston
-fuquay-varina
+fuquay varina
 furman
 furnace creek
 fürth
@@ -8211,7 +8211,7 @@ galt
 galva
 galveston
 galway
-galway-cavendish and harvey
+galway cavendish and harvey
 gamaliel
 gambell
 gambier
@@ -8253,7 +8253,7 @@ gardendale
 garden farms
 garden grove
 garden hill
-garden home-whitford
+garden home whitford
 garden plain
 garden prairie
 garden ridge
@@ -8273,7 +8273,7 @@ garfield
 garfield heights
 gargatha
 gargenville
-garges-lès-gonesse
+garges lès gonesse
 garibaldi
 garland
 garland city
@@ -8295,7 +8295,7 @@ gary
 gary city
 garysburg
 garyville
-garza-salinas ii
+garza salinas ii
 gas
 gasburg
 gas city
@@ -8355,7 +8355,7 @@ gene autry
 genesee
 geneseo
 geneva
-geneva-on-the-lake
+geneva on the lake
 gennevilliers
 genoa
 genoa city
@@ -8366,7 +8366,7 @@ gentryville
 george
 george mason
 georgetown
-georgetown-quitman county
+georgetown quitman county
 george west
 georgiana
 georgian bay
@@ -8426,7 +8426,7 @@ giessenburg
 giessendam
 gießhübl
 gifford
-gif-sur-yvette
+gif sur yvette
 gig harbor
 gijon
 gila
@@ -8558,7 +8558,7 @@ glen flora
 glenford
 glen fork
 glen gardner
-glen-gla-ouch 5
+glen gla ouch 5
 glenham
 glen haven
 glen head
@@ -8688,9 +8688,9 @@ golinda
 golovin
 goltry
 golva
-gometz-le-châtel
+gometz le châtel
 gonesse
-gonfreville-lorcher
+gonfreville lorcher
 gonvick
 gonzales
 gonzalez
@@ -8722,7 +8722,7 @@ goodwin
 goodyear
 goodyears bar
 goodyear village
-goo-ewe 8
+goo ewe 8
 goofy ridge
 goose creek
 goose lake
@@ -8764,7 +8764,7 @@ gould
 goulding
 goulds
 gouldsboro
-gournay-sur-marne
+gournay sur marne
 goussainville
 gouvernes
 gouverneur
@@ -8805,7 +8805,7 @@ granbury
 granby
 grand acres
 grand bay
-grand bay-westfield
+grand bay westfield
 grand beach
 grand blanc
 grand cane
@@ -8813,13 +8813,13 @@ grand canyon village
 grand canyon west
 grand coteau
 grand coulee
-grand-couronne
+grand couronne
 grand detour
-grande-anse
-grande-rivière
-grandes-piles
-grande-synthe
-grande-vallée
+grande anse
+grande rivière
+grandes piles
+grande synthe
+grande vallée
 grand falls
 grandfalls
 grand falls plaza
@@ -8839,7 +8839,7 @@ grand manan
 grand marais
 grand marsh
 grand meadow
-grand-métis
+grand métis
 grandmother's bay i.r. 219
 grand mound
 grand pass
@@ -8847,12 +8847,12 @@ grand point
 grand prairie
 grand rapids
 grand rapids 33
-grand-remous
+grand remous
 grand ridge
 grand river
 grand rivers
 grand ronde
-grand-saint-esprit
+grand saint esprit
 grand saline
 grand terrace
 grand tower
@@ -8862,7 +8862,7 @@ grandview beach
 grand view estates
 grandview heights
 grandview no. 349
-grand view-on-hudson
+grand view on hudson
 grandview plaza
 grandville
 grandwood park
@@ -8895,7 +8895,7 @@ grantsburg
 grants pass
 grantsville
 grant town
-grant-valkaria
+grant valkaria
 grantville
 grantwood village
 granville
@@ -8939,7 +8939,7 @@ gray court
 grayhawk
 grayland
 grayling
-graymoor-devondale
+graymoor devondale
 grayridge
 grays
 grayslake
@@ -9004,7 +9004,7 @@ greenfield
 greenfields
 green forest
 green grass
-green harbor-cedar crest
+green harbor cedar crest
 green hill
 green hills
 greenhills
@@ -9072,7 +9072,7 @@ grenoble
 grenola
 grenora
 grenville
-grenville-sur-la-rouge
+grenville sur la rouge
 gresham
 gresham park
 gretna
@@ -9084,7 +9084,7 @@ greycliff
 grey eagle
 grey forest
 grey highlands
-grézieu-la-varenne
+grézieu la varenne
 gribble island 10
 gridley
 grief island 2
@@ -9117,14 +9117,14 @@ groom
 gros cap indian reserve no. 49
 gros cap indian village reserve no. 49a
 groslay
-gros-mécatina
+gros mécatina
 gross
-grosse-Île
+grosse Île
 grosse pointe
 grosse pointe farms
 grosse pointe park
 grosse pointe woods
-grosses-roches
+grosses roches
 grosse tete
 grosseto
 gross kanischa
@@ -9146,14 +9146,14 @@ grovetown
 groveville
 grubbs
 grudziądz
-gruetli-laager
+gruetli laager
 grundy
 grundy center
 gruver
 grygla
 guadalajara
 guadalupe
-guadalupe-guerra
+guadalupe guerra
 guarnizo
 gudja
 guelph
@@ -9172,7 +9172,7 @@ guide rock
 guildford
 guilford
 guilford center
-guilherand-granges
+guilherand granges
 guimarães
 guin
 guinda
@@ -9193,12 +9193,12 @@ gull lake
 gull lake no. 139
 gull river indian reserve no. 55
 gully
-gul-mak 8
+gul mak 8
 gum branch
 gumlog
 gummersbach
 gum springs
-gun-a-chal 5
+gun a chal 5
 gunbarrel
 gun barrel city
 gun club estates
@@ -9222,7 +9222,7 @@ guthrie
 guthrie center
 gutierrez
 guttenberg
-gu-win
+gu win
 guy
 guyancourt
 guymon
@@ -9272,7 +9272,7 @@ hahira
 hahnville
 haigler
 haigler creek
-haiku-pauwela
+haiku pauwela
 hailesboro
 hailey
 haileyville
@@ -9315,7 +9315,7 @@ hallandale beach
 hall beach
 hällbybrunn
 halle
-hallennes-lez-haubourdin
+hallennes lez haubourdin
 hallett
 hallettsville
 halliday
@@ -9364,7 +9364,7 @@ hammond
 hammondsport
 hammondville
 hammonton
-ham-nord
+ham nord
 hampden
 hampden sydney
 hampshire
@@ -9374,7 +9374,7 @@ hampton bays
 hampton beach
 hampton manor
 Ħamrun
-ham-sud
+ham sud
 hamtramck
 hana
 hanaford
@@ -9438,7 +9438,7 @@ hardeeville
 hardesty
 hardin
 harding
-harding-birch lakes
+harding birch lakes
 hardinsburg
 hardricourt
 hard rocks
@@ -9549,7 +9549,7 @@ hassell
 hasson heights
 hastings
 hastings highlands
-hastings-on-hudson
+hastings on hudson
 hasty
 haswell
 hatboro
@@ -9575,7 +9575,7 @@ hauula
 havana
 havant
 havelock
-havelock-belmont-methuen
+havelock belmont methuen
 haven
 havensville
 haverford college
@@ -9586,7 +9586,7 @@ havířov
 havre
 havre de grace
 havre north
-havre-saint-pierre
+havre saint pierre
 hawaiian acres
 hawaiian beaches
 hawaiian gardens
@@ -9651,11 +9651,11 @@ hazelwood
 hazelwood no. 94
 hazen
 hazenmore
-hazerswoude-rijndijk
+hazerswoude rijndijk
 hazlehurst
 hazlet
 hazleton
-haz-zebbug
+haz zebbug
 h. cuellar estates
 head, clara and maria
 headingley
@@ -9682,10 +9682,10 @@ heavener
 hebbronville
 heber
 heber city
-heber-overgaard
+heber overgaard
 heber springs
 hébertville
-hébertville-station
+hébertville station
 hebgen lake estates
 hebo
 hebron
@@ -9719,7 +9719,7 @@ helena valley northeast
 helena valley northwest
 helena valley southeast
 helena valley west central
-helena-west helena
+helena west helena
 helena west side
 helenville
 helenwood
@@ -9751,7 +9751,7 @@ henderson's ranch 11
 hendersonville
 hendley
 hendricks
-hendrik-ido-ambacht
+hendrik ido ambacht
 hendrix
 hendron
 hendrum
@@ -9815,7 +9815,7 @@ herne
 heron
 heron bay
 heron lake
-hérouville-saint-clair
+hérouville saint clair
 hérouxville
 herreid
 herrick
@@ -9878,8 +9878,8 @@ hidden spring
 hidden valley
 hidden valley lake
 hideaway
-hide-a-way hills
-hide-a-way lake
+hide a way hills
+hide a way lake
 hideout
 hiellen 2
 higbee
@@ -9896,7 +9896,7 @@ high bar 1a
 high bar 2
 high bridge
 high falls
-highfield-cascade
+highfield cascade
 highfill
 highgrove
 high hill
@@ -9916,7 +9916,7 @@ highland lakes
 highland meadows
 highland park
 highlands
-highlands-baywood park
+highlands baywood park
 highlands east
 highland springs
 highlands ranch
@@ -9978,7 +9978,7 @@ hilltop
 hilltop lakes
 hillview
 hill view heights
-hilmar-irwin
+hilmar irwin
 hilo
 hilshire village
 hilton
@@ -9992,7 +9992,7 @@ hinckley
 hindman
 hindsboro
 hindsville
-hi-nella
+hi nella
 hines
 hinesburg
 hinesville
@@ -10040,7 +10040,7 @@ hoffman estates
 hogans corner
 hogansville
 hohenwald
-ho-ho-kus
+ho ho kus
 hoisington
 hoiss 8
 hokah
@@ -10064,7 +10064,7 @@ holgate
 holiday
 holiday beach
 holiday city
-holiday city-berkeley
+holiday city berkeley
 holiday city south
 holiday heights
 holiday hills
@@ -10128,7 +10128,7 @@ homalco 2a
 homalco 9
 homayno 2
 home
-homeacre-lyndora
+homeacre lyndora
 homecroft
 homedale
 home garden
@@ -10156,7 +10156,7 @@ homosassa
 homosassa springs
 honaker
 honalo
-honaunau-napoopoo
+honaunau napoopoo
 honcut
 hondah
 hondo
@@ -10218,7 +10218,7 @@ hopwood
 hoquiam
 horace
 horatio
-horbourg-wihr
+horbourg wihr
 hordville
 horicon
 horine
@@ -10266,7 +10266,7 @@ hospers
 hosston
 hostetter
 hotchkiss
-hotevilla-bacavi
+hotevilla bacavi
 hot springs
 hot springs landing
 hot springs village
@@ -10297,7 +10297,7 @@ howe
 howeet 8
 howell
 howells
-howey-in-the-hills
+howey in the hills
 howick
 howland
 howland center
@@ -10398,7 +10398,7 @@ hurley island
 hurlock
 huron
 huron east
-huron-kinloss
+huron kinloss
 huron no. 223
 huron shores
 hurricane
@@ -10472,7 +10472,7 @@ ider
 idledale
 idlewild
 idron
-idyllwild-pine cove
+idyllwild pine cove
 idylwood
 ifs
 igiugig
@@ -10490,14 +10490,14 @@ iktuksasuk 7
 ila
 ilchester
 ilclo 12
-Île-à-la-crosse
+Île à la crosse
 ile a la crosse i.r. 192e
 iliamna
 iliff
 ili'ili
 ilion
 illiopolis
-illkirch-graffenstaden
+illkirch graffenstaden
 illzach
 iltcoola indian reserve no. 7
 ilthpaya 8
@@ -10568,9 +10568,9 @@ inger
 ingersheim
 ingersoll
 ingleside
-ingleside on-the-bay
+ingleside on the bay
 inglewood
-inglewood-finn hill
+inglewood finn hill
 inglis
 ingold
 ingolstadt
@@ -10701,7 +10701,7 @@ ismay
 isola
 issaquah
 issou
-issy-les-moulineaux
+issy les moulineaux
 istachatta
 italy
 itasca
@@ -10715,14 +10715,14 @@ iva
 ivalee
 ivanhoe
 ivanof bay
-ivano-frankivsk
+ivano frankivsk
 ivesdale
 ives estates
 ivey
 ivins
 ivor
-ivry-sur-le-lac
-ivry-sur-seine
+ivry sur le lac
+ivry sur seine
 ivy
 ivyland
 ixl
@@ -10749,7 +10749,7 @@ jacksons gap
 jacksonville
 jacksonville beach
 jacksonwald
-jacob-bellecombette
+jacob bellecombette
 jacob city
 jacobus
 jacona
@@ -10780,7 +10780,7 @@ jamison city
 jamul
 jane lew
 janesville
-jan-phyl village
+jan phyl village
 jans bay
 jansen
 janvier 194
@@ -10790,11 +10790,11 @@ jardine
 jarratt
 jarrell
 jarrettsville
-jarville-la-malgrange
+jarville la malgrange
 jasmine estates
 jasonville
 jasper
-jassans-riottier
+jassans riottier
 jastrzębie zdrój
 java
 ja we yah's 99
@@ -10816,7 +10816,7 @@ jefferson city
 jefferson heights
 jefferson hills
 jeffersontown
-jefferson valley-yorktown
+jefferson valley yorktown
 jeffersonville
 jeffrey city
 jeiseyville
@@ -10900,7 +10900,7 @@ johnsville
 johny sticks 2
 joice
 joiner
-joinville-le-pont
+joinville le pont
 joliet
 joliette
 jolivue
@@ -10929,9 +10929,9 @@ josephine
 josephville
 joshua
 joshua tree
-joué-lès-tours
+joué lès tours
 jourdanton
-jouy-aux-arches
+jouy aux arches
 joy
 joyce
 juarez
@@ -10971,7 +10971,7 @@ juslibol
 justice
 justin
 juvignac
-juvisy-sur-orge
+juvisy sur orge
 juziers
 jyväskylä
 kaaawa
@@ -10982,7 +10982,7 @@ kachina village
 kadis 11
 kadoka
 kahaluu
-kahaluu-keauhou
+kahaluu keauhou
 kahas 7
 kahkaykay 6
 kahkewistahaw indian reserve no. 72b
@@ -10990,9 +10990,9 @@ kahkewistahaw indian reserve no. 72e
 kahkewistahaw indian reserve no. 72f
 kahkewistahaw indian reserve no. 72g
 kahkewistahaw indian reserve no. 72h
-kahkewistahaw indian reserve no. 72-j
+kahkewistahaw indian reserve no. 72 j
 kahkewistahaw i.r. 72
-kahkewistahaw i.r. 72 a-1
+kahkewistahaw i.r. 72 a 1
 kahkewistahaw reserve no. 72c
 kahkewistahaw reserve no. 72d
 kahlotus
@@ -11008,7 +11008,7 @@ kaikalahun 25
 kailua
 kailua kona
 kaiserslautern
-kai-too-kwis 15
+kai too kwis 15
 kajustus 10
 kaka
 kakalatza 6
@@ -11032,7 +11032,7 @@ kalona
 kaltag
 kalush
 kamas
-kamenets-podilski
+kamenets podilski
 kamiah
 kamihkowapihskak pawistik indian reserve
 kamloops
@@ -11077,7 +11077,7 @@ kapawe'no first nation no. 150d
 kapawe'no first nation no. 229
 kapawe'no first nation no. 230
 kapawe'no first nation no. 231
-kapelle-op-den-bosch
+kapelle op den bosch
 kaplan
 kapolei
 kaposvár
@@ -11145,8 +11145,8 @@ k'ay noo 47
 kaysville
 kazabazua
 kazanluk
-k-bar ranch
-kdad-eesh 4
+k bar ranch
+kdad eesh 4
 keaau
 keachi
 kealakekua
@@ -11173,32 +11173,32 @@ keenesburg
 keensburg
 keeseekoose i.r. 66
 keeseekoose i.r. 66a
-keeseekoose i.r. 66-ca-01
-keeseekoose i.r. 66-ca-02
-keeseekoose i.r. 66-ca-03
-keeseekoose i.r. 66-ca-04
-keeseekoose i.r. 66-ca-05
-keeseekoose i.r. 66-ca-06
-keeseekoose i.r. 66-ch-01
-keeseekoose i.r. 66-ch-03
-keeseekoose i.r. 66-ch-04
-keeseekoose i.r. 66-co-01
-keeseekoose i.r. 66-co-02
-keeseekoose i.r. 66-ke-01
-keeseekoose i.r. 66-ke-02
-keeseekoose i.r. 66-ke-03
-keeseekoose i.r. 66-ke-04
-keeseekoose i.r. 66-ke-05
-keeseekoose i.r. 66-sa-01
-keeseekoose i.r. 66-sa-02
-keeseekoose i.r. 66-st-01
-keeseekoose i.r. 66-st-02
-keeseekoose i.r. 66-st-03
-keeseekoose i.r. kk no. 66-st-04
+keeseekoose i.r. 66 ca 01
+keeseekoose i.r. 66 ca 02
+keeseekoose i.r. 66 ca 03
+keeseekoose i.r. 66 ca 04
+keeseekoose i.r. 66 ca 05
+keeseekoose i.r. 66 ca 06
+keeseekoose i.r. 66 ch 01
+keeseekoose i.r. 66 ch 03
+keeseekoose i.r. 66 ch 04
+keeseekoose i.r. 66 co 01
+keeseekoose i.r. 66 co 02
+keeseekoose i.r. 66 ke 01
+keeseekoose i.r. 66 ke 02
+keeseekoose i.r. 66 ke 03
+keeseekoose i.r. 66 ke 04
+keeseekoose i.r. 66 ke 05
+keeseekoose i.r. 66 sa 01
+keeseekoose i.r. 66 sa 02
+keeseekoose i.r. 66 st 01
+keeseekoose i.r. 66 st 02
+keeseekoose i.r. 66 st 03
+keeseekoose i.r. kk no. 66 st 04
 keeseekoowenin 61
 keeseville
 keewatin
-kee-way-win
+kee way win
 keflavik
 kehiwin 123
 kehl
@@ -11426,7 +11426,7 @@ kilkenny
 killaloe, hagarty and richards
 killaly
 killarney
-killarney-turtle mountain
+killarney turtle mountain
 killbuck
 killdeer
 kill devil hills
@@ -11437,7 +11437,7 @@ killona
 kilmarnock
 kilmichael
 kiln
-kil-pah-las 3
+kil pah las 3
 kiltala 2
 kim
 kimball
@@ -11521,7 +11521,7 @@ kinmundy
 kinnear's mills
 kinnelon
 kinney
-kinoosao-thomas clarke i.r. 204
+kinoosao thomas clarke i.r. 204
 kino springs
 kinross
 kinsey
@@ -11560,7 +11560,7 @@ kirvin
 kirwin
 kiryas joel
 kisameet 7
-kis-an-usko 7
+kis an usko 7
 k. i. sawyer
 kisbey
 kisgegas
@@ -11594,7 +11594,7 @@ kitselas 1
 kitsemenlagan 19
 kitsemenlagan 19a
 kitsilano 6
-kits-ka-haws 6
+kits ka haws 6
 kitsumkaylum 1
 kittanning
 kittery
@@ -11607,7 +11607,7 @@ k'i tue 196d
 kitzmiller
 kitzowit 20
 kivalina
-kivimaa-moonlight bay
+kivimaa moonlight bay
 kladno
 klagenfurt
 klagetoh
@@ -11660,7 +11660,7 @@ knightsen
 knights landing
 knightstown
 knightsville
-knik-fairview
+knik fairview
 knik river
 knippa
 knobel
@@ -11679,10 +11679,10 @@ kodiak station
 kohatk
 kohler
 kohls ranch
-kohtla-jarve
+kohtla jarve
 kokhanok
 kokomo
-ko-kwi-iss 14
+ko kwi iss 14
 kokyet 1
 kolding
 koliganek
@@ -11770,10 +11770,10 @@ ksames 85
 kshaoom 23
 kshish 4b
 kshish no 4 (includes kshish 4a)
-ksoo-gun-ya 2a
+ksoo gun ya 2a
 kstus 83
 kstus 84
-ksui-la-das 6
+ksui la das 6
 ktamgaodzen 51
 kualapuu
 kuaste 8
@@ -11821,7 +11821,7 @@ kutztown university
 kuz che 5
 kwanlin dun first nation
 kwatlena 4
-kwa-tsa-lix 4
+kwa tsa lix 4
 kwatse 3
 kwawkwawapilt 6
 kwetahkis 9
@@ -11830,7 +11830,7 @@ kwigillingok
 kwum kwum
 kyarti 3
 kyex 64
-kye-yaa-la 1
+kye yaa la 1
 kyidagwis 2
 kyimla 11
 kykinalko 2
@@ -11844,7 +11844,7 @@ laagri
 labadieville
 la barge
 labarque creek
-la baule-escoublac
+la baule escoublac
 labège
 la belle
 labelle
@@ -11861,35 +11861,35 @@ la canada flintridge
 la carla
 la casita
 lacassine
-lac-au-saumon
-lac-aux-sables
+lac au saumon
+lac aux sables
 lac baker
-lac-beauport
-lac-bouchette
+lac beauport
+lac bouchette
 lac brochet 197a
-lac-brome
-lac-delage
-lac-des-aigles
-lac-des-Écorces
+lac brome
+lac delage
+lac des aigles
+lac des Écorces
 lac des mille lacs first nation reserve no. 22a2
 lac des mille lacs indian reserve no. 22a1
-lac-des-plages
-lac-des-seize-Îles
-lac-drolet
+lac des plages
+lac des seize Îles
+lac drolet
 lac du bonnet
-lac-du-cerf
+lac du cerf
 lac du flambeau
-lac-Édouard
-la celle-saint-cloud
+lac Édouard
+la celle saint cloud
 la center
-lac-etchemin
+lac etchemin
 lacey
 laceyville
-lac-frontière
-la chapelle-saint-aubin
-la chapelle-saint-luc
-la chapelle-saint-mesmin
-lachkul-jeets 6
+lac frontière
+la chapelle saint aubin
+la chapelle saint luc
+la chapelle saint mesmin
+lachkul jeets 6
 lachmach 16
 la chuparosa
 lachute
@@ -11903,7 +11903,7 @@ lac la belle
 lac la hache i.r. 220
 lac la ronge i.r. 156
 laclede
-lac-mégantic
+lac mégantic
 lacolle
 la coma
 lacomb
@@ -11918,24 +11918,24 @@ la corne
 la coste
 la courneuve
 lac pelletier no. 107
-lac-poulin
+lac poulin
 la crescent
-la crescenta - montrose
+la crescenta   montrose
 la croft
 la crosse
-lac-saguay
-lac-sainte-marie
-lac-saint-joseph
-lac-saint-paul
-lac-sergent
+lac saguay
+lac sainte marie
+lac saint joseph
+lac saint paul
+lac sergent
 lac seul indian reserve no. 28
 lac simon
-lac-simon
-lac-supérieur
-lac-tremblant-nord
+lac simon
+lac supérieur
+lac tremblant nord
 la cueva
 la cygne
-lacy-lakeview
+lacy lakeview
 ladd
 laddonia
 ladera
@@ -11969,11 +11969,11 @@ la fontaine
 laforce
 lafourche crossing
 la francheville
-la frette-sur-seine
+la frette sur seine
 la garde
-la garenne-colombes
+la garenne colombes
 lagins 5
-lagny-sur-marne
+lagny sur marne
 lago
 lagord
 lago vista
@@ -11993,7 +11993,7 @@ laguna park
 laguna seca
 laguna vista
 laguna woods
-lagunitas-forest knolls
+lagunitas forest knolls
 la habra
 la habra heights
 la hacienda
@@ -12099,7 +12099,7 @@ lake ivanhoe
 lake jackson
 lake johnston no. 102
 lake junaluska
-lake ka-ho
+lake ka ho
 lake kathryn
 lake katrine
 lake ketchum
@@ -12131,10 +12131,10 @@ lake louise
 lakelse 25
 lake lure
 lake luzerne
-lake mack-forest hills
+lake mack forest hills
 lake madison
 lake magdalene
-lake marcel-stillwater
+lake marcel stillwater
 lake mary
 lake mary jane
 lake mary ronan
@@ -12153,7 +12153,7 @@ lake montezuma
 lake monticello
 lakemoor
 lakemore
-lake morton-berrydale
+lake morton berrydale
 lake murray of richland
 lake mykee town
 lake mystic
@@ -12210,7 +12210,7 @@ lake sherwood
 lakeshire
 lake shore
 lakeshore
-lakeshore gardens-hidden acres
+lakeshore gardens hidden acres
 lakeside
 lakeside city
 lakeside no. 338
@@ -12316,7 +12316,7 @@ la montagne
 la monte
 la morandière
 la motte
-la motte-servolex
+la motte servolex
 lamoure
 lampasas
 lampertheim
@@ -12334,7 +12334,7 @@ lanas 4
 lancaster
 lance creek
 lancer
-l'ancienne-lorette
+l'ancienne lorette
 landa
 landen
 lander
@@ -12355,11 +12355,11 @@ lane
 lanesboro
 lanesville
 lanett
-laneuveville-devant-nancy
+laneuveville devant nancy
 lang
 langdon
 langdon place
-l'ange-gardien
+l'ange gardien
 langeloth
 langenburg
 langenburg no. 181
@@ -12390,7 +12390,7 @@ la norville
 lansdale
 lansdowne
 l'anse
-l'anse-saint-jean
+l'anse saint jean
 lansford
 lansing
 lantana
@@ -12401,7 +12401,7 @@ laona
 la palma
 la paloma
 la paloma addition
-la paloma-lost creek
+la paloma lost creek
 la paloma ranchettes
 la patrie
 la paz
@@ -12409,7 +12409,7 @@ la paz valley
 la pêche
 lapeer
 lapel
-la penne-sur-huveaune
+la penne sur huveaune
 la pine
 laplace
 la plant
@@ -12429,7 +12429,7 @@ la puebla
 la puente
 la puerta
 lapwai
-la queue-en-brie
+la queue en brie
 la quinta
 laramie
 la ravoire
@@ -12450,11 +12450,11 @@ la riche
 larimore
 larissa
 la riviera
-la rivière-de-corps
-larkfield-wikiup
+la rivière de corps
+larkfield wikiup
 larkspur
 larksville
-larmor-plage
+larmor plage
 larnaca
 larned
 la rochelle
@@ -12473,17 +12473,17 @@ larwill
 la sal
 la salle
 lasalle
-la salvetat-saint-gilles
+la salvetat saint gilles
 lasana
 las animas
 lasara
 la sarre
 l'ascension
-l'ascension-de-notre-seigneur
-l'ascension-de-patapédia
+l'ascension de notre seigneur
+l'ascension de patapédia
 las cruces
 la selva beach
-la seyne-sur-mer
+la seyne sur mer
 las flores
 las haciendas
 lashburn
@@ -12517,9 +12517,9 @@ latina
 la tina ranch
 laton
 latour
-la tour-en-jarez
+la tour en jarez
 la trinité
-la trinité-des-monts
+la trinité des monts
 latrobe
 la tronche
 la tse cho diz i 33
@@ -12529,10 +12529,10 @@ lattimore
 lattingtown
 lattkaloup 9
 latty
-latulipe-et-gaboury
+latulipe et gaboury
 la tuque
 lauderdale
-lauderdale-by-the-sea
+lauderdale by the sea
 lauderdale lakes
 lauderhill
 laughlin
@@ -12564,7 +12564,7 @@ laurentian valley
 laurie
 laurier
 laurier no. 38
-laurier-station
+laurier station
 laurierville
 laurinburg
 laurium
@@ -12575,7 +12575,7 @@ lava hot springs
 laval
 la vale
 lavalette
-la valette-du-var
+la valette du var
 la valle
 la vallee
 lavallette
@@ -12592,13 +12592,13 @@ la verrière
 la veta
 la victoria
 la villa
-la ville-aux-dames
-la ville-du-bois
+la ville aux dames
+la ville du bois
 la villita
 la vina
 lavina
-la visitation-de-l'Île-dupas
-la visitation-de-yamaska
+la visitation de l'Île dupas
+la visitation de yamaska
 la vista
 lavon
 lavonia
@@ -12665,13 +12665,13 @@ lebam
 lebanon
 lebanon junction
 lebanon south
-le ban-saint-martin
+le ban saint martin
 lebbeke
 lebec
-lebel-sur-quévillon
-le blanc-mesnil
+lebel sur quévillon
+le blanc mesnil
 lebo
-le bosc-roger-en-roumois
+le bosc roger en roumois
 le bourget
 le bouscat
 lebret
@@ -12680,14 +12680,14 @@ lecanto
 lecce
 le cendre
 le center
-le champ-près-froges
+le champ près froges
 lechee
 le chesnay
 le claire
 leclercville
 lecompte
 lecompton
-le coudray-montceaux
+le coudray montceaux
 le crès
 le croisic
 ledbetter
@@ -12703,7 +12703,7 @@ leeds and the thousand islands
 lee mont
 leeper
 leers
-leers-nord
+leers nord
 leesburg
 leesport
 lee's summit
@@ -12725,7 +12725,7 @@ legnano
 legnica
 le goulet
 le grand
-le grand-quevilly
+le grand quevilly
 le haillan
 le havre
 lehi
@@ -12754,10 +12754,10 @@ leisure world
 leitchfield
 leitersburg
 leith
-leith-hatfield
+leith hatfield
 leixlip
 lejeune
-le kremlin-bicêtre
+le kremlin bicêtre
 lelachen 6
 leland
 leland grove
@@ -12772,10 +12772,10 @@ le mans
 le mars
 lemay
 lemberg
-le mée-sur-seine
-le mesnil-esnard
-le mesnil-le-roi
-le mesnil-saint-denis
+le mée sur seine
+le mesnil esnard
+le mesnil le roi
+le mesnil saint denis
 lemieux
 leming
 lemitar
@@ -12810,7 +12810,7 @@ lenox
 lenwood
 lenzburg
 leobendorf
-leo-cedarville
+leo cedarville
 leola
 leominster
 leon
@@ -12835,28 +12835,28 @@ leopolis
 leota
 leoti
 leoville
-le palais-sur-vienne
+le palais sur vienne
 lepanto
 le pecq
 le pellerin
-le perreux-sur-marne
-le petit-quevilly
-le pian-médoc
+le perreux sur marne
+le petit quevilly
+le pian médoc
 l'Épiphanie
-le plessis-bouchard
-le plessis-pâté
-le plessis-robinson
-le plessis-trévise
-le pont-de-claix
+le plessis bouchard
+le plessis pâté
+le plessis robinson
+le plessis trévise
+le pont de claix
 le pontet
-le port-marly
+le port marly
 le pouliguen
 le pradet
-le pré-saint-gervais
+le pré saint gervais
 le raincy
 le raysville
-le relecq-kerhuon
-le revest-les-eaux
+le relecq kerhuon
+le revest les eaux
 lerna
 leross
 le roy
@@ -12868,25 +12868,25 @@ les angles
 les bergeronnes
 lescar
 les cèdres
-les clayes-sous-bois
+les clayes sous bois
 les coteaux
 les Éboulements
 les escoumins
 leshara
 les hauteurs
 lésigny
-les Îles-de-la-madeleine
+les Îles de la madeleine
 leslie
 leslie beach
 les lilas
-les loges-en-josas
+les loges en josas
 les méchins
 les mureaux
-les noës-près-troyes
-les pavillons-sous-bois
-les pennes-mirabeau
+les noës près troyes
+les pavillons sous bois
+les pennes mirabeau
 lespinasse
-les ponts-de-cé
+les ponts de cé
 lesquin
 lesslie
 les sorinières
@@ -12897,8 +12897,8 @@ lestock
 le sueur
 les ulis
 leszno
-le taillan-médoc
-l'Étang-la-ville
+le taillan médoc
+l'Étang la ville
 letcher
 letea veche
 le thillay
@@ -12910,15 +12910,15 @@ letts
 leupp
 leusoali'i
 leuven
-leuville-sur-orge
-levallois-perret
+leuville sur orge
+levallois perret
 levan
 levant
 levasy
 level green
 levelland
 levelock
-level park-oak park
+level park oak park
 level plains
 levering
 leverkusen
@@ -12941,13 +12941,13 @@ lewistown heights
 lewisville
 lexa
 lexington
-lexington-fayette
+lexington fayette
 lexington hills
 lexington park
 leyner
 lezbye 6
 lezennes
-l'haÿ-les-roses
+l'haÿ les roses
 lhoh cho 29
 l'hôpital
 l'hospitalet de llobregat
@@ -12986,11 +12986,11 @@ lija
 likely
 lilbourn
 lilburn
-l'Île-cadieux
-l'Île-d'anticosti
-l'Île-dorval
-l'Île-du-grand-calumet
-l'Île-perrot
+l'Île cadieux
+l'Île d'anticosti
+l'Île dorval
+l'Île du grand calumet
+l'Île perrot
 lilesville
 lille
 lillie
@@ -13007,7 +13007,7 @@ limassol
 limaville
 limay
 limbuš
-limeil-brévannes
+limeil brévannes
 lime lake
 limerick
 lime ridge
@@ -13086,14 +13086,14 @@ lisbon falls
 lisburn
 lisco
 liscomb
-lish-leesh-tum 17
+lish leesh tum 17
 lisichansk
 lisle
-l'isle-adam
-l'isle-aux-allumettes
-l'isle-aux-coudres
+l'isle adam
+l'isle aux allumettes
+l'isle aux coudres
 l'islet
-l'isle-verte
+l'isle verte
 lisman
 lismore
 lisses
@@ -13139,7 +13139,7 @@ little pine i.r. 116
 little red river i.r. 106c
 little red river i.r. 106d
 little river
-little river-academy
+little river academy
 little rock
 littlerock
 little round lake
@@ -13168,7 +13168,7 @@ livingston no. 331
 livingston wheeler
 livonia
 livonia center
-livry-gargan
+livry gargan
 lizton
 ljubljana
 llano
@@ -13182,7 +13182,7 @@ loachapoka
 loami
 lobelville
 lochaber
-lochaber-partie-ouest
+lochaber partie ouest
 loch arbour
 lochbuie
 lochearn
@@ -13236,7 +13236,7 @@ logrono
 lohbiee 3
 lohman
 lohrville
-loire-sur-rhône
+loire sur rhône
 lokla 4
 loleta
 lolita
@@ -13285,7 +13285,7 @@ long branch
 longbranch
 long creek
 longdale
-longeville-lès-metz
+longeville lès metz
 longfellow
 longford
 long grove
@@ -13304,7 +13304,7 @@ longoria
 long pine
 long plain 6
 long point
-longpont-sur-orge
+longpont sur orge
 longport
 long prairie
 long sault indian reserve no. 12
@@ -13314,8 +13314,8 @@ longtown
 long tunnel 5
 long tunnel 5a
 longueau
-longue-pointe-de-mingan
-longue-rive
+longue pointe de mingan
+longue rive
 longueuil
 long valley
 longvic
@@ -13366,7 +13366,7 @@ lormont
 lorne
 lorraine
 lorrainville
-lorry-lès-metz
+lorry lès metz
 lorton
 los alamitos
 los alamos
@@ -13514,7 +13514,7 @@ lucama
 lucan
 lucan biddulph
 lucas
-lucas valley-marinwood
+lucas valley marinwood
 lucasville
 lucca
 lucedale
@@ -13620,7 +13620,7 @@ lynn lake
 lynnview
 lynnville
 lynnwood
-lynnwood-pricedale
+lynnwood pricedale
 lynwood
 lynxville
 lyon
@@ -13628,7 +13628,7 @@ lyon mountain
 lyons
 lyons falls
 lyons switch
-lys-lez-lannoy
+lys lez lannoy
 lyster
 lytle
 lytle creek
@@ -13747,9 +13747,9 @@ magnet cove
 magnetic springs
 magnolia
 magnolia springs
-magny-les-hameaux
+magny les hameaux
 magog
-ma-guala 6
+ma guala 6
 magwekstala 10
 mahaffey
 mahanoy city
@@ -13761,7 +13761,7 @@ mahnomen
 mahomet
 mahopac
 mahpahkum 4
-mah-te-nicht 8
+mah te nicht 8
 mahtomedi
 mahtowa
 maia
@@ -13773,13 +13773,13 @@ maili
 maina
 maincy
 maineville
-main-kinzig-kreis
+main kinzig kreis
 mainville
 mainz
 maish vaya
 maisonnette
-maisons-alfort
-maisons-laffitte
+maisons alfort
+maisons laffitte
 maite
 maitland
 maize
@@ -13820,7 +13820,7 @@ malcolm
 malcolm island 8
 malcom
 malden
-malden-on-hudson
+malden on hudson
 malibu
 malin
 malinta
@@ -13869,11 +13869,11 @@ manchester center
 mancos
 mandan
 mandaree
-mandelieu-la-napoule
+mandelieu la napoule
 manderson
-manderson-white horse creek
+manderson white horse creek
 mandeville
-mandres-les-roses
+mandres les roses
 manele
 manfredonia
 mangham
@@ -13895,7 +13895,7 @@ manistique
 manito
 manitou
 manitou beach
-manitou beach-devils lake
+manitou beach devils lake
 manitou lake no. 442
 manitou rapids indian reserve no. 11
 manitou springs
@@ -13925,7 +13925,7 @@ manresa
 manseau
 mansfield
 mansfield center
-mansfield-et-pontefract
+mansfield et pontefract
 manson
 mansura
 mantachie
@@ -13935,8 +13935,8 @@ mantee
 manteno
 manteo
 manter
-mantes-la-jolie
-mantes-la-ville
+mantes la jolie
+mantes la ville
 manti
 mantoloking
 manton
@@ -13961,7 +13961,7 @@ maple falls
 maple glen
 maple grove
 maple heights
-maple heights-lake desire
+maple heights lake desire
 maple hill
 maple lake
 maple park
@@ -14010,13 +14010,13 @@ marchtrenk
 marck
 marco island
 marcoussis
-marcq-en-barœul
+marcq en barœul
 marcus
 marcus hook
-marcy-l'Étoile
+marcy l'Étoile
 mardela springs
 mardié
-mareil-marly
+mareil marly
 marengo
 marenisco
 marfa
@@ -14045,7 +14045,7 @@ mariemont
 marienthal
 marienville
 marietta
-marietta-alderwood
+marietta alderwood
 marieville
 marijampolė
 marina
@@ -14078,7 +14078,7 @@ markleville
 markleysburg
 marks
 marksboro
-markstay-warren
+markstay warren
 marksville
 marktosis 15
 marl
@@ -14094,33 +14094,33 @@ marlow
 marlow heights
 marlton
 marly
-marly-le-roi
-mar-mac
+marly le roi
+mar mac
 marmaduke
 marmarth
 marmet
 marmora and lake
 marne
-marnes-la-coquette
+marnes la coquette
 maroa
-marolles-en-hurepoix
+marolles en hurepoix
 maromme
 marquand
 marquette
 marquette heights
-marquette-lez-lille
+marquette lez lille
 marquez
 marquis
 marquis no. 191
 marrero
 marriott no. 317
-marriott-slaterville
+marriott slaterville
 marrowbone
 marrowstone
 mars
 marsa
 marsala
-marsannay-la-côte
+marsannay la côte
 marsascala
 marsaxlokk
 marsden
@@ -14238,7 +14238,7 @@ mathiston
 matimekosh indian reserve no.3
 matinecock
 matlacha
-matlacha isles-matlacha shores
+matlacha isles matlacha shores
 matlaten 4
 matlock
 matoaca
@@ -14253,7 +14253,7 @@ mattawan
 mattawana
 matteson
 matthews
-mattice-val côté
+mattice val côté
 mattituck
 mattoon
 mattydale
@@ -14323,7 +14323,7 @@ mayville
 maywood
 maywood park
 mazeppa
-mazères-lezons
+mazères lezons
 mazie
 mazomanie
 mazon
@@ -14446,7 +14446,7 @@ mcleansboro
 mclean's lake 3
 mcleansville
 mclemoresville
-mclendon-chisholm
+mclendon chisholm
 mcleod
 mcleod lake 1
 mcleod lake 5
@@ -14461,10 +14461,10 @@ mcminnville
 mcmullen
 mcmullin
 mcmurray
-mcmurrich-monteith
+mcmurrich monteith
 mcnab
 mcnabb
-mcnab-braeside
+mcnab braeside
 mcnair
 mcnary
 mcneal
@@ -14570,7 +14570,7 @@ melbeta
 melbourne
 melbourne beach
 melbourne village
-melcher-dallas
+melcher dallas
 melfa
 melfort
 melilla
@@ -14626,7 +14626,7 @@ menomonie
 mentasta lake
 mentone
 mentor
-mentor-on-the-lake
+mentor on the lake
 meota
 meota no. 468
 mequon
@@ -14662,7 +14662,7 @@ merom
 merriam
 merriam woods
 merrick
-merrickville-wolford
+merrickville wolford
 merrifield
 merrill
 merrillan
@@ -14684,7 +14684,7 @@ mertztown
 mervin
 mervin no. 499
 merwin
-méry-sur-oise
+méry sur oise
 mesa
 mesa del caballo
 mesa verde
@@ -14705,7 +14705,7 @@ messiah college
 messines
 mestre
 meta
-métabetchouan - lac-à-la-croix
+métabetchouan   lac à la croix
 metairie
 metaline
 metaline falls
@@ -14716,7 +14716,7 @@ metchosin
 methow
 methuen town
 metinota
-métis-sur-mer
+métis sur mer
 metlakatla
 metolius
 metompkin
@@ -14729,13 +14729,13 @@ metuchen
 metz
 metzger
 meudon
-meulan-en-yvelines
+meulan en yvelines
 mexia
 mexican colony
 mexican hat
 mexico
 mexico beach
-me-yan-law 47
+me yan law 47
 meyanlow 58
 meyer
 meyersdale
@@ -14743,7 +14743,7 @@ meyers lake
 meylan
 meythet
 meyzieu
-mézy-sur-seine
+mézy sur seine
 miami
 miami beach
 miami gardens
@@ -14813,14 +14813,14 @@ midwest
 midwest city
 mielec
 mier
-miercurea-ciuc
+miercurea ciuc
 miesville
 mifflin
 mifflinburg
 mifflintown
 mifflinville
-mignaloux-beauvoir
-migné-auxances
+mignaloux beauvoir
+migné auxances
 mignon
 miguel barrera
 miguelturra
@@ -14860,7 +14860,7 @@ mill creek
 millcreek
 mill creek east
 milledgeville
-mille-isles
+mille isles
 millen
 miller
 miller city
@@ -14885,7 +14885,7 @@ milliken
 millingport
 millington
 millinocket
-millis-clicquot
+millis clicquot
 mill neck
 millport
 millry
@@ -14912,7 +14912,7 @@ milroy
 milton
 miltona
 milton center
-milton-freewater
+milton freewater
 milton keynes
 milton mills
 milton no. 292
@@ -14923,8 +14923,8 @@ milwaukie
 mimbres
 mims
 mina
-min-a-he-quo-sis indian reserve no. 116a
-min-a-he-quo-sis i.r. 116c
+min a he quo sis indian reserve no. 116a
+min a he quo sis i.r. 116c
 minatare
 minburn
 minco
@@ -15048,9 +15048,9 @@ mistusinne
 mitchell
 mitchell heights
 mitchellville
-mitry-mory
+mitry mory
 mittelhausbergen
-mi-wuk village
+mi wuk village
 mize
 mizpah
 mnjikaning first nation indian reserve no. 32
@@ -15090,7 +15090,7 @@ mohawk
 mohawk vista
 mohnton
 mohrsville
-moissy-cramayel
+moissy cramayel
 mojave
 mojave ranch estates
 mokane
@@ -15164,12 +15164,12 @@ montara
 montauban
 montauk
 mont belvieu
-montbonnot-saint-martin
+montbonnot saint martin
 montcalm
-mont-carmel
-montcerf-lytton
+mont carmel
+montcerf lytton
 montclair
-montcy-notre-dame
+montcy notre dame
 monteagle
 monte alto
 montebello
@@ -15190,7 +15190,7 @@ montévrain
 montezuma
 montezuma creek
 montfermeil
-montferrier-sur-lez
+montferrier sur lez
 montfort
 montgeron
 montgomery
@@ -15200,15 +15200,15 @@ montgomery village
 montgomeryville
 monticello
 montier
-montigny-le-bretonneux
-montigny-lès-cormeilles
-montigny-lès-metz
+montigny le bretonneux
+montigny lès cormeilles
+montigny lès metz
 montivilliers
-mont-joli
-mont-laurier
+mont joli
+mont laurier
 montlhéry
 montlignon
-montlouis-sur-loire
+montlouis sur loire
 montluel
 montmagny
 montmartre
@@ -15222,26 +15222,26 @@ montpelier
 montpellier
 montrabé
 montreal
-montréal-est
+montréal est
 montreal lake i.r. 106
 montreal lake i.r. 106b
-montréal-ouest
+montréal ouest
 montreat
 montreuil
 montrose
-montrose-ghent
+montrose ghent
 montrose manor
 montrose no. 315
 montross
 montrouge
-mont-royal
+mont royal
 montry
-mont-saint-aignan
-mont-saint-grégoire
-mont-saint-hilaire
-mont-saint-michel
-mont-saint-pierre
-mont-tremblant
+mont saint aignan
+mont saint grégoire
+mont saint hilaire
+mont saint michel
+mont saint pierre
+mont tremblant
 montura
 montvale
 montverde
@@ -15271,7 +15271,7 @@ mooresburg
 moores hill
 moores mill
 moore station
-moorestown-lenola
+moorestown lenola
 mooresville
 mooreton
 mooreville
@@ -15327,7 +15327,7 @@ moraga
 moraida
 moraine
 moraleja de enmedio
-morales-sanchez
+morales sanchez
 moran
 morancé
 morangis
@@ -15360,8 +15360,8 @@ morganza
 moriarty
 moricetown 1
 moriches
-morières-lès-avignon
-morin-heights
+morières lès avignon
+morin heights
 morin lake i.r. 217
 morland
 morley
@@ -15386,13 +15386,13 @@ morrisonville
 morris plains
 morriston
 morristown
-morris-turnberry
+morris turnberry
 morrisville
 morro bay
 morrow
 morrowville
-morsang-sur-orge
-morschwiller-le-bas
+morsang sur orge
+morschwiller le bas
 morse
 morse bluff
 morse no. 165
@@ -15431,10 +15431,10 @@ mosta
 mostoles
 motley
 mott
-mouans-sartoux
+mouans sartoux
 mouen
 mougins
-moulins-lès-metz
+moulins lès metz
 moulton
 moultrie
 mound
@@ -15513,7 +15513,7 @@ mount enterprise
 mount ephraim
 mount erie
 mount etna
-mount gay-shamrock
+mount gay shamrock
 mount gilead
 mount gretna
 mount gretna heights
@@ -15606,7 +15606,7 @@ muldrow
 muleshoe
 mulford
 mulga
-mulgrave-et-derry
+mulgrave et derry
 mulhall
 mulhouse
 mulino
@@ -15639,7 +15639,7 @@ munjor
 munnsville
 munroe falls
 munro lake
-munsee-delaware nation no. 1
+munsee delaware nation no. 1
 munsey park
 munson
 munsons corners
@@ -15694,74 +15694,74 @@ muskoday first nation i.r. 99
 muskogee
 muskoka
 muskoka lakes
-muskowekwan indian reserve no. 85-46
-muskowekwan indian reserve no. 85-51
-muskowekwan indian reserve no. 85-56
-muskowekwan indian reserve no. 85-57
-muskowekwan indian reserve no. 85-58
-muskowekwan indian reserve no. 85-59
-muskowekwan indian reserve no. 85-60
-muskowekwan indian reserve no. 85-61
-muskowekwan indian reserve no. 85-62
-muskowekwan indian reserve no. 85-63
-muskowekwan indian reserve no. 85-64
-muskowekwan indian reserve no. 85-65
-muskowekwan indian reserve no. 85-66
-muskowekwan indian reserve no. 85-67
+muskowekwan indian reserve no. 85 46
+muskowekwan indian reserve no. 85 51
+muskowekwan indian reserve no. 85 56
+muskowekwan indian reserve no. 85 57
+muskowekwan indian reserve no. 85 58
+muskowekwan indian reserve no. 85 59
+muskowekwan indian reserve no. 85 60
+muskowekwan indian reserve no. 85 61
+muskowekwan indian reserve no. 85 62
+muskowekwan indian reserve no. 85 63
+muskowekwan indian reserve no. 85 64
+muskowekwan indian reserve no. 85 65
+muskowekwan indian reserve no. 85 66
+muskowekwan indian reserve no. 85 67
 muskowekwan i.r. 85
-muskowekwan i.r. 85-1
-muskowekwan i.r. 85-10
-muskowekwan i.r. 85-11
-muskowekwan i.r. 85-12
-muskowekwan i.r. 85-13
-muskowekwan i.r. 85-14
-muskowekwan i.r. 85-15
-muskowekwan i.r. 85-16
-muskowekwan i.r. 85-17
-muskowekwan i.r. 85-18
-muskowekwan i.r. 85-19
-muskowekwan i.r. 85-20
-muskowekwan i.r. 85-21
-muskowekwan i.r. 85-22
-muskowekwan i.r. 85-23
-muskowekwan i.r. 85-24
-muskowekwan i.r. 85-25
-muskowekwan i.r. 85-26
-muskowekwan i.r. 85-27
-muskowekwan i.r. 85-28
-muskowekwan i.r. 85-29
-muskowekwan i.r. 85-2a
-muskowekwan i.r. 85-3
-muskowekwan i.r. 85-30
-muskowekwan i.r. 85-31
-muskowekwan i.r. 85-32
-muskowekwan i.r. 85-33
-muskowekwan i.r. 85-34
-muskowekwan i.r. 85-35
-muskowekwan i.r. 85-36
-muskowekwan i.r. 85-37
-muskowekwan i.r. 85-38
-muskowekwan i.r. 85-39
-muskowekwan i.r. 85-4
-muskowekwan i.r. 85-40
-muskowekwan i.r. 85-41
-muskowekwan i.r. 85-42
-muskowekwan i.r. 85-43
-muskowekwan i.r. 85-44
-muskowekwan i.r. 85-45
-muskowekwan i.r. 85-47
-muskowekwan i.r. 85-48
-muskowekwan i.r. 85-49
-muskowekwan i.r. 85-5
-muskowekwan i.r. 85-50
-muskowekwan i.r. 85-52
-muskowekwan i.r. 85-53
-muskowekwan i.r. 85-54
-muskowekwan i.r. 85-55
-muskowekwan i.r. 85-6
-muskowekwan i.r. 85-7
-muskowekwan i.r. 85-8
-muskowekwan i.r. 85-9
+muskowekwan i.r. 85 1
+muskowekwan i.r. 85 10
+muskowekwan i.r. 85 11
+muskowekwan i.r. 85 12
+muskowekwan i.r. 85 13
+muskowekwan i.r. 85 14
+muskowekwan i.r. 85 15
+muskowekwan i.r. 85 16
+muskowekwan i.r. 85 17
+muskowekwan i.r. 85 18
+muskowekwan i.r. 85 19
+muskowekwan i.r. 85 20
+muskowekwan i.r. 85 21
+muskowekwan i.r. 85 22
+muskowekwan i.r. 85 23
+muskowekwan i.r. 85 24
+muskowekwan i.r. 85 25
+muskowekwan i.r. 85 26
+muskowekwan i.r. 85 27
+muskowekwan i.r. 85 28
+muskowekwan i.r. 85 29
+muskowekwan i.r. 85 2a
+muskowekwan i.r. 85 3
+muskowekwan i.r. 85 30
+muskowekwan i.r. 85 31
+muskowekwan i.r. 85 32
+muskowekwan i.r. 85 33
+muskowekwan i.r. 85 34
+muskowekwan i.r. 85 35
+muskowekwan i.r. 85 36
+muskowekwan i.r. 85 37
+muskowekwan i.r. 85 38
+muskowekwan i.r. 85 39
+muskowekwan i.r. 85 4
+muskowekwan i.r. 85 40
+muskowekwan i.r. 85 41
+muskowekwan i.r. 85 42
+muskowekwan i.r. 85 43
+muskowekwan i.r. 85 44
+muskowekwan i.r. 85 45
+muskowekwan i.r. 85 47
+muskowekwan i.r. 85 48
+muskowekwan i.r. 85 49
+muskowekwan i.r. 85 5
+muskowekwan i.r. 85 50
+muskowekwan i.r. 85 52
+muskowekwan i.r. 85 53
+muskowekwan i.r. 85 54
+muskowekwan i.r. 85 55
+muskowekwan i.r. 85 6
+muskowekwan i.r. 85 7
+muskowekwan i.r. 85 8
+muskowekwan i.r. 85 9
 muskowekwan i.r. 85a
 muskrat dam lake indian reserve
 muskwaminiwatim i.r. 225
@@ -15819,7 +15819,7 @@ nak'azdli
 nakiskatowaneek i.r. 227
 naknek
 nakusp
-na-kwockto 2
+na kwockto 2
 nambe
 nampa
 namur
@@ -15861,7 +15861,7 @@ naperville
 napier field
 napierville
 napi headquarters
-napili-honokowai
+napili honokowai
 naplate
 naples
 naples manor
@@ -15885,7 +15885,7 @@ narva
 naschitti
 naselle
 nash
-na-sha-ke-penais
+na sha ke penais
 nashotah
 nashua
 nashville
@@ -15893,7 +15893,7 @@ nashwauk
 nason
 nassau
 nassau bay
-nassau village-ratliff
+nassau village ratliff
 nassawadox
 natalbany
 natalia
@@ -15945,7 +15945,7 @@ neabsco
 neah bay
 neahkahnie
 neapolis
-neauphle-le-château
+neauphle le château
 nebo
 nebraska city
 necait 6
@@ -15955,7 +15955,7 @@ neche
 neck city
 nectar
 nédélec
-neder-hardinxveld
+neder hardinxveld
 nederland
 nedoats 11
 nedoats 13
@@ -16040,7 +16040,7 @@ neskantaga indian reserve
 neskonlith 1
 neskonlith 2
 neskowin
-nesles-la-vallée
+nesles la vallée
 nespelem
 nespelem community
 nesquehoning
@@ -16053,26 +16053,26 @@ netawaka
 netcong
 netherhill
 netos
-ne-tsaw-greece 10
+ne tsaw greece 10
 nettie
 nett lake
 nettle island 5
 nettleton
 neubrandenburg
 neudorf
-neuilly-lès-dijon
-neuilly-plaisance
-neuilly-sur-marne
-neuilly-sur-seine
+neuilly lès dijon
+neuilly plaisance
+neuilly sur marne
+neuilly sur seine
 neumünster
 neuse forest
 neuss
 neustadt an der weinstraße
-neu-ulm
+neu ulm
 neuville
-neuville-en-ferrain
-neuville-sur-oise
-neuville-sur-saône
+neuville en ferrain
+neuville sur oise
+neuville sur saône
 neuwied
 nevada
 nevada city
@@ -16204,7 +16204,7 @@ new jerusalem
 new johnsonville
 new kensington
 new kent
-new kingman-butler
+new kingman butler
 new kingstown
 newkirk
 new knoxville
@@ -16335,7 +16335,7 @@ nezperce
 ngwyu'yemc 36
 niagara
 niagara falls
-niagara-on-the-lake
+niagara on the lake
 niangua
 niantic
 niarada
@@ -16430,18 +16430,18 @@ nocatee
 nocona
 nocona hills
 nocten 19
-no-cut 5
+no cut 5
 nodaway
 noel
 nogal
 nogales
-nogent-sur-marne
+nogent sur marne
 nohomeen 23
 noiseau
 noisiel
-noisy-le-grand
-noisy-le-roi
-noisy-le-sec
+noisy le grand
+noisy le roi
+noisy le sec
 nokesville
 nokia
 nokomis
@@ -16798,61 +16798,61 @@ norway
 norway house 17
 norway house 17a
 norway house 17b
-norway house 17c-3
-norway house 17c-4
-norway house 17d-1
-norway house 17d-2
-norway house 17d-3
-norway house 17d-4
-norway house 17d-5
-norway house 17d-6
-norway house 17d-7
-norway house 17d-8
-norway house 17d-9
-norway house indian reserve no. 17c-1
-norway house indian reserve no. 17c-10
-norway house indian reserve no. 17c-11
-norway house indian reserve no. 17c-12
-norway house indian reserve no. 17c-13
-norway house indian reserve no. 17c-14
-norway house indian reserve no. 17c-15
-norway house indian reserve no. 17c-16
-norway house indian reserve no. 17c-17
-norway house indian reserve no. 17c-18
-norway house indian reserve no. 17c-19
-norway house indian reserve no. 17c-2
-norway house indian reserve no. 17c-20
-norway house indian reserve no. 17c-21
-norway house indian reserve no. 17c-22
-norway house indian reserve no. 17c-23
-norway house indian reserve no. 17c-24
-norway house indian reserve no. 17c-25
-norway house indian reserve no. 17c-26
-norway house indian reserve no. 17c-27
-norway house indian reserve no. 17c-28
-norway house indian reserve no. 17c-29
-norway house indian reserve no. 17c-30
-norway house indian reserve no. 17c-31
-norway house indian reserve no. 17c-32
-norway house indian reserve no. 17c-33
-norway house indian reserve no. 17c-34
-norway house indian reserve no. 17c-35
-norway house indian reserve no. 17c-36
-norway house indian reserve no. 17c-37
-norway house indian reserve no. 17c-38
-norway house indian reserve no. 17c-39
-norway house indian reserve no. 17c-40
-norway house indian reserve no. 17c-41
-norway house indian reserve no. 17c-42
-norway house indian reserve no. 17c-43
-norway house indian reserve no. 17c-44
-norway house indian reserve no. 17c-45
-norway house indian reserve no. 17c-46
-norway house indian reserve no. 17c-5
-norway house indian reserve no. 17c-6
-norway house indian reserve no. 17c-7
-norway house indian reserve no. 17c-8
-norway house indian reserve no. 17c-9
+norway house 17c 3
+norway house 17c 4
+norway house 17d 1
+norway house 17d 2
+norway house 17d 3
+norway house 17d 4
+norway house 17d 5
+norway house 17d 6
+norway house 17d 7
+norway house 17d 8
+norway house 17d 9
+norway house indian reserve no. 17c 1
+norway house indian reserve no. 17c 10
+norway house indian reserve no. 17c 11
+norway house indian reserve no. 17c 12
+norway house indian reserve no. 17c 13
+norway house indian reserve no. 17c 14
+norway house indian reserve no. 17c 15
+norway house indian reserve no. 17c 16
+norway house indian reserve no. 17c 17
+norway house indian reserve no. 17c 18
+norway house indian reserve no. 17c 19
+norway house indian reserve no. 17c 2
+norway house indian reserve no. 17c 20
+norway house indian reserve no. 17c 21
+norway house indian reserve no. 17c 22
+norway house indian reserve no. 17c 23
+norway house indian reserve no. 17c 24
+norway house indian reserve no. 17c 25
+norway house indian reserve no. 17c 26
+norway house indian reserve no. 17c 27
+norway house indian reserve no. 17c 28
+norway house indian reserve no. 17c 29
+norway house indian reserve no. 17c 30
+norway house indian reserve no. 17c 31
+norway house indian reserve no. 17c 32
+norway house indian reserve no. 17c 33
+norway house indian reserve no. 17c 34
+norway house indian reserve no. 17c 35
+norway house indian reserve no. 17c 36
+norway house indian reserve no. 17c 37
+norway house indian reserve no. 17c 38
+norway house indian reserve no. 17c 39
+norway house indian reserve no. 17c 40
+norway house indian reserve no. 17c 41
+norway house indian reserve no. 17c 42
+norway house indian reserve no. 17c 43
+norway house indian reserve no. 17c 44
+norway house indian reserve no. 17c 45
+norway house indian reserve no. 17c 46
+norway house indian reserve no. 17c 5
+norway house indian reserve no. 17c 6
+norway house indian reserve no. 17c 7
+norway house indian reserve no. 17c 8
+norway house indian reserve no. 17c 9
 norwich
 norwood
 norwood court
@@ -16861,33 +16861,33 @@ notasulga
 notchietown
 notin sakahekun
 notre dame
-notre-dame-auxiliatrice-de-buckland
-notre-dame-de-bondeville
-notre-dame-de-bonsecours
-notre-dame-de-ham
-notre-dame-de-la-merci
-notre-dame-de-la-paix
-notre-dame-de-la-salette
-notre-dame-de-l'Île-perrot
-notre-dame-de-lorette
-notre-dame-de-lourdes
-notre-dame-de-montauban
-notre-dame-de-pontmain
-notre-dame-des-anges
-notre-dame-des-bois
-notre-dame-des-monts
-notre-dame-des-neiges
-notre-dame-des-pins
-notre-dame-des-prairies
-notre-dame-des-sept-douleurs
-notre-dame-de-stanbridge
-notre-dame-du-bon-conseil
-notre-dame-du-laus
-notre-dame-du-mont-carmel
-notre-dame-du-nord
-notre-dame-du-portage
-notre-dame-du-rosaire
-notre-dame-du-sacré-coeur-d'issoudun
+notre dame auxiliatrice de buckland
+notre dame de bondeville
+notre dame de bonsecours
+notre dame de ham
+notre dame de la merci
+notre dame de la paix
+notre dame de la salette
+notre dame de l'Île perrot
+notre dame de lorette
+notre dame de lourdes
+notre dame de montauban
+notre dame de pontmain
+notre dame des anges
+notre dame des bois
+notre dame des monts
+notre dame des neiges
+notre dame des pins
+notre dame des prairies
+notre dame des sept douleurs
+notre dame de stanbridge
+notre dame du bon conseil
+notre dame du laus
+notre dame du mont carmel
+notre dame du nord
+notre dame du portage
+notre dame du rosaire
+notre dame du sacré coeur d'issoudun
 nottingham
 nottoway court house
 notus
@@ -16899,7 +16899,7 @@ novelty
 novi
 novice
 novinger
-novohrad-volynskyi
+novohrad volynskyi
 novomoskovsk
 novosedlice
 novovolynsk
@@ -16939,7 +16939,7 @@ nunavut land claims agreement – grise fiord inuit owned land
 nunavut land claims agreement – hall beach inuit owned land
 nunavut land claims agreement – igloolik inuit owned land
 nunavut land claims agreement – iqaluit inuit owned land
-nunavut land claims agreement - jointly owned land
+nunavut land claims agreement   jointly owned land
 nunavut land claims agreement – kimmirut inuit owned land
 nunavut land claims agreement – kugaaruk inuit owned land
 nunavut land claims agreement – kugluktuk inuit owned land
@@ -16969,7 +16969,7 @@ nyssa
 oacoma
 oak
 oak bay
-oak beach-captree
+oak beach captree
 oakboro
 oak brook
 oakbrook
@@ -17003,7 +17003,7 @@ oakland acres
 oakland city
 oakland park
 oak lawn
-oaklawn-sunview
+oaklawn sunview
 oak leaf
 oakleaf plantation
 oak level
@@ -17057,7 +17057,7 @@ ocean
 oceana
 ocean acres
 ocean beach
-ocean bluff-brant rock
+ocean bluff brant rock
 ocean breeze park
 ocean city
 ocean gate
@@ -17086,131 +17086,131 @@ oceanside
 ocean springs
 ocean view
 oceola
-ochapowace indian reserve no. 71-132
+ochapowace indian reserve no. 71 132
 ochapowace i.r. 71
-ochapowace i.r. 71-1
-ochapowace i.r. 71-10
-ochapowace i.r. 71-100
-ochapowace i.r. 71-101
-ochapowace i.r. 71-102
-ochapowace i.r. 71-103
-ochapowace i.r. 71-104
-ochapowace i.r. 71-105
-ochapowace i.r. 71-106
-ochapowace i.r. 71-107
-ochapowace i.r. 71-108
-ochapowace i.r. 71-109
-ochapowace i.r. 71-11
-ochapowace i.r. 71-110
-ochapowace i.r. 71-112
-ochapowace i.r. 71-115
-ochapowace i.r. 71-116
-ochapowace i.r. 71-117
-ochapowace i.r. 71-118
-ochapowace i.r. 71-119
-ochapowace i.r. 71-12
-ochapowace i.r. 71-120
-ochapowace i.r. 71-121
-ochapowace i.r. 71-122
-ochapowace i.r. 71-123
-ochapowace i.r. 71-124
-ochapowace i.r. 71-125
-ochapowace i.r. 71-126
-ochapowace i.r. 71-127
-ochapowace i.r. 71-128
-ochapowace i.r. 71-129
-ochapowace i.r. 71-13
-ochapowace i.r. 71-130
-ochapowace i.r. 71-131
-ochapowace i.r. 71-14
-ochapowace i.r. 71-15
-ochapowace i.r. 71-16
-ochapowace i.r. 71-17
-ochapowace i.r. 71-18
-ochapowace i.r. 71-19
-ochapowace i.r. 71-2
-ochapowace i.r. 71-20
-ochapowace i.r. 71-21
-ochapowace i.r. 71-22
-ochapowace i.r. 71-23
-ochapowace i.r. 71-24
-ochapowace i.r. 71-25
-ochapowace i.r. 71-26
-ochapowace i.r. 71-27
-ochapowace i.r. 71-28
-ochapowace i.r. 71-29
-ochapowace i.r. 71-3
-ochapowace i.r. 71-30
-ochapowace i.r. 71-31
-ochapowace i.r. 71-32
-ochapowace i.r. 71-33
-ochapowace i.r. 71-34
-ochapowace i.r. 71-35
-ochapowace i.r. 71-36
-ochapowace i.r. 71-37
-ochapowace i.r. 71-38
-ochapowace i.r. 71-39
-ochapowace i.r. 71-4
-ochapowace i.r. 71-40
-ochapowace i.r. 71-41
-ochapowace i.r. 71-42
-ochapowace i.r. 71-43
-ochapowace i.r. 71-44
-ochapowace i.r. 71-45
-ochapowace i.r. 71-46
-ochapowace i.r. 71-47
-ochapowace i.r. 71-48
-ochapowace i.r. 71-49
-ochapowace i.r. 71-5
-ochapowace i.r. 71-50
-ochapowace i.r. 71-51
-ochapowace i.r. 71-52
-ochapowace i.r. 71-53
-ochapowace i.r. 71-54
-ochapowace i.r. 71-55
-ochapowace i.r. 71-56
-ochapowace i.r. 71-57
-ochapowace i.r. 71-59
-ochapowace i.r. 71-6
-ochapowace i.r. 71-60
-ochapowace i.r. 71-61
-ochapowace i.r. 71-62
-ochapowace i.r. 71-63
-ochapowace i.r. 71-64
-ochapowace i.r. 71-65
-ochapowace i.r. 71-66
-ochapowace i.r. 71-67
-ochapowace i.r. 71-68
-ochapowace i.r. 71-69
-ochapowace i.r. 71-7
-ochapowace i.r. 71-70
-ochapowace i.r. 71-71
-ochapowace i.r. 71-72
-ochapowace i.r. 71-73
-ochapowace i.r. 71-74
-ochapowace i.r. 71-75
-ochapowace i.r. 71-76
-ochapowace i.r. 71-77
-ochapowace i.r. 71-78
-ochapowace i.r. 71-79
-ochapowace i.r. 71-8
-ochapowace i.r. 71-80
-ochapowace i.r. 71-82
-ochapowace i.r. 71-83
-ochapowace i.r. 71-86
-ochapowace i.r. 71-87
-ochapowace i.r. 71-88
-ochapowace i.r. 71-89
-ochapowace i.r. 71-9
-ochapowace i.r. 71-91
-ochapowace i.r. 71-92
-ochapowace i.r. 71-93
-ochapowace i.r. 71-94
-ochapowace i.r. 71-95
-ochapowace i.r. 71-96
-ochapowace i.r. 71-97
-ochapowace i.r. 71-98
-ochapowace i.r. 71-99
+ochapowace i.r. 71 1
+ochapowace i.r. 71 10
+ochapowace i.r. 71 100
+ochapowace i.r. 71 101
+ochapowace i.r. 71 102
+ochapowace i.r. 71 103
+ochapowace i.r. 71 104
+ochapowace i.r. 71 105
+ochapowace i.r. 71 106
+ochapowace i.r. 71 107
+ochapowace i.r. 71 108
+ochapowace i.r. 71 109
+ochapowace i.r. 71 11
+ochapowace i.r. 71 110
+ochapowace i.r. 71 112
+ochapowace i.r. 71 115
+ochapowace i.r. 71 116
+ochapowace i.r. 71 117
+ochapowace i.r. 71 118
+ochapowace i.r. 71 119
+ochapowace i.r. 71 12
+ochapowace i.r. 71 120
+ochapowace i.r. 71 121
+ochapowace i.r. 71 122
+ochapowace i.r. 71 123
+ochapowace i.r. 71 124
+ochapowace i.r. 71 125
+ochapowace i.r. 71 126
+ochapowace i.r. 71 127
+ochapowace i.r. 71 128
+ochapowace i.r. 71 129
+ochapowace i.r. 71 13
+ochapowace i.r. 71 130
+ochapowace i.r. 71 131
+ochapowace i.r. 71 14
+ochapowace i.r. 71 15
+ochapowace i.r. 71 16
+ochapowace i.r. 71 17
+ochapowace i.r. 71 18
+ochapowace i.r. 71 19
+ochapowace i.r. 71 2
+ochapowace i.r. 71 20
+ochapowace i.r. 71 21
+ochapowace i.r. 71 22
+ochapowace i.r. 71 23
+ochapowace i.r. 71 24
+ochapowace i.r. 71 25
+ochapowace i.r. 71 26
+ochapowace i.r. 71 27
+ochapowace i.r. 71 28
+ochapowace i.r. 71 29
+ochapowace i.r. 71 3
+ochapowace i.r. 71 30
+ochapowace i.r. 71 31
+ochapowace i.r. 71 32
+ochapowace i.r. 71 33
+ochapowace i.r. 71 34
+ochapowace i.r. 71 35
+ochapowace i.r. 71 36
+ochapowace i.r. 71 37
+ochapowace i.r. 71 38
+ochapowace i.r. 71 39
+ochapowace i.r. 71 4
+ochapowace i.r. 71 40
+ochapowace i.r. 71 41
+ochapowace i.r. 71 42
+ochapowace i.r. 71 43
+ochapowace i.r. 71 44
+ochapowace i.r. 71 45
+ochapowace i.r. 71 46
+ochapowace i.r. 71 47
+ochapowace i.r. 71 48
+ochapowace i.r. 71 49
+ochapowace i.r. 71 5
+ochapowace i.r. 71 50
+ochapowace i.r. 71 51
+ochapowace i.r. 71 52
+ochapowace i.r. 71 53
+ochapowace i.r. 71 54
+ochapowace i.r. 71 55
+ochapowace i.r. 71 56
+ochapowace i.r. 71 57
+ochapowace i.r. 71 59
+ochapowace i.r. 71 6
+ochapowace i.r. 71 60
+ochapowace i.r. 71 61
+ochapowace i.r. 71 62
+ochapowace i.r. 71 63
+ochapowace i.r. 71 64
+ochapowace i.r. 71 65
+ochapowace i.r. 71 66
+ochapowace i.r. 71 67
+ochapowace i.r. 71 68
+ochapowace i.r. 71 69
+ochapowace i.r. 71 7
+ochapowace i.r. 71 70
+ochapowace i.r. 71 71
+ochapowace i.r. 71 72
+ochapowace i.r. 71 73
+ochapowace i.r. 71 74
+ochapowace i.r. 71 75
+ochapowace i.r. 71 76
+ochapowace i.r. 71 77
+ochapowace i.r. 71 78
+ochapowace i.r. 71 79
+ochapowace i.r. 71 8
+ochapowace i.r. 71 80
+ochapowace i.r. 71 82
+ochapowace i.r. 71 83
+ochapowace i.r. 71 86
+ochapowace i.r. 71 87
+ochapowace i.r. 71 88
+ochapowace i.r. 71 89
+ochapowace i.r. 71 9
+ochapowace i.r. 71 91
+ochapowace i.r. 71 92
+ochapowace i.r. 71 93
+ochapowace i.r. 71 94
+ochapowace i.r. 71 95
+ochapowace i.r. 71 96
+ochapowace i.r. 71 97
+ochapowace i.r. 71 98
+ochapowace i.r. 71 99
 ochelata
 ocheyedan
 o'chiese 203
@@ -17391,7 +17391,7 @@ old orchard
 old orchard beach
 old post no. 43
 old ripley
-old river-winfree
+old river winfree
 olds
 old saybrook center
 old shawneetown
@@ -17419,7 +17419,7 @@ olivet
 olivette
 olivia
 olivia lopez de gutierrez
-oljato-monument valley
+oljato monument valley
 olla
 ollainville
 ollie
@@ -17465,17 +17465,17 @@ onancock
 onarga
 onawa
 onaway
-one arrow indian reserve no. 95-1j
+one arrow indian reserve no. 95 1j
 one arrow i.r. 95
-one arrow i.r. 95-1a
-one arrow i.r. 95-1b
-one arrow i.r. 95-1c
-one arrow i.r. 95-1d
-one arrow i.r. 95-1e
-one arrow i.r. 95-1f
-one arrow i.r. 95-1g
-one arrow i.r. 95-1h
-one arrow i.r. 95-1i
+one arrow i.r. 95 1a
+one arrow i.r. 95 1b
+one arrow i.r. 95 1c
+one arrow i.r. 95 1d
+one arrow i.r. 95 1e
+one arrow i.r. 95 1f
+one arrow i.r. 95 1g
+one arrow i.r. 95 1h
+one arrow i.r. 95 1i
 one hundred five mile post 2
 oneida
 oneida castle
@@ -17491,8 +17491,8 @@ oneşti
 ong
 onida
 onikahp sahgnikansis indian reserve no 165e
-onion lake indian reserve no. 119-2
-onion lake i.r. 119-1
+onion lake indian reserve no. 119 2
+onion lake i.r. 119 1
 onley
 onset
 onslow
@@ -17508,7 +17508,7 @@ oologah
 ooltewah
 oostburg
 opal
-opa-locka
+opa locka
 opasatika
 opaskwayak c.n. 27a (carrot river)
 opaskwayak cree nation 21a
@@ -17544,7 +17544,7 @@ openit 27
 opheim
 ophir
 opio
-o-pipon-na-piwin cree nation 1
+o pipon na piwin cree nation 1
 opischikonayak nation
 opitsat 1
 opole
@@ -17627,7 +17627,7 @@ orly
 orme
 ormes
 ormond beach
-ormond-by-the-sea
+ormond by the sea
 ormonde creek 8
 ormoy
 ormsby
@@ -17635,7 +17635,7 @@ ormstown
 ornex
 orofino
 orogrande
-oro-medonte
+oro medonte
 oromocto
 oromocto indian reserve no. 26
 orono
@@ -17715,14 +17715,14 @@ otego
 othello
 otho
 otis
-otis orchards-east farms
+otis orchards east farms
 otisville
 oto
 otoe
-otonabee-south monaghan
-otopeni-de-sus
+otonabee south monaghan
+otopeni de sus
 otranto
-o-tsaw-las 5
+o tsaw las 5
 otsego
 ottawa
 ottawa hills
@@ -17733,7 +17733,7 @@ otter lake
 otter lake 2
 ottertail
 otterville
-ottignies-louvain-la-neuve
+ottignies louvain la neuve
 ottosen
 ottoville
 ottumwa
@@ -17775,7 +17775,7 @@ owens cross roads
 owen sound
 owensville
 owenton
-owh-wis-too-a-wan 10
+owh wis too a wan 10
 owings
 owings mills
 owingsville
@@ -17799,7 +17799,7 @@ oxly
 oxnard
 oxoboxo river
 oxon hill
-o-ya-kum-la 11
+o ya kum la 11
 oyees 9
 oyehut
 oyens
@@ -17810,16 +17810,16 @@ oyster creek
 ozan
 ozark
 ozawkie
-ozoir-la-ferrière
+ozoir la ferrière
 ozona
 ozora
-pa-aat 6
+pa aat 6
 paauilo
 pabianice
 pabineau indian reserve no. 11
 pablo
 pablo pena
-pa-cat'l-lin-ne 3
+pa cat'l lin ne 3
 pace
 pachapesihk wasahow indian reserve
 pacheco
@@ -17915,7 +17915,7 @@ palmetto estates
 palm harbor
 palmhurst
 palmona park
-palm river-clair mel
+palm river clair mel
 palm shores
 palm springs
 palm springs north
@@ -17975,7 +17975,7 @@ papekwatchin 4
 paphos
 papillion
 papineau
-papineau-cameron
+papineau cameron
 papineauville
 papsilqua 13
 papsilqua 2
@@ -17984,7 +17984,7 @@ papsilqua 2b
 papyum 27
 papyum 27a
 papyum graveyard 27c
-paqtnkek-niktuek indian reserve no. 23
+paqtnkek niktuek indian reserve no. 23
 paquetville
 paqulh
 parachute
@@ -18001,9 +18001,9 @@ paragon estates
 paragould
 paraje
 paramount
-paramount-long meadow
+paramount long meadow
 paramus
-paray-vieille-poste
+paray vieille poste
 parc
 parchment
 parcu voluntarilor
@@ -18255,10 +18255,10 @@ pelham
 pelham manor
 pelican
 pelican bay
-pelican lake i.r. 191-a
-pelican lake i.r. 191-b
-pelican lake i.r. 191-c
-pelican lake i.r. 191-d
+pelican lake i.r. 191 a
+pelican lake i.r. 191 b
+pelican lake i.r. 191 c
+pelican lake i.r. 191 d
 pelican narrows
 pelican narrows i.r. 184b
 pelican narrows i.r. 206
@@ -18268,7 +18268,7 @@ pelican rapids access road phase 1
 pelion
 pella
 pell city
-pel-looth'l kai 17
+pel looth'l kai 17
 pellston
 pelly
 pelzer
@@ -18351,7 +18351,7 @@ pepin
 pepperell
 peppermill village
 pepper pike
-peq-paq 22
+peq paq 22
 pequot lakes
 peralta
 percé
@@ -18366,7 +18366,7 @@ perezville
 perham
 péribonka
 peridot
-pérignat-lès-sarliève
+pérignat lès sarliève
 périgny
 perkasie
 perkins
@@ -18377,7 +18377,7 @@ pernik
 pérols
 perpignan
 perrets 11
-perrigny-lès-dijon
+perrigny lès dijon
 perrin
 perrinton
 perris
@@ -18396,7 +18396,7 @@ persan
 persia
 perth
 perth amboy
-perth-andover
+perth andover
 perth east
 perth south
 peru
@@ -18410,7 +18410,7 @@ pessac
 petal
 petaluma
 petawawa
-pe-ta-waygamak
+pe ta waygamak
 peter
 peterborough
 peter burton's/shorty rapids
@@ -18426,11 +18426,11 @@ peterstown
 petersville
 pete suckers 13
 petitcodiac
-petit-couronne
-petite-rivière-saint-françois
-petite-vallée
-petit-rocher
-petit-saguenay
+petit couronne
+petite rivière saint françois
+petite vallée
+petit rocher
+petit saguenay
 petoskey
 petrer
 petrey
@@ -18526,8 +18526,8 @@ piermont
 pierpoint
 pierpont
 pierre
-pierre-bénite
-pierrefitte-sur-seine
+pierre bénite
+pierrefitte sur seine
 pierrelaye
 pierre part
 pierrepont manor
@@ -18645,7 +18645,7 @@ pinesburg
 pinesdale
 pine springs
 pinetop country club
-pinetop-lakeside
+pinetop lakeside
 pinetops
 pinetown
 pine valley
@@ -18676,7 +18676,7 @@ pinon hills
 pinopolis
 pinos altos
 pinsaguel
-pins-justaret
+pins justaret
 pinson
 pinto creek no. 75
 pioche
@@ -18744,10 +18744,10 @@ plainview
 plainville
 plainwell
 plaisance
-plaisance-du-touch
+plaisance du touch
 plaisir
 planada
-plan-de-cuques
+plan de cuques
 plandome
 plandome heights
 plandome manor
@@ -18814,7 +18814,7 @@ plevna
 płock
 ploemeur
 ploieşti
-plombières-lès-dijon
+plombières lès dijon
 plovdiv
 plover
 pluj
@@ -18838,7 +18838,7 @@ plush
 plymouth
 plymouth meeting
 plymptonville
-plympton-wyoming
+plympton wyoming
 poca
 pocahontas
 pocasset
@@ -18860,16 +18860,16 @@ point baker
 pointblank
 point clear
 point comfort
-pointe-à-la-croix
+pointe à la croix
 pointe a la hache
-pointe-aux-outardes
-pointe-calumet
-pointe-claire
-pointe-des-cascades
+pointe aux outardes
+pointe calumet
+pointe claire
+pointe des cascades
 point edward
-pointe-fortune
-pointe-lebel
-pointe-verte
+pointe fortune
+pointe lebel
+pointe verte
 point grondine indian reserve no. 3
 point hope
 point isabel
@@ -18944,9 +18944,9 @@ ponemah
 poneto
 ponhook lake indian reserve no. 10
 ponshewaing
-pontault-combault
-pont-de-l'arche
-pont-de-metz
+pontault combault
+pont de l'arche
+pont de metz
 ponteix
 pontevedra
 pontiac
@@ -18955,8 +18955,8 @@ pontoise
 pontoon beach
 pontoosuc
 pontotoc
-pont-rouge
-pont-sainte-marie
+pont rouge
+pont sainte marie
 pony
 pooeyelth 3
 poole
@@ -18965,12 +18965,12 @@ poolesville
 poorman i.r. 88
 pope
 popejoy
-pope-vannoy landing
+pope vannoy landing
 popkum 1
 popkum 2
 poplar
 poplar bluff
-poplar-cotton center
+poplar cotton center
 poplar grove
 poplar hill indian reserve
 poplar hills
@@ -18994,7 +18994,7 @@ pornichet
 portage
 portage creek
 portage des sioux
-portage-du-fort
+portage du fort
 portage lakes
 portage la prairie
 portageville
@@ -19015,7 +19015,7 @@ port barre
 port barrington
 port byron
 port carbon
-port-cartier
+port cartier
 port charlotte
 port chester
 port clarence
@@ -19025,7 +19025,7 @@ port colborne
 port colden
 port coquitlam
 port costa
-port-daniel - gascons
+port daniel   gascons
 port deposit
 port dickinson
 port edward
@@ -19037,14 +19037,14 @@ porter heights
 porters neck
 portersville
 porterville
-portes-lès-valence
+portes lès valence
 port essington
-portet-sur-garonne
+portet sur garonne
 port ewen
 port gamble tribal community
 port gibson
 port graham
-port hadlock-irondale
+port hadlock irondale
 port hardy
 port heiden
 port henry
@@ -19074,7 +19074,7 @@ port moody
 port murray
 port neches
 portneuf
-portneuf-sur-mer
+portneuf sur mer
 port neville 4
 port norris
 porto
@@ -19155,40 +19155,40 @@ poularies
 poulsbo
 poultney
 pound
-poundmaker indian reserve no. 114-11a
-poundmaker indian reserve no. 114-16
-poundmaker indian reserve no. 114-17
-poundmaker indian reserve no. 114-28
-poundmaker indian reserve no. 114-29
+poundmaker indian reserve no. 114 11a
+poundmaker indian reserve no. 114 16
+poundmaker indian reserve no. 114 17
+poundmaker indian reserve no. 114 28
+poundmaker indian reserve no. 114 29
 poundmaker i.r. 114
-poundmaker i.r. 114-10a
-poundmaker i.r. 114-12
-poundmaker i.r. 114-13
-poundmaker i.r. 114-15
-poundmaker i.r. 114-15c
-poundmaker i.r. 114-17a
-poundmaker i.r. 114-18a
-poundmaker i.r. 114-18b
-poundmaker i.r. 114-19
-poundmaker i.r. 114-1a
-poundmaker i.r. 114-21
-poundmaker i.r. 114-22
-poundmaker i.r. 114-2a
-poundmaker i.r. 114-2b
-poundmaker i.r. 114-2c
-poundmaker i.r. 114-3a
-poundmaker i.r. 114-3b
-poundmaker i.r. 114-4a
-poundmaker i.r. 114-5a
-poundmaker i.r. 114-5b
-poundmaker i.r. 114-6a2
-poundmaker i.r. 114-6a3
-poundmaker i.r. 114-6b2
-poundmaker i.r. 114-6c2
-poundmaker i.r. 114-7a
-poundmaker i.r. 114-8a
-poundmaker i.r. 114-9
-poundmaker i.r. 114-9a
+poundmaker i.r. 114 10a
+poundmaker i.r. 114 12
+poundmaker i.r. 114 13
+poundmaker i.r. 114 15
+poundmaker i.r. 114 15c
+poundmaker i.r. 114 17a
+poundmaker i.r. 114 18a
+poundmaker i.r. 114 18b
+poundmaker i.r. 114 19
+poundmaker i.r. 114 1a
+poundmaker i.r. 114 21
+poundmaker i.r. 114 22
+poundmaker i.r. 114 2a
+poundmaker i.r. 114 2b
+poundmaker i.r. 114 2c
+poundmaker i.r. 114 3a
+poundmaker i.r. 114 3b
+poundmaker i.r. 114 4a
+poundmaker i.r. 114 5a
+poundmaker i.r. 114 5b
+poundmaker i.r. 114 6a2
+poundmaker i.r. 114 6a3
+poundmaker i.r. 114 6b2
+poundmaker i.r. 114 6c2
+poundmaker i.r. 114 7a
+poundmaker i.r. 114 8a
+poundmaker i.r. 114 9
+poundmaker i.r. 114 9a
 powassan
 poway
 powderly
@@ -19205,7 +19205,7 @@ power
 powers
 powers lake
 powersville
-powerview-pine falls
+powerview pine falls
 powhatan
 powhatan point
 powhattan
@@ -19264,12 +19264,12 @@ presquille
 prestbury
 preston
 preston heights
-preston-potter hollow
+preston potter hollow
 prestonsburg
 prestonville
 pretty bayou
 pretty prairie
-prévessin-moëns
+prévessin moëns
 prévost
 price
 prices fork
@@ -19306,7 +19306,7 @@ prinsenbeek
 prior lake
 pritchett
 privateer
-prix-lès-mézières
+prix lès mézières
 proberta
 proboštov
 proctor
@@ -19400,7 +19400,7 @@ puryear
 puskiakiwenin 122
 puslinch
 puteaux
-put-in-bay
+put in bay
 putkwa 14
 putnam
 putnam lake
@@ -19433,7 +19433,7 @@ qualicum beach
 quamba
 quanah
 quaniwsom 2
-quan-skum-ksin-mich-mich 4
+quan skum ksin mich mich 4
 quantico
 quantico base
 quapaw
@@ -19477,11 +19477,11 @@ quilcene
 quill lake
 quimby
 quimper
-qui-nai-elt village
+qui nai elt village
 quinby
 quincy
-quincy-sous-sénart
-quincy-voisins
+quincy sous sénart
+quincy voisins
 quinebaug
 quinhagak
 quinlan
@@ -19565,10 +19565,10 @@ ramblewood
 ramer
 ramey
 ramireno
-ramirez-perez
+ramirez perez
 ramnicu valcea
 ramona
-ramonville-saint-agne
+ramonville saint agne
 ramos
 rampart
 ramseur
@@ -19629,8 +19629,8 @@ ranson
 rantoul
 raoul
 rapid city
-rapide-danseur
-rapides-des-joachims
+rapide danseur
+rapides des joachims
 rapid lake
 rapids
 rapids city
@@ -19847,7 +19847,7 @@ reminderville
 remington
 remscheid
 remsen
-remsenburg-speonk
+remsenburg speonk
 remy
 rendon
 rendville
@@ -20054,10 +20054,10 @@ rising city
 rising star
 rising sun
 risingsun
-rising sun-lebanon
+rising sun lebanon
 rison
-ris-orangis
-ristigouche-partie-sud-est
+ris orangis
+ristigouche partie sud est
 ritchey
 ritchot
 rittman
@@ -20092,7 +20092,7 @@ river road
 river rouge
 rivers
 riverside
-riverside-albert
+riverside albert
 riverside no. 168
 river sioux
 riverton
@@ -20106,18 +20106,18 @@ rives
 rivesville
 riviera
 riviera beach
-rivière-à-claude
-rivière-à-pierre
-rivière-au-tonnerre
-rivière-beaudette
-rivière-bleue
-rivière-du-loup
-rivière-Éternité
-rivière-héva
-rivière-ouelle
-rivière-rouge
-rivière-saint-jean
-rivière-verte
+rivière à claude
+rivière à pierre
+rivière au tonnerre
+rivière beaudette
+rivière bleue
+rivière du loup
+rivière Éternité
+rivière héva
+rivière ouelle
+rivière rouge
+rivière saint jean
+rivière verte
 rivne
 rixheim
 roachdale
@@ -20145,7 +20145,7 @@ roberval
 robesonia
 robie creek
 robinette
-robin glen-indiantown
+robin glen indiantown
 robinhood
 robins
 robins afb
@@ -20253,8 +20253,8 @@ rogue river
 rohnert park
 rohrersville
 rohrsburg
-roissy-en-brie
-roissy-en-france
+roissy en brie
+roissy en france
 roland
 rolesville
 rolette
@@ -20362,7 +20362,7 @@ rosewood heights
 rosharon
 rosholt
 rosiclare
-rosières-près-troyes
+rosières près troyes
 rosine
 rosita
 roslyn
@@ -20371,7 +20371,7 @@ roslyn harbor
 roslyn heights
 rosmalen
 rosman
-rosny-sous-bois
+rosny sous bois
 ross
 rossburg
 rossburn
@@ -20426,7 +20426,7 @@ round valley no. 410
 rouse
 rouses point
 rouseville
-rouyn-noranda
+rouyn noranda
 rouzerville
 rovenki
 rowan
@@ -20482,7 +20482,7 @@ rudolph
 rudy
 rudyard
 rudy no. 284
-rueil-malmaison
+rueil malmaison
 ruelisheim
 ruffin
 rufus
@@ -20575,8 +20575,8 @@ sabillasville
 sabin
 sabina
 sabinal
-sabitawasis beach indian reserve no. 89 c-1
-sables-spanish rivers
+sabitawasis beach indian reserve no. 89 c 1
+sables spanish rivers
 sabula
 sacate village
 sacaton
@@ -20595,8 +20595,8 @@ sackum 3
 sackville
 saco
 sacramento
-sacré-coeur
-sacré-coeur-de-jésus
+sacré coeur
+sacré coeur de jésus
 sacred heart
 saddlebrooke
 saddle butte
@@ -20628,597 +20628,597 @@ sahtu lands
 sahuarita
 sa'ilele
 sailor springs
-saint-adalbert
-saint-adelme
-saint-adelphe
-saint-adolphe-d'howard
-saint-adrien
-saint-adrien-d'irlande
-saint-agapit
-saint-aimé
-saint-aimé-des-lacs
-saint-aimé-du-lac-des-Îles
-saint-alban
-saint-alban-leysse
-saint-albert
-saint-alexandre
-saint-alexandre-de-kamouraska
-saint-alexandre-des-lacs
-saint-alexis
-saint-alexis-de-matapédia
-saint-alexis-des-monts
-saint-alfred
-saint-alphonse
-saint-alphonse-de-granby
-saint-alphonse-rodriguez
-saint-amable
-saint-ambroise
-saint-ambroise-de-kildare
-saint-anaclet-de-lessard
-saint-andré
-saint-andré-avellin
-saint-andré-d'argenteuil
-saint-andré-de-restigouche
-saint-andré-du-lac-saint-jean
-saint-andré-les-vergers
-saint-andré-lez-lille
+saint adalbert
+saint adelme
+saint adelphe
+saint adolphe d'howard
+saint adrien
+saint adrien d'irlande
+saint agapit
+saint aimé
+saint aimé des lacs
+saint aimé du lac des Îles
+saint alban
+saint alban leysse
+saint albert
+saint alexandre
+saint alexandre de kamouraska
+saint alexandre des lacs
+saint alexis
+saint alexis de matapédia
+saint alexis des monts
+saint alfred
+saint alphonse
+saint alphonse de granby
+saint alphonse rodriguez
+saint amable
+saint ambroise
+saint ambroise de kildare
+saint anaclet de lessard
+saint andré
+saint andré avellin
+saint andré d'argenteuil
+saint andré de restigouche
+saint andré du lac saint jean
+saint andré les vergers
+saint andré lez lille
 saint andrews
-saint-anicet
-saint-anselme
-saint-antoine
-saint-antoine-de-l'isle-aux-grues
-saint-antoine-de-tilly
-saint-antoine-sur-richelieu
-saint-antonin
-saint-apollinaire
-saint-armand
-saint-arsène
-saint-athanase
-saint-aubert
-saint-aubin-de-médoc
-saint-augustin
-saint-augustin-de-desmaures
-saint-augustin-de-woburn
-saint-avé
-saint-avertin
-saint-ay
-saint-barnabé
-saint-barnabé-sud
-saint-barthélemy
-saint-barthélemy-d'anjou
-saint-basile
-saint-basile-le-grand
-saint-benjamin
-saint-benoît
-saint-benoît-du-lac
-saint-benoît-labre
-saint-bernard
-saint-bernard-de-lacolle
-saint-bernard-de-michaudville
-saint-berthevin
-saint-blaise-sur-richelieu
-saint-bonaventure
-saint-boniface
-saint-bonnet-de-mure
-saint-briac-sur-mer
-saint-brice-courcelles
-saint-brice-sous-forêt
-saint-bruno
-saint-bruno-de-guigues
-saint-bruno-de-kamouraska
-saint-bruno-de-montarville
-saint-calixte
-saint-camille
-saint-camille-de-lellis
-saint-casimir
-saint-célestin
-saint-césaire
-saint-charles-borromée
-saint-charles-de-bellechasse
-saint-charles-de-bourget
-saint-charles-garnier
-saint-charles-sur-richelieu
-saint-christophe-d'arthabaska
-saint-chrysostome
+saint anicet
+saint anselme
+saint antoine
+saint antoine de l'isle aux grues
+saint antoine de tilly
+saint antoine sur richelieu
+saint antonin
+saint apollinaire
+saint armand
+saint arsène
+saint athanase
+saint aubert
+saint aubin de médoc
+saint augustin
+saint augustin de desmaures
+saint augustin de woburn
+saint avé
+saint avertin
+saint ay
+saint barnabé
+saint barnabé sud
+saint barthélemy
+saint barthélemy d'anjou
+saint basile
+saint basile le grand
+saint benjamin
+saint benoît
+saint benoît du lac
+saint benoît labre
+saint bernard
+saint bernard de lacolle
+saint bernard de michaudville
+saint berthevin
+saint blaise sur richelieu
+saint bonaventure
+saint boniface
+saint bonnet de mure
+saint briac sur mer
+saint brice courcelles
+saint brice sous forêt
+saint bruno
+saint bruno de guigues
+saint bruno de kamouraska
+saint bruno de montarville
+saint calixte
+saint camille
+saint camille de lellis
+saint casimir
+saint célestin
+saint césaire
+saint charles borromée
+saint charles de bellechasse
+saint charles de bourget
+saint charles garnier
+saint charles sur richelieu
+saint christophe d'arthabaska
+saint chrysostome
 saint clair
-saint-claude
-saint-clément
-saint-cléophas
-saint-cléophas-de-brandon
-saint-clet
-saint-cloud
-saint-colomban
-saint-côme
-saint-côme - linière
-saint-constant
-saint-cuthbert
-saint-cyprien
-saint-cyprien-de-napierville
-saint-cyr-en-val
-saint-cyrille-de-lessard
-saint-cyrille-de-wendover
-saint-cyr-l'École
-saint-cyr-sur-loire
-saint-damase
-saint-damase-de-l'islet
-saint-damien
-saint-damien-de-buckland
-saint-david
-saint-david-de-falardeau
-saint-denis
-saint-denis-de-brompton
-saint-denis-en-val
-saint-denis-sur-richelieu
-saint-didace
-saint-didier-au-mont-d'or
-saint-didier-de-formans
-saint-dominique
-saint-dominique-du-rosaire
-saint-donat
-saint-doulchard
-sainte-adèle
-sainte-adresse
-sainte-agathe-de-lotbinière
-sainte-agathe-des-monts
-sainte-angèle-de-mérici
-sainte-angèle-de-monnoir
-sainte-angèle-de-prémont
-sainte-anne-de-beaupré
-sainte-anne-de-bellevue
-sainte-anne-de-la-pérade
-sainte-anne-de-la-pocatière
-sainte-anne-de-la-rochelle
-sainte-anne-de-madawaska
-sainte-anne-de-sabrevois
-sainte-anne-des-lacs
-sainte-anne-des-monts
-sainte-anne-de-sorel
-sainte-anne-des-plaines
-sainte-anne-du-lac
-sainte-anne-du-sault
-sainte-apolline-de-patton
-sainte-aurélie
-sainte-barbe
-sainte-béatrix
-sainte-brigide-d'iberville
-sainte-brigitte-de-laval
-sainte-brigitte-des-saults
-sainte-catherine
-sainte-catherine-de-hatley
-sainte-catherine-de-la-jacques-cartier
-sainte-cécile-de-lévrard
-sainte-cécile-de-milton
-sainte-cécile-de-whitton
-sainte-christine
-sainte-christine-d'auvergne
-sainte-claire
-sainte-clotilde
-sainte-clotilde-de-beauce
-sainte-clotilde-de-horton
-sainte-consorce
-sainte-croix
-saint-edmond-de-grantham
-saint-edmond-les-plaines
-saint-Édouard
-saint-Édouard-de-fabre
-saint-Édouard-de-lotbinière
-saint-Édouard-de-maskinongé
-sainte-edwidge-de-clifton
-sainte-Élisabeth
-sainte-Élizabeth-de-warwick
-sainte-Émélie-de-l'Énergie
-sainte-eulalie
-sainte-euphémie-sur-rivière-du-sud
-sainte-famille
-sainte-félicité
-sainte-flavie
-sainte-florence
-sainte-foy-lès-lyon
-sainte-françoise
-sainte-geneviève-de-batiscan
-sainte-geneviève-de-berthier
-sainte-geneviève-des-bois
-sainte-germaine-boulé
-sainte-gertrude-manneville
+saint claude
+saint clément
+saint cléophas
+saint cléophas de brandon
+saint clet
+saint cloud
+saint colomban
+saint côme
+saint côme   linière
+saint constant
+saint cuthbert
+saint cyprien
+saint cyprien de napierville
+saint cyr en val
+saint cyrille de lessard
+saint cyrille de wendover
+saint cyr l'École
+saint cyr sur loire
+saint damase
+saint damase de l'islet
+saint damien
+saint damien de buckland
+saint david
+saint david de falardeau
+saint denis
+saint denis de brompton
+saint denis en val
+saint denis sur richelieu
+saint didace
+saint didier au mont d'or
+saint didier de formans
+saint dominique
+saint dominique du rosaire
+saint donat
+saint doulchard
+sainte adèle
+sainte adresse
+sainte agathe de lotbinière
+sainte agathe des monts
+sainte angèle de mérici
+sainte angèle de monnoir
+sainte angèle de prémont
+sainte anne de beaupré
+sainte anne de bellevue
+sainte anne de la pérade
+sainte anne de la pocatière
+sainte anne de la rochelle
+sainte anne de madawaska
+sainte anne de sabrevois
+sainte anne des lacs
+sainte anne des monts
+sainte anne de sorel
+sainte anne des plaines
+sainte anne du lac
+sainte anne du sault
+sainte apolline de patton
+sainte aurélie
+sainte barbe
+sainte béatrix
+sainte brigide d'iberville
+sainte brigitte de laval
+sainte brigitte des saults
+sainte catherine
+sainte catherine de hatley
+sainte catherine de la jacques cartier
+sainte cécile de lévrard
+sainte cécile de milton
+sainte cécile de whitton
+sainte christine
+sainte christine d'auvergne
+sainte claire
+sainte clotilde
+sainte clotilde de beauce
+sainte clotilde de horton
+sainte consorce
+sainte croix
+saint edmond de grantham
+saint edmond les plaines
+saint Édouard
+saint Édouard de fabre
+saint Édouard de lotbinière
+saint Édouard de maskinongé
+sainte edwidge de clifton
+sainte Élisabeth
+sainte Élizabeth de warwick
+sainte Émélie de l'Énergie
+sainte eulalie
+sainte euphémie sur rivière du sud
+sainte famille
+sainte félicité
+sainte flavie
+sainte florence
+sainte foy lès lyon
+sainte françoise
+sainte geneviève de batiscan
+sainte geneviève de berthier
+sainte geneviève des bois
+sainte germaine boulé
+sainte gertrude manneville
 saint egreve
-sainte-hedwidge
-sainte-hélène
-sainte-hélène-de-bagot
-sainte-hélène-de-chester
-sainte-hélène-de-mancebourg
-sainte-hénédine
-sainte-irène
-sainte-jeanne-d'arc
-sainte-julie
-sainte-julienne
-sainte-justine
-sainte-justine-de-newton
-saint-Élie-de-caxton
-saint-Éloi
-sainte-louise
-saint-elphège
-sainte-luce
-sainte-lucie-de-beauregard
-sainte-lucie-des-laurentides
-saint-elzéar
-saint-elzéar-de-témiscouata
-sainte-madeleine
-sainte-madeleine-de-la-rivière-madeleine
-sainte-marcelline-de-kildare
-sainte-marguerite
-sainte-marguerite-du-lac-masson
-sainte-marguerite-marie
-sainte-marie
-sainte-marie-de-blandford
-sainte-marie-madeleine
-sainte-marie-saint-raphaël
-sainte-marie-salomé
-sainte-marthe
-sainte-marthe-sur-le-lac
-sainte-martine
-sainte-mélanie
-saint-Émile-de-suffolk
-sainte-monique
-sainte-paule
-sainte-perpétue
-sainte-pétronille
-saint-Éphrem-de-beauce
-saint-Épiphane
-sainte-praxède
-sainte-rita
-sainte-rose-de-watford
-sainte-rose-du-nord
-sainte-sabine
-sainte-savine
-sainte-séraphine
-sainte-sophie
-sainte-sophie-de-lévrard
-sainte-sophie-d'halifax
-saint-esprit
-sainte-thècle
-sainte-thérèse
-sainte-thérèse-de-gaspé
-sainte-thérèse-de-la-gatineau
-saint-etienne
-saint-Étienne-de-beauharnois
-saint-Étienne-de-bolton
-saint-Étienne-des-grès
-saint-Étienne-du-rouvray
-saint-eugène
-saint-eugène-d'argentenay
-saint-eugène-de-guigues
-saint-eugène-de-ladrière
-sainte-ursule
-saint-eusèbe
-saint-eustache
-saint-Évariste-de-forsyth
-sainte-victoire-de-sorel
-saint-fabien
-saint-fabien-de-panet
-saint-faustin - lac-carré
-saint-félicien
-saint-félix-de-dalquier
-saint-félix-de-kingsey
-saint-félix-de-valois
-saint-félix-d'otis
-saint-ferdinand
-saint-ferréol-d'auroure
-saint-ferréol-les-neiges
-saint-flavien
-saint-fons
-saint-fortunat
-saint-françois-d'assise
-saint-françois-de-la-rivière-du-sud
-saint-françois-de-l'Île-d'orléans
-saint-françois de madawaska
-saint-françois-de-sales
-saint-françois-du-lac
-saint-françois-xavier-de-brompton
-saint-françois-xavier-de-viger
-saint-frédéric
-saint-fulgence
-saint-gabriel
-saint-gabriel-de-brandon
-saint-gabriel-de-rimouski
-saint-gabriel-de-valcartier
-saint-gabriel-lalemant
-saint-gédéon
-saint-gédéon-de-beauce
-saint-geniès-bellevue
-saint-genis-laval
-saint-genis-les-ollières
-saint-genis-pouilly
-saint-georges
-saint-georges-de-clarenceville
-saint-georges-de-windsor
-saint-gérard-majella
-saint-germain
-saint-germain-au-mont-d'or
-saint-germain-de-grantham
-saint-germain-en-laye
-saint-germain-lès-arpajon
-saint-germain-lès-corbeil
-saint-germain-sur-morin
-saint-gervais
-saint-gilbert
-saint-gilles
-saint-godefroi
-saint-gratien
-saint-guillaume
-saint-guy
-saint-henri
-saint-henri-de-taillon
-saint-herblain
-saint-herménégilde
-saint-hilaire-de-dorset
-saint-hilarion
-saint-hippolyte
-saint-honoré
-saint-honoré-de-shenley
-saint-honoré-de-témiscouata
-saint-hubert-de-rivière-du-loup
-saint-hugues
-saint-hyacinthe
-saint-ignace-de-loyola
-saint-ignace-de-stanbridge
-saint-irénée
-saint-isidore
-saint-isidore-de-clifton
-saint-ismier
-saint-jacques
-saint-jacques-de-la-lande
-saint-jacques-de-leeds
-saint-jacques-le-majeur-de-wolfestown
-saint-jacques-le-mineur
-saint-jacques-sur-darnétal
+sainte hedwidge
+sainte hélène
+sainte hélène de bagot
+sainte hélène de chester
+sainte hélène de mancebourg
+sainte hénédine
+sainte irène
+sainte jeanne d'arc
+sainte julie
+sainte julienne
+sainte justine
+sainte justine de newton
+saint Élie de caxton
+saint Éloi
+sainte louise
+saint elphège
+sainte luce
+sainte lucie de beauregard
+sainte lucie des laurentides
+saint elzéar
+saint elzéar de témiscouata
+sainte madeleine
+sainte madeleine de la rivière madeleine
+sainte marcelline de kildare
+sainte marguerite
+sainte marguerite du lac masson
+sainte marguerite marie
+sainte marie
+sainte marie de blandford
+sainte marie madeleine
+sainte marie saint raphaël
+sainte marie salomé
+sainte marthe
+sainte marthe sur le lac
+sainte martine
+sainte mélanie
+saint Émile de suffolk
+sainte monique
+sainte paule
+sainte perpétue
+sainte pétronille
+saint Éphrem de beauce
+saint Épiphane
+sainte praxède
+sainte rita
+sainte rose de watford
+sainte rose du nord
+sainte sabine
+sainte savine
+sainte séraphine
+sainte sophie
+sainte sophie de lévrard
+sainte sophie d'halifax
+saint esprit
+sainte thècle
+sainte thérèse
+sainte thérèse de gaspé
+sainte thérèse de la gatineau
+saint etienne
+saint Étienne de beauharnois
+saint Étienne de bolton
+saint Étienne des grès
+saint Étienne du rouvray
+saint eugène
+saint eugène d'argentenay
+saint eugène de guigues
+saint eugène de ladrière
+sainte ursule
+saint eusèbe
+saint eustache
+saint Évariste de forsyth
+sainte victoire de sorel
+saint fabien
+saint fabien de panet
+saint faustin   lac carré
+saint félicien
+saint félix de dalquier
+saint félix de kingsey
+saint félix de valois
+saint félix d'otis
+saint ferdinand
+saint ferréol d'auroure
+saint ferréol les neiges
+saint flavien
+saint fons
+saint fortunat
+saint françois d'assise
+saint françois de la rivière du sud
+saint françois de l'Île d'orléans
+saint françois de madawaska
+saint françois de sales
+saint françois du lac
+saint françois xavier de brompton
+saint françois xavier de viger
+saint frédéric
+saint fulgence
+saint gabriel
+saint gabriel de brandon
+saint gabriel de rimouski
+saint gabriel de valcartier
+saint gabriel lalemant
+saint gédéon
+saint gédéon de beauce
+saint geniès bellevue
+saint genis laval
+saint genis les ollières
+saint genis pouilly
+saint georges
+saint georges de clarenceville
+saint georges de windsor
+saint gérard majella
+saint germain
+saint germain au mont d'or
+saint germain de grantham
+saint germain en laye
+saint germain lès arpajon
+saint germain lès corbeil
+saint germain sur morin
+saint gervais
+saint gilbert
+saint gilles
+saint godefroi
+saint gratien
+saint guillaume
+saint guy
+saint henri
+saint henri de taillon
+saint herblain
+saint herménégilde
+saint hilaire de dorset
+saint hilarion
+saint hippolyte
+saint honoré
+saint honoré de shenley
+saint honoré de témiscouata
+saint hubert de rivière du loup
+saint hugues
+saint hyacinthe
+saint ignace de loyola
+saint ignace de stanbridge
+saint irénée
+saint isidore
+saint isidore de clifton
+saint ismier
+saint jacques
+saint jacques de la lande
+saint jacques de leeds
+saint jacques le majeur de wolfestown
+saint jacques le mineur
+saint jacques sur darnétal
 saint james
-saint-janvier-de-joly
-saint-jean
-saint-jean-baptiste
-saint-jean-bonnefonds
-saint-jean-cap-ferrat
-saint-jean-de-braye
-saint-jean-de-brébeuf
-saint-jean-de-cherbourg
-saint-jean-de-dieu
-saint-jean-de-la-lande
-saint-jean-de-la-ruelle
-saint-jean-de-l'Île-d'orléans
-saint-jean-de-matha
-saint-jean-de-védas
-saint-jean-le-blanc
-saint-jeannet
-saint-jean-port-joli
-saint-jean-sur-richelieu
-saint-jérôme
-saint-joachim
-saint-joachim-de-shefford
+saint janvier de joly
+saint jean
+saint jean baptiste
+saint jean bonnefonds
+saint jean cap ferrat
+saint jean de braye
+saint jean de brébeuf
+saint jean de cherbourg
+saint jean de dieu
+saint jean de la lande
+saint jean de la ruelle
+saint jean de l'Île d'orléans
+saint jean de matha
+saint jean de védas
+saint jean le blanc
+saint jeannet
+saint jean port joli
+saint jean sur richelieu
+saint jérôme
+saint joachim
+saint joachim de shefford
 saint john
-saint-joseph-de-beauce
-saint-joseph-de-coleraine
-saint-joseph-de-kamouraska
-saint-joseph-de-lepage
-saint-joseph-des-Érables
-saint-joseph-de-sorel
-saint-joseph-du-lac
-saint-jude
-saint-jules
-saint-julien
-saint-julien-lès-metz
-saint-julien-les-villas
-saint-just-de-bretenières
-saint-juste-du-lac
-saint-justin
-saint-lambert
-saint-lambert-de-lauzon
-saint-laurent-de-l'Île-d'orléans
-saint-laurent-de-mure
-saint-laurent-du-var
-saint-lazare
-saint-lazare-de-bellechasse
-saint-léandre
-saint-léger-du-bourg-denis
-saint-léolin
-saint-léonard
-saint-léonard-d'aston
-saint-léonard-de-portneuf
-saint-léon-de-standon
-saint-léon-le-grand
-saint-leu-la-forêt
-saint-liboire
-saint-liguori
-saint-lin - laurentides
-saint-loubès
-saint-louis
-saint-louis-de-blandford
-saint-louis-de-gonzague
-saint-louis-de-gonzague-du-cap-tourmente
-saint-louis de kent
-saint-louis-du-ha! ha!
-saint-luc-de-bellechasse
-saint-luc-de-vincennes
-saint-lucien
-saint-ludger
-saint-ludger-de-milot
-saint-lunaire
-saint-magloire
-saint-majorique-de-grantham
-saint-malachie
-saint-malo
-saint-mandé
-saint-mandrier-sur-mer
-saint-marc-de-figuery
-saint-marc-des-carrières
-saint-marc-du-lac-long
-saint-marcel
-saint-marcel-de-richelieu
-saint-marcellin
-saint-marc-sur-richelieu
-saint-martin
-saint-martin-d'hères
-saint-martin-du-vivier
-saint-martin-le-vinoux
-saint-mathias-sur-richelieu
-saint-mathieu
-saint-mathieu-de-beloeil
-saint-mathieu-de-rioux
-saint-mathieu-d'harricana
-saint-mathieu-du-parc
-saint-maur-des-fossés
-saint-maurice
-saint-maurice-de-beynost
-saint-max
-saint-maxime-du-mont-louis
-saint-médard
-saint-médard-en-jalles
-saint-michel
-saint-michel-de-bellechasse
-saint-michel-des-saints
-saint-michel-du-squatec
-saint-modeste
-saint-moïse
-saint-narcisse
-saint-narcisse-de-beaurivage
-saint-narcisse-de-rimouski
-saint-nazaire
-saint-nazaire-d'acton
-saint-nazaire-de-dorchester
-saint-nazaire-les-eymes
-saint-nérée-de-bellechasse
-saint-noël
-saint-nom-la-bretèche
-saint-norbert
-saint-norbert-d'arthabaska
-saint-octave-de-métis
-saint-odilon-de-cranbourne
-saint-omer
-saint-onésime-d'ixworth
-saint-ouen
-saint-ouen-du-tilleul
-saint-ouen-l'aumône
-saint-ours
-saint-pacôme
-saint-pamphile
-saint-parres-aux-tertres
-saint-pascal
-saint-patrice-de-beaurivage
-saint-patrice-de-sherrington
-saint-paul
-saint-paul-d'abbotsford
-saint-paul-de-la-croix
-saint-paul-de-l'Île-aux-noix
-saint-paul-de-montminy
-saint-paul-de-vence
-saint-paulin
-saint-péray
-saint-philémon
-saint-philibert
-saint-philippe
-saint-philippe-de-néri
-saint-pie
-saint-pie-de-guire
-saint-pierre
-saint-pierre-baptiste
-saint-pierre-de-broughton
-saint-pierre-de-lamy
-saint-pierre-de-la-rivière-du-sud
-saint-pierre-de-l'Île-d'orléans
-saint-pierre-des-corps
-saint-pierre-les-becquets
-saint-pierre-lès-elbeuf
-saint-placide
-saint-pol-sur-mer
-saint-polycarpe
-saint-priest
-saint-prime
-saint-prix
-saint-prosper
-saint-prosper-de-champlain
-saint-pryvé-saint-mesmin
-saint-quentin
-saint-raphaël
-saint-raymond
-saint-rémi
-saint-rémi-de-tingwick
-saint-rémy-lès-chevreuse
-saint-rené
-saint-rené-de-matane
-saint-robert
-saint-robert-bellarmin
-saint-roch-de-l'achigan
-saint-roch-de-mékinac
-saint-roch-de-richelieu
-saint-roch-des-aulnaies
-saint-roch-ouest
-saint-romain
-saint-rosaire
-saintry-sur-seine
-saint-samuel
-saints-anges
-saint-saturnin
-saint-sauveur
-saint-sébastien
-saint-sébastien-sur-loire
-saint-sévère
-saint-séverin
-saint-siméon
-saint-simon
-saint-simon-les-mines
-saint-sixte
-saints-martyrs-canadiens
-saint-stanislas
-saint-stanislas-de-kostka
-saint-sulpice
-saint-sylvère
-saint-sylvestre
-saint-symphorien-d'ozon
-saint-télesphore
-saint-tharcisius
-saint-théodore-d'acton
-saint-théophile
-saint-thibault-des-vignes
-saint-thomas
-saint-thomas-didyme
-saint-thuribe
-saint-tite
-saint-tite-des-caps
-saint-ubalde
-saint-ulric
-saint-urbain
-saint-urbain-premier
-saint-valentin
-saint-valère
-saint-valérien
-saint-valérien-de-milton
-saint-vallier
-saint-venant-de-paquette
+saint joseph de beauce
+saint joseph de coleraine
+saint joseph de kamouraska
+saint joseph de lepage
+saint joseph des Érables
+saint joseph de sorel
+saint joseph du lac
+saint jude
+saint jules
+saint julien
+saint julien lès metz
+saint julien les villas
+saint just de bretenières
+saint juste du lac
+saint justin
+saint lambert
+saint lambert de lauzon
+saint laurent de l'Île d'orléans
+saint laurent de mure
+saint laurent du var
+saint lazare
+saint lazare de bellechasse
+saint léandre
+saint léger du bourg denis
+saint léolin
+saint léonard
+saint léonard d'aston
+saint léonard de portneuf
+saint léon de standon
+saint léon le grand
+saint leu la forêt
+saint liboire
+saint liguori
+saint lin   laurentides
+saint loubès
+saint louis
+saint louis de blandford
+saint louis de gonzague
+saint louis de gonzague du cap tourmente
+saint louis de kent
+saint louis du ha! ha!
+saint luc de bellechasse
+saint luc de vincennes
+saint lucien
+saint ludger
+saint ludger de milot
+saint lunaire
+saint magloire
+saint majorique de grantham
+saint malachie
+saint malo
+saint mandé
+saint mandrier sur mer
+saint marc de figuery
+saint marc des carrières
+saint marc du lac long
+saint marcel
+saint marcel de richelieu
+saint marcellin
+saint marc sur richelieu
+saint martin
+saint martin d'hères
+saint martin du vivier
+saint martin le vinoux
+saint mathias sur richelieu
+saint mathieu
+saint mathieu de beloeil
+saint mathieu de rioux
+saint mathieu d'harricana
+saint mathieu du parc
+saint maur des fossés
+saint maurice
+saint maurice de beynost
+saint max
+saint maxime du mont louis
+saint médard
+saint médard en jalles
+saint michel
+saint michel de bellechasse
+saint michel des saints
+saint michel du squatec
+saint modeste
+saint moïse
+saint narcisse
+saint narcisse de beaurivage
+saint narcisse de rimouski
+saint nazaire
+saint nazaire d'acton
+saint nazaire de dorchester
+saint nazaire les eymes
+saint nérée de bellechasse
+saint noël
+saint nom la bretèche
+saint norbert
+saint norbert d'arthabaska
+saint octave de métis
+saint odilon de cranbourne
+saint omer
+saint onésime d'ixworth
+saint ouen
+saint ouen du tilleul
+saint ouen l'aumône
+saint ours
+saint pacôme
+saint pamphile
+saint parres aux tertres
+saint pascal
+saint patrice de beaurivage
+saint patrice de sherrington
+saint paul
+saint paul d'abbotsford
+saint paul de la croix
+saint paul de l'Île aux noix
+saint paul de montminy
+saint paul de vence
+saint paulin
+saint péray
+saint philémon
+saint philibert
+saint philippe
+saint philippe de néri
+saint pie
+saint pie de guire
+saint pierre
+saint pierre baptiste
+saint pierre de broughton
+saint pierre de lamy
+saint pierre de la rivière du sud
+saint pierre de l'Île d'orléans
+saint pierre des corps
+saint pierre les becquets
+saint pierre lès elbeuf
+saint placide
+saint pol sur mer
+saint polycarpe
+saint priest
+saint prime
+saint prix
+saint prosper
+saint prosper de champlain
+saint pryvé saint mesmin
+saint quentin
+saint raphaël
+saint raymond
+saint rémi
+saint rémi de tingwick
+saint rémy lès chevreuse
+saint rené
+saint rené de matane
+saint robert
+saint robert bellarmin
+saint roch de l'achigan
+saint roch de mékinac
+saint roch de richelieu
+saint roch des aulnaies
+saint roch ouest
+saint romain
+saint rosaire
+saintry sur seine
+saint samuel
+saints anges
+saint saturnin
+saint sauveur
+saint sébastien
+saint sébastien sur loire
+saint sévère
+saint séverin
+saint siméon
+saint simon
+saint simon les mines
+saint sixte
+saints martyrs canadiens
+saint stanislas
+saint stanislas de kostka
+saint sulpice
+saint sylvère
+saint sylvestre
+saint symphorien d'ozon
+saint télesphore
+saint tharcisius
+saint théodore d'acton
+saint théophile
+saint thibault des vignes
+saint thomas
+saint thomas didyme
+saint thuribe
+saint tite
+saint tite des caps
+saint ubalde
+saint ulric
+saint urbain
+saint urbain premier
+saint valentin
+saint valère
+saint valérien
+saint valérien de milton
+saint vallier
+saint venant de paquette
 saint venera
-saint-vianney
-saint-victor
+saint vianney
+saint victor
 saint vincent
-saint-wenceslas
-saint-zacharie
-saint-zénon
-saint-zénon-du-lac-humqui
-saint-zéphirin-de-courval
-saint-zotique
-sakimay indian reserve 74-10
-sakimay indian reserve no. 74-14
+saint wenceslas
+saint zacharie
+saint zénon
+saint zénon du lac humqui
+saint zéphirin de courval
+saint zotique
+sakimay indian reserve 74 10
+sakimay indian reserve no. 74 14
 sakimay i.r. 74
-sakimay i.r. 74-1
-sakimay i.r. 74-11
-sakimay i.r. 74-12
-sakimay i.r. 74-16
-sakimay i.r. 74-17
-sakimay i.r. 74-2
-sakimay i.r. 74-3
-sakimay i.r. 74-4
-sakimay i.r. 74-5
-sakimay i.r. 74-6
-sakimay i.r. 74-7
-sakimay i.r. 74-9
+sakimay i.r. 74 1
+sakimay i.r. 74 11
+sakimay i.r. 74 12
+sakimay i.r. 74 16
+sakimay i.r. 74 17
+sakimay i.r. 74 2
+sakimay i.r. 74 3
+sakimay i.r. 74 4
+sakimay i.r. 74 5
+sakimay i.r. 74 6
+sakimay i.r. 74 7
+sakimay i.r. 74 9
 saks
-salaberry-de-valleyfield
+salaberry de valleyfield
 salado
 salamanca
 salamatof
@@ -21304,7 +21304,7 @@ sams corner
 samson
 samson 137
 samson 137a
-samsula-spruce creek
+samsula spruce creek
 san acacia
 san acacio
 san andreas
@@ -21315,7 +21315,7 @@ san antonio
 san antonio heights
 san antonito
 san ardo
-sanary-sur-mer
+sanary sur mer
 sanatoga
 san augustine
 san benito
@@ -21368,7 +21368,7 @@ sandy bay 5
 sandy creek
 sandyfield
 sandy harry 4
-sandy hollow-escondidas
+sandy hollow escondidas
 sandy hook
 sandy lake
 sandy lake indian reserve no. 88
@@ -21408,7 +21408,7 @@ san juan
 san juan bautista
 san juan capistrano
 sankertown
-sankt andrä-wördern
+sankt andrä wördern
 sankt augustin
 san leandro
 san leanna
@@ -21489,7 +21489,7 @@ san ysidro
 saouchten 18
 saouk 16
 sapotaweyak cree nation
-sapotaweyak cree nation - spruce island
+sapotaweyak cree nation   spruce island
 sappington
 sapulpa
 sarah ann
@@ -21537,7 +21537,7 @@ satalice
 satanta
 satartia
 satellite beach
-sathonay-camp
+sathonay camp
 saticoy
 satilla
 satsop
@@ -21548,7 +21548,7 @@ satunquin 5
 saturna island 7
 saucier
 sauga
-saug-a-gaw-sing indian reserve no. 1
+saug a gaw sing indian reserve no. 1
 saugatuck
 saugeen and cape croker fishing islands indian reserve no. 1
 saugeen hunting grounds indian reserve no. 60a
@@ -21605,8 +21605,8 @@ saulteaux i.r. 159x
 saulteaux i.r. 159y
 saulteaux i.r. 159z
 sault ste. marie
-saulx-les-chartreux
-saulxures-lès-nancy
+saulx les chartreux
+saulxures lès nancy
 saunemin
 sausal
 sausheim
@@ -21618,8 +21618,8 @@ savageville
 savanna
 savannah
 savey 15
-savigny-le-temple
-savigny-sur-orge
+savigny le temple
+savigny sur orge
 savona
 savonburg
 savoonga
@@ -21644,7 +21644,7 @@ saxtons river
 sayabec
 saybrook
 saybrook manor
-say-la-quas 10
+say la quas 10
 saylorsburg
 saylorville
 sayner
@@ -21766,7 +21766,7 @@ scunthorpe
 scurry
 scuttsap 11
 scuttsap 11a
-scy-chazelles
+scy chazelles
 seabeck
 seabird island
 seaboard
@@ -21862,7 +21862,7 @@ seconsett island
 secor
 secretary
 section
-security-widefield
+security widefield
 sedalia
 sedan
 sedgewickville
@@ -21870,7 +21870,7 @@ sedgwick
 sedillo
 sedley
 sedona
-sedro-woolley
+sedro woolley
 seekaskootch i.r. 119
 seektukis 24
 seeley
@@ -21887,7 +21887,7 @@ seibert
 seichamps
 seiersberg
 seiling
-seine-port
+seine port
 seine river indian reserve no. 23a
 seine river indian reserve no. 23b
 sekiu
@@ -21909,7 +21909,7 @@ sellersville
 sells
 selma
 selmer
-selmont-west selmont
+selmont west selmont
 seltzer
 selz
 semach 2
@@ -21932,14 +21932,14 @@ seneca knolls
 senecaville
 senlac
 senlac no. 411
-sennecey-lès-dijon
+sennecey lès dijon
 senneterre
 senneville
 senoia
 sentinel
 sentinel butte
-septèmes-les-vallons
-sept-Îles
+septèmes les vallons
+sept Îles
 sequedin
 sequim
 sequoia crest
@@ -21953,7 +21953,7 @@ serris
 servon
 sesser
 sesto
-setauket-east setauket
+setauket east setauket
 seth ward
 seton lake 5
 seton lake 5a
@@ -21995,11 +21995,11 @@ seymour creek 2
 seymour meadows 19
 seynod
 seysses
-seyssinet-pariset
+seyssinet pariset
 sfantu gheorghe
 sfântu ilie
 s.giorgio a cremano
-'s-gravendeel
+'s gravendeel
 shabbona
 shackan 11
 shackelford
@@ -22044,7 +22044,7 @@ shannon
 shannon city
 shannondale
 shannon hills
-shanor-northvue
+shanor northvue
 shark river hills
 sharon
 sharon hill
@@ -22111,7 +22111,7 @@ shell island 3
 shell knob
 shell lake
 shellman
-shellmouth-boulton
+shellmouth boulton
 shell point
 shell ridge
 shell river
@@ -22212,17 +22212,17 @@ shongaloo
 shongopovi
 shonto
 shoomart 5
-sho-ook 5
+sho ook 5
 shoowahtlans 4
 shoreacres
 shoreham
-shoreham-by-sea
+shoreham by sea
 shoreline
 shoreview
 shorewood
 shorewood forest
 shorewood hills
-shorewood-tower hills-harbert
+shorewood tower hills harbert
 short
 shorter
 short hills
@@ -22289,7 +22289,7 @@ signal hill
 signal mountain
 sigourney
 sigurd
-sik-e-dakh 2
+sik e dakh 2
 sikes
 sikeston
 siksika 146
@@ -22358,16 +22358,16 @@ singac
 singer
 sinking spring
 sinkut lake 8
-sinnce-tah-lah 2
+sinnce tah lah 2
 sintaluta
-sint-genesius-rode
-sint-kruis-winkel
+sint genesius rode
+sint kruis winkel
 sinton
 sioux center
 sioux city
 sioux falls
 sioux lookout
-sioux narrows-nestor falls
+sioux narrows nestor falls
 sioux rapids
 sioux valley dakota nation
 sipsey
@@ -22392,7 +22392,7 @@ sisul tl'o k'ut 14
 sisul tl'o k'ut 21
 sitka
 si'ufaga
-six-fours-les-plages
+six fours les plages
 six mile
 six mile meadow 6
 six mile run
@@ -22468,14 +22468,14 @@ skyland
 skyland estates
 skyline
 skyline acres
-skyline-ganipa
+skyline ganipa
 skyline view
 sky valley
 slabtown
 slana
 slatedale
 slater
-slater-marietta
+slater marietta
 slate spring
 slatina
 slatington
@@ -22530,7 +22530,7 @@ smiley
 smithboro
 smith center
 smith corner
-smith-ennismore-lakefield
+smith ennismore lakefield
 smithers
 smithfield
 smith island
@@ -22548,7 +22548,7 @@ smith valley
 smith village
 smithville
 smithville flats
-smithville-sanders
+smithville sanders
 smoaks
 smock
 smoke rise
@@ -22595,15 +22595,15 @@ soda bay
 soda creek 1
 soda springs
 sodaville
-soddy-daisy
+soddy daisy
 sodus
 sodus point
 soegao indian reserve no. 35
 sofia
 soham
-so-hi
-soisy-sous-montmorency
-soisy-sur-seine
+so hi
+soisy sous montmorency
+soisy sur seine
 sokatisewin sakahikan indian reserve no. 224
 solaize
 solana
@@ -22617,7 +22617,7 @@ soledad
 solen
 solingen
 solis
-solliès-ville
+solliès ville
 solomon
 solomons
 solon
@@ -22648,14 +22648,14 @@ sophe 14
 sophia
 soquel
 sorbier
-sorel-tracy
+sorel tracy
 sorento
 sorgues
 sorrel
 sorrento
 sosnowiec
 soso
-sotteville-lès-rouen
+sotteville lès rouen
 soudan
 soudersburg
 souderton
@@ -22728,7 +22728,7 @@ south el monte
 south end
 southend i.r. 200
 southend i.r. 200a
-southend-on-sea
+southend on sea
 south english
 southern gateway
 southern pines
@@ -22879,7 +22879,7 @@ south west city
 southwest greensburg
 southwest harbor
 southwest middlesex
-south-west oxford
+south west oxford
 southwest ranches
 south whitley
 south whittier
@@ -23041,7 +23041,7 @@ spy hill no. 152
 squaam 2
 squaderee 91
 squamish
-squaw-hay-one 11
+squaw hay one 11
 squawkum creek 3
 squaw lake
 squaw valley
@@ -23050,7 +23050,7 @@ squiaala 7
 squiaala 8
 squianny 10
 squinas 2
-squin-lix-stat 3
+squin lix stat 3
 squirrel cove 8
 squirrel mountain valley
 staatsburg
@@ -23106,7 +23106,7 @@ stansberry lake
 stansbury park
 st. ansgar
 stanstead
-stanstead-est
+stanstead est
 st. anthony
 stanton
 stantonsburg
@@ -23181,7 +23181,7 @@ st. bonifacius
 st. brieux
 st. catharines
 st. charles
-st.-charles
+st. charles
 st. clair
 st. clair shores
 st. clairsville
@@ -23233,7 +23233,7 @@ steptoe
 stequmwhulpa 5
 sterling
 sterling city
-sterling-heights
+sterling heights
 sterlington
 ste. rose
 ste. rose du lac
@@ -23291,7 +23291,7 @@ stinesville
 stinnett
 stinson beach
 stirling city
-stirling-rawdon
+stirling rawdon
 stites
 st. jacob
 st. james
@@ -23308,7 +23308,7 @@ st. julian's
 stlakament 9
 st. laurent
 st. lawrence
-st-lazare
+st lazare
 st. leo
 st. leon
 st. leonard
@@ -23319,7 +23319,7 @@ st. louis park
 st. louisville
 st. lucas
 st. lucie village
-st-malo
+st malo
 st. marie
 st. maries
 st. marks
@@ -23327,7 +23327,7 @@ st. martin
 st. martins
 st. martinville
 st. mary
-st. mary-of-the-woods
+st. mary of the woods
 st. mary's
 st. marys
 st. mary's 1a
@@ -23349,12 +23349,12 @@ stockholm
 stock island
 stockport
 stockton
-stockton-on-tees
+stockton on tees
 stockville
 stockwell
 stoddard
 stoke
-stoke-on-trent
+stoke on trent
 stokes
 stokesdale
 st. olaf
@@ -23369,7 +23369,7 @@ stone creek
 stonefort
 stonegate
 stoneham
-stoneham-et-tewkesbury
+stoneham et tewkesbury
 stone harbor
 stonehenge no. 73
 stone lake
@@ -23442,7 +23442,7 @@ st. petersburg
 st. peters fishing station 1a
 st. philips no. 301
 st. pierre
-st-pierre-jolys
+st pierre jolys
 strafford
 stralsund
 strandburg
@@ -23458,7 +23458,7 @@ strathmere
 strathmoor manor
 strathmoor village
 strathmore
-strathroy-caradoc
+strathroy caradoc
 stratmoor
 strattanville
 stratton
@@ -23510,7 +23510,7 @@ stuart lake 9
 stuarts draft
 stuckey
 study butte
-stukely-sud
+stukely sud
 stullawheets 8
 sturbridge
 sturgeon
@@ -23543,7 +23543,7 @@ sucker creek indian reserve no. 23
 sucker lake 2
 sucker river i.r. 156c
 sucwoa 6
-sucy-en-brie
+sucy en brie
 sudan
 sudbury
 sudden valley
@@ -23641,7 +23641,7 @@ sunman
 sunny isles beach
 sunny side
 sunnyside
-sunnyside-tahoe city
+sunnyside tahoe city
 sunnyslope
 sunny slopes
 sunnyvale
@@ -23704,7 +23704,7 @@ sutherlin
 sutter
 sutter creek
 sutton
-sutton-alpine
+sutton alpine
 sutton in ashfield
 sutton no. 103
 suttons bay
@@ -23751,26 +23751,26 @@ swedesboro
 sweeny
 sweeteen 3
 sweet grass
-sweet grass indian reserve no. 113-d12
+sweet grass indian reserve no. 113 d12
 sweetgrass i.r. 113
 sweetgrass i.r. 113a
 sweetgrass i.r. 113b
-sweetgrass i.r. 113-c19
-sweetgrass i.r. 113-c7
-sweetgrass i.r. 113-d33
-sweetgrass i.r. 113-e22
-sweetgrass i.r. 113-f16
-sweetgrass i.r. 113-g7
-sweetgrass i.r. 113-h1
-sweetgrass i.r. 113-i4
-sweetgrass i.r. 113-j3
-sweetgrass i.r. 113-k32
-sweetgrass i.r. 113-l6
-sweetgrass i.r. 113-m16
-sweetgrass i.r. 113-n27
-sweetgrass i.r. 113-o28
-sweetgrass i.r. 113-p2
-sweetgrass i.r. 113-s6
+sweetgrass i.r. 113 c19
+sweetgrass i.r. 113 c7
+sweetgrass i.r. 113 d33
+sweetgrass i.r. 113 e22
+sweetgrass i.r. 113 f16
+sweetgrass i.r. 113 g7
+sweetgrass i.r. 113 h1
+sweetgrass i.r. 113 i4
+sweetgrass i.r. 113 j3
+sweetgrass i.r. 113 k32
+sweetgrass i.r. 113 l6
+sweetgrass i.r. 113 m16
+sweetgrass i.r. 113 n27
+sweetgrass i.r. 113 o28
+sweetgrass i.r. 113 p2
+sweetgrass i.r. 113 s6
 sweet home
 sweetser
 sweet springs
@@ -23825,7 +23825,7 @@ szigetmonostor
 szolnok
 szombathely
 szorpron
-ta-a-ack 5
+ta a ack 5
 ta'an kwach'an council
 taarbæk
 taastrup
@@ -23904,11 +23904,11 @@ talofofo
 taloga
 taloyoak
 talpa
-tal-pietà
+tal pietà
 talty
 tama
 tamaha
-tamalpais-homestead valley
+tamalpais homestead valley
 tamaqua
 tamarac
 tamarack
@@ -23978,7 +23978,7 @@ tartu
 tarxien
 taschereau
 tasley
-tassin-la-demi-lune
+tassin la demi lune
 tatabánya
 tatamy
 tatcho creek 11
@@ -23991,7 +23991,7 @@ tatitlek
 tatla't east 2
 tatla west 11
 tat momoli
-tatpo-oose 10
+tatpo oose 10
 tatsadah lake 14
 tatselawas 2
 tatuk lake 7
@@ -24072,7 +24072,7 @@ temecula
 temelec
 temescal valley
 témiscaming
-témiscouata-sur-le-lac
+témiscouata sur le lac
 temiskaming shores
 tempe
 temperance
@@ -24120,7 +24120,7 @@ terrace park
 terral
 terramuggus
 terrassa
-terrasse-vaudreuil
+terrasse vaudreuil
 terrebonne
 terre du lac
 terre haute
@@ -24200,7 +24200,7 @@ thendara
 the north shore
 theodore
 theodosia
-théoule-sur-mer
+théoule sur mer
 the pas
 the pinehills
 the pinery
@@ -24247,7 +24247,7 @@ thomson
 thonotosassa
 thor
 thoreau
-thorigny-sur-marne
+thorigny sur marne
 thornburg
 thorndale
 thorne
@@ -24443,7 +24443,7 @@ toftrees
 togiak
 togo
 tohatchi
-toh-quo-eugh 2
+toh quo eugh 2
 tok
 tokeland
 tokenatch 5
@@ -24512,7 +24512,7 @@ topaz lake
 topaz ranch estates
 topeka
 topock
-top-of-the-world
+top of the world
 toppenish
 topsail beach
 topsfield
@@ -24555,8 +24555,8 @@ tourcoing
 tournefeuille
 tours
 tourville
-tourville-la-rivière
-tourville-sur-odon
+tourville la rivière
+tourville sur odon
 tovey
 towamensing trails
 towanda
@@ -24579,7 +24579,7 @@ towson
 toxey
 toyah
 toyei
-tracadie-sheila
+tracadie sheila
 tracy
 tracy city
 tracyton
@@ -24614,10 +24614,10 @@ treaty four reserve grounds i.r. no. 77
 trécesson
 treece
 trego
-trego-rohrersville station
+trego rohrersville station
 treherne
 trélazé
-tremblay-en-france
+tremblay en france
 tremont
 tremont city
 tremonton
@@ -24629,8 +24629,8 @@ trenton
 trent woods
 tresckow
 tres pinos
-très-saint-rédempteur
-très-saint-sacrement
+très saint rédempteur
+très saint sacrement
 treviso
 trevorton
 trevose
@@ -24645,14 +24645,14 @@ tribbey
 tribes hill
 tribune
 tri city
-triel-sur-seine
+triel sur seine
 trier
 trieste
-tri-lakes
+tri lakes
 trilby
 trimble
 trimont
-tring-jonction
+tring jonction
 trinidad
 trinity
 trinity center
@@ -24666,9 +24666,9 @@ triumph
 trmice
 trnava
 troisdorf
-trois-pistoles
-trois-rives
-trois-rivières
+trois pistoles
+trois rives
+trois rivières
 trommald
 tromso
 trona
@@ -24715,7 +24715,7 @@ truxton
 tryon
 tsachla lake 8
 tsahaheh 1
-tsai-kwi-ee 13
+tsai kwi ee 13
 tsaile
 tsak 9
 tsarksis 2
@@ -24731,7 +24731,7 @@ tsaz cheh koh 24
 tseatah 2
 tse bay ha tine a 34
 tse bonito
-tseetsum-sawlasilah 6
+tseetsum sawlasilah 6
 tselakai dezza
 tsemknawalqan 79
 tseoowa 4
@@ -24745,8 +24745,8 @@ tsinstikeptum 9
 tsintahktl 2
 tsitsk 3
 ts'kw'aylaxw 5
-t'sou-ke 1
-t'sou-ke 2
+t'sou ke 1
+t'sou ke 2
 tsowenachs 2
 tsowwin 10
 tsu k'adhe tue 196f
@@ -24799,9 +24799,9 @@ tullytown
 tulsa
 tulsita
 tuluksak
-tumacacori-carmen
+tumacacori carmen
 tumalo
-tum-bah 5
+tum bah 5
 tumbler ridge
 tumbling shoals
 tumon
@@ -24924,7 +24924,7 @@ tyrone
 tyronza
 tysons corner
 ty ty
-tzart-lam 5
+tzart lam 5
 tzeachten 13
 tzetzi lake 11
 ualapu'e
@@ -24969,7 +24969,7 @@ unalaska
 uncertain
 uncha lake 13a
 underwood
-underwood-petersville
+underwood petersville
 unicoi
 unieux
 union
@@ -24986,7 +24986,7 @@ union gap
 union grove
 union hall
 union hill
-union hill-novelty hill
+union hill novelty hill
 union level
 union park
 union point
@@ -25101,24 +25101,24 @@ vaiden
 vail
 vailoatai
 vails gate
-vaires-sur-marne
+vaires sur marne
 vaitogi
 vaiva vo
-val-alain
+val alain
 valatie
 valbo
-val-brillant
+val brillant
 valcourt
-val-david
+val david
 valdemoro
 valders
-val-des-bois
+val des bois
 valdese
-val-des-lacs
-val-des-monts
+val des lacs
+val des monts
 valdez
 valdoie
-val-d'or
+val d'or
 valdosta
 vale
 valea voievozilor
@@ -25133,13 +25133,13 @@ vale summit
 valhalla
 valier
 valinda
-val-joli
+val joli
 valladolid
 vallauris
 valle
 vallecito
 valle crucis
-vallée-jonction
+vallée jonction
 valle hermoso
 vallejo
 valletta
@@ -25159,7 +25159,7 @@ valley green
 valley grove
 valley head
 valley hi
-valley-hi
+valley hi
 valley hill
 valley home
 valley mills
@@ -25178,13 +25178,13 @@ val marie no. 17
 valmeyer
 valmondois
 valmont
-val-morin
+val morin
 valmy
 valparaiso
-val-racine
+val racine
 valrico
-val rita-harty
-val-saint-gilles
+val rita harty
+val saint gilles
 val verde
 val verde park
 vamo
@@ -25209,7 +25209,7 @@ vanderhoof
 vandervoort
 vandiver
 vandling
-vandœuvre-lès-nancy
+vandœuvre lès nancy
 vanduser
 van dyne
 van etten
@@ -25231,10 +25231,10 @@ vanves
 van vleck
 van voorhis
 van wert
-varces-allières-et-risset
+varces allières et risset
 vardaman
 varennes
-varennes-jarcy
+varennes jarcy
 varese
 vargas island 31
 varina
@@ -25250,18 +25250,18 @@ vassar
 västerhaninge
 vatia
 vaucresson
-vaudreuil-dorion
-vaudreuil-sur-le-lac
+vaudreuil dorion
+vaudreuil sur le lac
 vaughan
 vaughn
 vaughnsville
 vaugneray
 vauhallan
 vaujours
-vaulx-en-velin
+vaulx en velin
 vauréal
-vaux-le-pénil
-vaux-sur-seine
+vaux le pénil
+vaux sur seine
 veblen
 vecsés
 vedène
@@ -25276,7 +25276,7 @@ velda city
 velda village hills
 veldhoven
 veliko turnovo
-vélizy-villacoublay
+vélizy villacoublay
 velma
 velva
 venango
@@ -25292,7 +25292,7 @@ venetian village
 venetie
 venice
 venice gardens
-venise-en-québec
+venise en québec
 vénissieux
 ventana
 ventnor city
@@ -25323,7 +25323,7 @@ vermontville
 vernaison
 vernal
 verndale
-verneuil-sur-seine
+verneuil sur seine
 vernoleninsk
 vernon
 vernonburg
@@ -25336,12 +25336,12 @@ vero beach south
 verona
 verona walk
 verplanck
-verrières-le-buisson
+verrières le buisson
 versailles
 verson
-vert-le-grand
+vert le grand
 vertou
-vert-saint-denis
+vert saint denis
 verviers
 vesper
 vesta
@@ -25380,10 +25380,10 @@ vienna center
 viera east
 viera west
 viersen
-view park-windsor hills
+view park windsor hills
 view royal
 vigevano
-vigneux-sur-seine
+vigneux sur seine
 vigo
 viking
 viladecans
@@ -25397,7 +25397,7 @@ village bay 7
 village des hurons wendake indian reserve no. 7
 village des hurons wendake indian reserve no. 7a
 village green
-village green-green ridge
+village green green ridge
 village island 7
 village of clarkston
 village of four seasons
@@ -25422,40 +25422,40 @@ villas
 villava – atarrabia
 villa verde
 villaviciosa de odón
-villebon-sur-yvette
+villebon sur yvette
 villecresnes
-ville-d'avray
-villefranche-sur-mer
-villefranche-sur-saône
+ville d'avray
+villefranche sur mer
+villefranche sur saône
 villejuif
 villejust
-ville-la-grand
-ville-marie
-villemoisson-sur-orge
+ville la grand
+ville marie
+villemoisson sur orge
 villemomble
-villenave-d'ornon
-villeneuve-d'ascq
-villeneuve-la-garenne
-villeneuve-le-roi
-villeneuve-lès-avignon
+villenave d'ornon
+villeneuve d'ascq
+villeneuve la garenne
+villeneuve le roi
+villeneuve lès avignon
 villeneuve les beziers
-villeneuve-loubet
-villeneuve-saint-georges
-villennes-sur-seine
+villeneuve loubet
+villeneuve saint georges
+villennes sur seine
 villeparisis
 villepinte
 ville platte
 villepreux
 villeroy
-villers-semeuse
+villers semeuse
 villetaneuse
 villeurbanne
-villiers-le-bel
-villiers-saint-frédéric
-villiers-sur-marne
-villiers-sur-morin
-villiers-sur-orge
-villingen-schwenningen
+villiers le bel
+villiers saint frédéric
+villiers sur marne
+villiers sur morin
+villiers sur orge
+villingen schwenningen
 villisca
 vilnius
 vilonia
@@ -25493,7 +25493,7 @@ virginia gardens
 virginville
 viroflay
 viroqua
-viry-châtillon
+viry châtillon
 visalia
 viscount
 viscount no. 341
@@ -25502,13 +25502,13 @@ vista
 vista center
 vista santa rosa
 vista west
-vitoria-gasteiz
-vitry-sur-seine
+vitoria gasteiz
+vitry sur seine
 vittoria
 vivian
 vlaardingen
 voglans
-voisins-le-bretonneux
+voisins le bretonneux
 volant
 volcano
 volente
@@ -25588,7 +25588,7 @@ wahta mohawk territory
 waialua
 waianae
 waiblingen
-waihee-waiehu
+waihee waiehu
 waikane
 waikapu
 waikele
@@ -25620,7 +25620,7 @@ wakaw
 wakaw lake
 wakeeney
 wakefield
-wakefield-peacedale
+wakefield peacedale
 wake forest
 wakeman
 wakems 6
@@ -25744,7 +25744,7 @@ wapekeka reserve no. 1
 wapekeka reserve no. 2
 wapella
 wapello
-wa-pii-moos-toosis i.r. 83a
+wa pii moos toosis i.r. 83a
 wapikunoo bay indian reserve
 wapisew lake
 wapisu lake indian reserve
@@ -26034,7 +26034,7 @@ wendover
 wenona
 wenonah
 wentworth
-wentworth-nord
+wentworth nord
 wentzville
 weogufka
 weott
@@ -26099,7 +26099,7 @@ west chester
 westchester
 west chicago
 west city
-west clarkston-highland
+west clarkston highland
 westcliffe
 west college corner
 west columbia
@@ -26121,7 +26121,7 @@ west elizabeth
 west elkton
 west elmira
 west end
-west end-cobb town
+west end cobb town
 westerly
 western
 western grove
@@ -26161,8 +26161,8 @@ west harrison
 west hartford
 west hattiesburg
 west haven
-westhaven-moonstone
-west haven-sylvan
+westhaven moonstone
+west haven sylvan
 west haverstraw
 west havre
 west hazleton
@@ -26241,7 +26241,7 @@ weston
 weston bay 20
 weston lakes
 weston mills
-weston-super-mare
+weston super mare
 west orange
 westover
 westover hills
@@ -26310,7 +26310,7 @@ westway
 west waynesburg
 westwego
 west wendover
-west whittier-los nietos
+west whittier los nietos
 west wildwood
 west winfield
 west wood
@@ -26385,7 +26385,7 @@ whistler
 whitaker
 whitakers
 whitby
-whitchurch-stouffville
+whitchurch stouffville
 white
 white ash
 white bear i.r. 70
@@ -26503,7 +26503,7 @@ wibaux
 wichita
 wichita falls
 wickenburg
-wickerham manor-fisher
+wickerham manor fisher
 wickes
 wickett
 wickham
@@ -26543,7 +26543,7 @@ wiley ford
 wilhelmshaven
 wilhoit
 wilkerson
-wilkes-barre
+wilkes barre
 wilkesboro
 wilkeson
 wilkesville
@@ -26635,7 +26635,7 @@ wilsey
 wilskaskammel 14
 wilson
 wilson city
-wilson-conococheague
+wilson conococheague
 wilson creek
 wilsonia
 wilsons mills
@@ -26716,7 +26716,7 @@ winslow no. 319
 winslow west
 winsted
 winston
-winston-salem
+winston salem
 winstonville
 winter
 winter beach
@@ -26859,7 +26859,7 @@ woodmoor
 woodmore
 wood mountain
 wood mountain i.r. 160
-wood-ridge
+wood ridge
 woodridge
 wood river
 wood river no. 74
@@ -26873,7 +26873,7 @@ woodsfield
 woods hole
 woodside
 woodside east
-woods landing-jelm
+woods landing jelm
 woodson
 woodson terrace
 woodstock
@@ -26922,7 +26922,7 @@ wrenshall
 wrexham
 wright
 wright city
-wright-patterson afb
+wright patterson afb
 wrightsboro
 wrightstown
 wrightsville
@@ -26996,7 +26996,7 @@ yachats
 yacolt
 yadkinville
 yagan 3
-yah-ta-hey
+yah ta hey
 yakima
 yakutat
 yakweakwioose 12
@@ -27060,10 +27060,10 @@ yellow girl bay indian reserve no. 32b
 yellow grass
 yellowknife
 yellow pine
-yellow quill indian reserve no. 90-9
+yellow quill indian reserve no. 90 9
 yellow quill i.r. 90
-yellow quill i.r. 90-18
-yellow quill i.r. 90-8
+yellow quill i.r. 90 18
+yellow quill i.r. 90 8
 yellow springs
 yellville
 yelm
@@ -27087,7 +27087,7 @@ yonah
 yoncalla
 yonkers
 yookwitz 12
-y-o ranch
+y o ranch
 yorba linda
 york
 yorkana
@@ -27127,7 +27127,7 @@ yulee
 yuma
 yuquot 1
 yutan
-yvré-l'Évêque
+yvré l'Évêque
 yznaga
 zaandam
 Żabbar

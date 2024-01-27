@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
+use log::debug;
+
 use crate::{
     common::query_sep,
-    component::{ComponentParser, QueryComponent},
+    component::{QueryComponent, COMPONENT_PARSERS},
     scorers::score_scenario,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct QueryScenario {
     components: Vec<Arc<dyn QueryComponent>>,
 }
@@ -44,7 +46,7 @@ impl Query {
                 components: prefix.to_vec(),
             });
         } else {
-            for component_parser in inventory::iter::<ComponentParser>() {
+            for component_parser in COMPONENT_PARSERS.iter() {
                 for (new_component, new_remaining) in (component_parser.function)(remaining) {
                     let mut new_prefix = prefix.to_vec();
                     new_prefix.push(new_component);
@@ -63,6 +65,7 @@ impl Query {
     }
 
     pub fn parse(input: &str) -> Self {
+        debug!("Parsing query: {:?}", input);
         let mut components_scenarios = Self::parse_recurse(&[], input);
         components_scenarios
             .sort_by(|a, b| b.penalty_mult().partial_cmp(&a.penalty_mult()).unwrap());
@@ -71,8 +74,8 @@ impl Query {
         }
     }
 
-    pub fn scenarios(&self) -> impl Iterator<Item = &QueryScenario> {
-        self.components_scenarios.iter()
+    pub fn scenarios(&self) -> Vec<QueryScenario> {
+        self.components_scenarios.clone()
     }
 }
 
@@ -87,7 +90,8 @@ mod tests {
         let now = Instant::now();
         let query = Query::parse("boylston and denny");
         println!("took {:?}", now.elapsed());
-        let scenario = query.scenarios().next().unwrap();
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 1);
         assert_eq!(
@@ -101,7 +105,8 @@ mod tests {
         let now = Instant::now();
         let query = Query::parse("123 main st, st louis, missouri, united states");
         println!("took {:?}", now.elapsed());
-        let scenario = query.scenarios().next().unwrap();
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 5);
         assert_eq!(
@@ -119,7 +124,8 @@ mod tests {
         let now = Instant::now();
         let query = Query::parse("seattle, wa");
         println!("took {:?}", now.elapsed());
-        let scenario = query.scenarios().next().unwrap();
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 2);
         assert_eq!(scenario.components[0].as_ref().name(), "LocalityComponent");
@@ -131,7 +137,8 @@ mod tests {
         let now = Instant::now();
         let query = Query::parse("fred meyer");
         println!("took {:?}", now.elapsed());
-        let scenario = query.scenarios().next().unwrap();
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 1);
         assert_eq!(scenario.components[0].as_ref().name(), "PlaceNameComponent");
@@ -142,7 +149,8 @@ mod tests {
         let now = Instant::now();
         let query = Query::parse("fred meyer seattle");
         println!("took {:?}", now.elapsed());
-        let scenario = query.scenarios().next().unwrap();
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 2);
         assert_eq!(scenario.components[0].as_ref().name(), "PlaceNameComponent");
@@ -154,7 +162,8 @@ mod tests {
         let now = Instant::now();
         let query = Query::parse("seattle fred meyer");
         println!("took {:?}", now.elapsed());
-        let scenario = query.scenarios().next().unwrap();
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 2);
         assert_eq!(scenario.components[0].as_ref().name(), "LocalityComponent");
