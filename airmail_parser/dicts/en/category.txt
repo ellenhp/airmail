@@ -17,6 +17,8 @@ pub
 bank
 pharmacy
 doctor
+doctor's office
+doctors office
 dentist
 er
 emergency room
@@ -42,8 +44,10 @@ service station
 petrol station
 vet
 nightclub
+nightclubs
 club
 theater
+theatres
 theatre
 police station
 fire station

@@ -21,7 +21,11 @@ impl App {
             |scenario| {
                 let mut text = String::new();
                 for component in &scenario.as_vec() {
-                    text.push_str(&format!("{}: \"{}\"\n", component.name(), component.text()));
+                    text.push_str(&format!(
+                        "{}: \"{}\"\n",
+                        component.debug_name(),
+                        component.text()
+                    ));
                 }
                 text
             },

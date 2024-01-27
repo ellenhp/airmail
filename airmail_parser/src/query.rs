@@ -66,11 +66,18 @@ impl Query {
 
     pub fn parse(input: &str) -> Self {
         debug!("Parsing query: {:?}", input);
-        let mut components_scenarios = Self::parse_recurse(&[], input);
-        components_scenarios
-            .sort_by(|a, b| b.penalty_mult().partial_cmp(&a.penalty_mult()).unwrap());
+        let components_scenarios = Self::parse_recurse(&[], input);
+        debug!("Found {} scenarios", components_scenarios.len());
+        let mut scored_scenarios = components_scenarios
+            .iter()
+            .map(|scenario| (scenario, scenario.penalty_mult()))
+            .collect::<Vec<_>>();
+        scored_scenarios.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
         Self {
-            components_scenarios,
+            components_scenarios: scored_scenarios
+                .iter()
+                .map(|(scenario, _score)| (*scenario).clone())
+                .collect(),
         }
     }
 
@@ -95,7 +102,7 @@ mod tests {
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 1);
         assert_eq!(
-            scenario.components[0].as_ref().name(),
+            scenario.components[0].as_ref().debug_name(),
             "IntersectionComponent"
         );
     }
@@ -110,13 +117,25 @@ mod tests {
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 5);
         assert_eq!(
-            scenario.components[0].as_ref().name(),
+            scenario.components[0].as_ref().debug_name(),
             "HouseNumberComponent"
         );
-        assert_eq!(scenario.components[1].as_ref().name(), "RoadComponent");
-        assert_eq!(scenario.components[2].as_ref().name(), "LocalityComponent");
-        assert_eq!(scenario.components[3].as_ref().name(), "RegionComponent");
-        assert_eq!(scenario.components[4].as_ref().name(), "CountryComponent");
+        assert_eq!(
+            scenario.components[1].as_ref().debug_name(),
+            "RoadComponent"
+        );
+        assert_eq!(
+            scenario.components[2].as_ref().debug_name(),
+            "LocalityComponent"
+        );
+        assert_eq!(
+            scenario.components[3].as_ref().debug_name(),
+            "RegionComponent"
+        );
+        assert_eq!(
+            scenario.components[4].as_ref().debug_name(),
+            "CountryComponent"
+        );
     }
 
     #[test]
@@ -128,8 +147,14 @@ mod tests {
         let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 2);
-        assert_eq!(scenario.components[0].as_ref().name(), "LocalityComponent");
-        assert_eq!(scenario.components[1].as_ref().name(), "RegionComponent");
+        assert_eq!(
+            scenario.components[0].as_ref().debug_name(),
+            "LocalityComponent"
+        );
+        assert_eq!(
+            scenario.components[1].as_ref().debug_name(),
+            "RegionComponent"
+        );
     }
 
     #[test]
@@ -141,7 +166,10 @@ mod tests {
         let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 1);
-        assert_eq!(scenario.components[0].as_ref().name(), "PlaceNameComponent");
+        assert_eq!(
+            scenario.components[0].as_ref().debug_name(),
+            "PlaceNameComponent"
+        );
     }
 
     #[test]
@@ -153,8 +181,14 @@ mod tests {
         let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 2);
-        assert_eq!(scenario.components[0].as_ref().name(), "PlaceNameComponent");
-        assert_eq!(scenario.components[1].as_ref().name(), "LocalityComponent");
+        assert_eq!(
+            scenario.components[0].as_ref().debug_name(),
+            "PlaceNameComponent"
+        );
+        assert_eq!(
+            scenario.components[1].as_ref().debug_name(),
+            "LocalityComponent"
+        );
     }
 
     #[test]
@@ -166,8 +200,14 @@ mod tests {
         let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 2);
-        assert_eq!(scenario.components[0].as_ref().name(), "LocalityComponent");
-        assert_eq!(scenario.components[1].as_ref().name(), "PlaceNameComponent");
+        assert_eq!(
+            scenario.components[0].as_ref().debug_name(),
+            "LocalityComponent"
+        );
+        assert_eq!(
+            scenario.components[1].as_ref().debug_name(),
+            "PlaceNameComponent"
+        );
     }
 
     #[test]
@@ -180,11 +220,17 @@ mod tests {
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 3);
         assert_eq!(
-            scenario.components[0].as_ref().name(),
+            scenario.components[0].as_ref().debug_name(),
             "HouseNumberComponent"
         );
-        assert_eq!(scenario.components[1].as_ref().name(), "RoadComponent");
-        assert_eq!(scenario.components[2].as_ref().name(), "LocalityComponent");
+        assert_eq!(
+            scenario.components[1].as_ref().debug_name(),
+            "RoadComponent"
+        );
+        assert_eq!(
+            scenario.components[2].as_ref().debug_name(),
+            "LocalityComponent"
+        );
     }
 
     #[test]
@@ -196,12 +242,21 @@ mod tests {
         let scenario = scenarios.iter().next().unwrap();
         dbg!(&scenario);
         assert_eq!(scenario.components.len(), 4);
-        assert_eq!(scenario.components[0].as_ref().name(), "CategoryComponent");
-        assert_eq!(scenario.components[1].as_ref().name(), "NearComponent");
         assert_eq!(
-            scenario.components[2].as_ref().name(),
+            scenario.components[0].as_ref().debug_name(),
+            "CategoryComponent"
+        );
+        assert_eq!(
+            scenario.components[1].as_ref().debug_name(),
+            "NearComponent"
+        );
+        assert_eq!(
+            scenario.components[2].as_ref().debug_name(),
             "SublocalityComponent"
         );
-        assert_eq!(scenario.components[3].as_ref().name(), "LocalityComponent");
+        assert_eq!(
+            scenario.components[3].as_ref().debug_name(),
+            "LocalityComponent"
+        );
     }
 }

@@ -5,7 +5,6 @@ use crate::{
     fst::{parse_fst, FstMatchMode, KeyedFst},
 };
 use fst::IntoStreamer;
-use log::debug;
 use nom::{bytes::complete::take_while, IResult};
 
 // Use lazy_static to lazy load the FSTs from include_bytes!.
@@ -43,6 +42,21 @@ lazy_static! {
             .collect();
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum QueryComponentType {
+    CategoryComponent,
+    NearComponent,
+    HouseNumberComponent,
+    RoadComponent,
+    IntersectionComponent,
+    SublocalityComponent,
+    LocalityComponent,
+    RegionComponent,
+    CountryComponent,
+    PlaceNameComponent,
+    IntersectionJoinWordComponent,
+}
+
 pub trait TriviallyConstructibleComponent: QueryComponent {
     fn new(text: String) -> Self;
 }
@@ -52,7 +66,9 @@ pub trait QueryComponent {
 
     fn penalty_mult(&self) -> f32;
 
-    fn name(&self) -> &'static str;
+    fn debug_name(&self) -> &'static str;
+
+    fn component_type(&self) -> QueryComponentType;
 
     fn subcomponents(&self) -> Vec<Arc<dyn QueryComponent>> {
         Vec::new()
@@ -64,12 +80,12 @@ impl std::fmt::Debug for dyn QueryComponent {
         let subcomponents = self.subcomponents();
         if subcomponents.is_empty() {
             return f
-                .debug_struct(self.name())
+                .debug_struct(self.debug_name())
                 .field("text", &self.text())
                 .field("penalty_mult", &self.penalty_mult())
                 .finish();
         } else {
-            let mut formatter = f.debug_struct(self.name());
+            let mut formatter = f.debug_struct(self.debug_name());
             for (i, subcomponent) in subcomponents.iter().enumerate() {
                 formatter.field(&format!("subcomponent_{}", i), subcomponent);
             }
@@ -90,65 +106,31 @@ fn parse_component<C: TriviallyConstructibleComponent>(
     let mut sep_len = 0;
 
     let max_sublist_len = if let Ok((_, token)) = parser(text) {
-        debug!(
-            "Found token `{}` in string `{}`, checking sub-sequences.",
-            token, text
-        );
         token.len()
     } else {
-        debug!(
-            "Unable to parse ${} token in string `{}`.",
-            stringify!($name),
-            text
-        );
         return scenarios;
     };
 
     loop {
         if sublist_len + sep_len > max_sublist_len {
-            debug!(
-                "Sublist length {} exceeds max sublist length {}, stopping.",
-                sublist_len + sep_len,
-                max_sublist_len
-            );
             break;
         }
         if let Ok((remainder, next_subtoken)) = query_term(&text[sublist_len + sep_len..]) {
             if next_subtoken.is_empty() {
-                debug!("Ran out of tokens to parse, stopping.");
                 break;
             }
             sublist_len += next_subtoken.len();
             if let Ok((_, token)) = parser(&text[..sublist_len + sep_len]) {
                 if token.len() == sublist_len + sep_len {
                     let component = C::new(token.to_string());
-                    debug!(
-                        "Found token `{}` in string `{}`, adding to scenarios.",
-                        token, text
-                    );
                     scenarios.push((component, &text[sublist_len + sep_len..]));
-                } else {
-                    debug!(
-                        "Token `{}` is not the same length as the sub-list `{}`, skipping.",
-                        token, next_subtoken
-                    );
                 }
             }
             // Accumulate the old separator length, then look for a new one.
             sublist_len += sep_len;
-            debug!(
-                "Looking for separator after `{}` in string `{}`",
-                next_subtoken, remainder
-            );
             if let Ok((_, sep)) = query_sep(remainder) {
-                debug!(
-                    "Found separator `{}`, padding with length {}",
-                    sep,
-                    sep.len()
-                );
                 sep_len = sep.len();
             } else {
-                debug!("No separator found, not padding");
                 break;
             }
         } else {
@@ -190,8 +172,11 @@ macro_rules! define_component {
             fn text(&self) -> &str {
                 &self.text
             }
-            fn name(&self) -> &'static str {
+            fn debug_name(&self) -> &'static str {
                 stringify!($name)
+            }
+            fn component_type(&self) -> QueryComponentType {
+                QueryComponentType::$name
             }
             fn penalty_mult(&self) -> f32 {
                 ($penalty_lambda)(&self.text)
@@ -338,8 +323,12 @@ impl QueryComponent for RoadComponent {
         self.penalty_mult
     }
 
-    fn name(&self) -> &'static str {
+    fn debug_name(&self) -> &'static str {
         "RoadComponent"
+    }
+
+    fn component_type(&self) -> QueryComponentType {
+        QueryComponentType::RoadComponent
     }
 }
 
@@ -406,20 +395,13 @@ impl IntersectionComponent {
         let mut scenarios = Vec::new();
         let road1_scenarios = RoadComponent::parse(text);
         for (road1, remainder) in road1_scenarios {
-            debug!("Found road `{}` in text `{}`", road1.text, text);
             let (remainder, first_sep) = if let Ok((remainder, first_sep)) = query_sep(remainder) {
                 (remainder, first_sep)
             } else {
                 (remainder, "")
             };
-            debug!("Looking for intersection join word in text `{}`", remainder);
             let intersection_join_word_scenarios = IntersectionJoinWordComponent::parse(remainder);
             for (intersection_join_word, remainder) in intersection_join_word_scenarios {
-                debug!(
-                    "Found intersection join word `{}` in text `{}`",
-                    intersection_join_word.text(),
-                    text
-                );
                 let (remainder, second_sep) =
                     if let Ok((remainder, second_sep)) = query_sep(remainder) {
                         (remainder, second_sep)
@@ -427,13 +409,8 @@ impl IntersectionComponent {
                         (remainder, "")
                     };
 
-                debug!(
-                    "Looking for road after intersection join word in text `{}`",
-                    remainder
-                );
                 let road2_scenarios = RoadComponent::parse(remainder);
                 for (road2, remainder) in road2_scenarios {
-                    debug!("Found road `{}` in text `{}`", road2.text, text);
                     let remainder = remainder.trim_start();
                     let component = Self::new(
                         text[..road1.text().len()
@@ -445,10 +422,6 @@ impl IntersectionComponent {
                         road1.clone(),
                         intersection_join_word.clone(),
                         road2.clone(),
-                    );
-                    debug!(
-                        "Adding intersection component `{:?}` to scenarios",
-                        component
                     );
                     scenarios.push((component, remainder));
                 }
@@ -476,8 +449,12 @@ impl QueryComponent for IntersectionComponent {
         f32::min(self.road1.penalty_mult(), self.road2.penalty_mult()) * 5.0f32
     }
 
-    fn name(&self) -> &'static str {
+    fn debug_name(&self) -> &'static str {
         "IntersectionComponent"
+    }
+
+    fn component_type(&self) -> QueryComponentType {
+        QueryComponentType::IntersectionComponent
     }
 
     fn subcomponents(&self) -> Vec<Arc<dyn QueryComponent>> {
@@ -564,8 +541,12 @@ impl QueryComponent for PlaceNameComponent {
         }
     }
 
-    fn name(&self) -> &'static str {
+    fn debug_name(&self) -> &'static str {
         "PlaceNameComponent"
+    }
+
+    fn component_type(&self) -> QueryComponentType {
+        QueryComponentType::PlaceNameComponent
     }
 }
 
@@ -623,6 +604,7 @@ mod test {
     fn test_category() {
         let text = "grocery store";
         let scenarios = CategoryComponent::parse(text);
+        dbg!(&scenarios);
         assert_eq!(scenarios.len(), 1);
         let (component, remainder) = &scenarios[0];
         assert_eq!(remainder, &"");

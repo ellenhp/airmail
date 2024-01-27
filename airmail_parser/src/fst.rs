@@ -1,10 +1,13 @@
-use std::{cell::RefCell, num::NonZeroUsize, sync::Mutex};
+use std::{
+    hash::Hash,
+    sync::{Arc, Mutex},
+};
 
+use cached::proc_macro::cached;
 use fst::{
     automaton::{Levenshtein, Str},
     Automaton, IntoStreamer, Streamer,
 };
-use lru::LruCache;
 use nom::IResult;
 
 use crate::common::{query_sep, query_term};
@@ -17,17 +20,35 @@ lazy_static! {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FstKey(usize);
 
+#[derive(Debug, Clone)]
 pub struct KeyedFst {
-    fst: fst::Set<Vec<u8>>,
+    fst: Arc<fst::Set<Vec<u8>>>,
     key: FstKey,
 }
+
+impl Hash for KeyedFst {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.key.hash(state);
+    }
+}
+
+impl PartialEq for KeyedFst {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key
+    }
+}
+
+impl Eq for KeyedFst {}
 
 impl KeyedFst {
     pub fn new(fst: fst::Set<Vec<u8>>) -> Self {
         let mut key_count = KEY_COUNT.lock().unwrap();
         let key = FstKey(*key_count);
         *key_count += 1;
-        Self { fst, key }
+        Self {
+            fst: Arc::new(fst),
+            key,
+        }
     }
 
     pub fn key(&self) -> FstKey {
@@ -46,8 +67,37 @@ pub enum FstMatchMode {
     GreedyLevenshtein(u32),
 }
 
-thread_local! {
-    static MEMOIZED_FST_MATCH : RefCell<LruCache<(FstKey, FstMatchMode, String), Option<usize>>> = RefCell::new(LruCache::new(NonZeroUsize::new(1024*128).unwrap()));
+#[cached(size = 131072)]
+fn search_fst(fst: KeyedFst, query: String, dist: u32, prefix: bool) -> bool {
+    if dist > 0 {
+        if prefix {
+            fst.fst
+                .search(Levenshtein::new(&query, dist).unwrap().starts_with())
+                .into_stream()
+                .next()
+                .is_some()
+        } else {
+            fst.fst
+                .search(Levenshtein::new(&query, dist).unwrap())
+                .into_stream()
+                .next()
+                .is_some()
+        }
+    } else {
+        if prefix {
+            fst.fst
+                .search(Str::new(&query).starts_with())
+                .into_stream()
+                .next()
+                .is_some()
+        } else {
+            fst.fst
+                .search(Str::new(&query))
+                .into_stream()
+                .next()
+                .is_some()
+        }
+    }
 }
 
 pub fn parse_fst<'a>(
@@ -55,58 +105,10 @@ pub fn parse_fst<'a>(
     match_mode: FstMatchMode,
     input: &'a str,
 ) -> IResult<&'a str, &'a str> {
-    let memoized_result = MEMOIZED_FST_MATCH.with(|memoized_match| {
-        let mut memoized_match = memoized_match.borrow_mut();
-        if let Some(matched_len) = memoized_match
-            .get(&(fst.key(), match_mode, input.to_owned()))
-            .cloned()
-        {
-            Some(if let Some(matched_len) = matched_len {
-                Ok((&input[matched_len..], &input[0..matched_len]))
-            } else {
-                Err(nom::Err::Error(nom::error::Error::new(
-                    input,
-                    nom::error::ErrorKind::Fail,
-                )))
-            })
-        } else {
-            None
-        }
-    });
-    if let Some(memoized_result) = memoized_result {
-        return memoized_result;
-    }
-
-    let result = parse_fst_inner(fst, match_mode, input);
-    MEMOIZED_FST_MATCH.with(|memoized_match| {
-        let mut memoized_match = memoized_match.borrow_mut();
-        if let Ok((remainder, _matched)) = result {
-            memoized_match.push(
-                (fst.key(), match_mode, input.to_owned()),
-                Some(input.len() - remainder.len()),
-            );
-        } else {
-            memoized_match.push((fst.key(), match_mode, input.to_owned()), None);
-        }
-    });
-    result
-}
-
-pub fn parse_fst_inner<'a>(
-    fst: &KeyedFst,
-    match_mode: FstMatchMode,
-    input: &'a str,
-) -> IResult<&'a str, &'a str> {
-    let fst = &fst.fst;
     match match_mode {
         FstMatchMode::Prefix => {
             let (remainder, term) = query_term(input)?;
-            if fst
-                .search(Str::new(term).starts_with())
-                .into_stream()
-                .next()
-                .is_some()
-            {
+            if search_fst(fst.clone(), term.to_string(), 0, true) {
                 Ok((remainder, term))
             } else {
                 Err(nom::Err::Error(nom::error::Error::new(
@@ -117,15 +119,7 @@ pub fn parse_fst_inner<'a>(
         }
         FstMatchMode::Levenshtein(dist) => {
             let (remainder, term) = query_term(input)?;
-            let have_match = if dist > 0 {
-                fst.search(Levenshtein::new(term, dist).unwrap())
-                    .into_stream()
-                    .next()
-                    .is_some()
-            } else {
-                fst.search(Str::new(input)).into_stream().next().is_some()
-            };
-            if have_match {
+            if search_fst(fst.clone(), input.to_string(), dist, false) {
                 Ok((remainder, term))
             } else {
                 Err(nom::Err::Error(nom::error::Error::new(
@@ -148,21 +142,7 @@ pub fn parse_fst_inner<'a>(
                     break;
                 };
                 let tentative_slice = &input[0..matching_slice_length + sep_length + term.len()];
-                let have_match = if dist > 0 {
-                    fst.search(
-                        Levenshtein::new(tentative_slice, dist)
-                            .unwrap()
-                            .starts_with(),
-                    )
-                    .into_stream()
-                    .next()
-                    .is_some()
-                } else {
-                    fst.search(Str::new(tentative_slice).starts_with())
-                        .into_stream()
-                        .next()
-                        .is_some()
-                };
+                let have_match = search_fst(fst.clone(), tentative_slice.to_string(), dist, true);
                 if have_match {
                     matching_slice_length += sep_length + term.len();
                     if let Ok((_, matched_sep)) = query_sep(remainder) {
@@ -182,17 +162,7 @@ pub fn parse_fst_inner<'a>(
             } else {
                 // Double-check that the slice we found is actually a match, and not just a prefix of a match.
                 let tentative_slice = &input[0..matching_slice_length];
-                let have_match = if dist > 0 {
-                    fst.search(Levenshtein::new(tentative_slice, dist).unwrap())
-                        .into_stream()
-                        .next()
-                        .is_some()
-                } else {
-                    fst.search(Str::new(tentative_slice))
-                        .into_stream()
-                        .next()
-                        .is_some()
-                };
+                let have_match = search_fst(fst.clone(), tentative_slice.to_string(), dist, false);
                 if have_match {
                     Ok((
                         &input[matching_slice_length..input.len()],

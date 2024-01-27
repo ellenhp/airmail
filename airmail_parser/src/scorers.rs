@@ -1,10 +1,10 @@
-use crate::query::QueryScenario;
+use crate::{component::QueryComponentType, query::QueryScenario};
 
 // Penalizing multiple roads in one query is fine because we have a separate component for intersections.
 fn max_one_road(scenario: &QueryScenario) -> f32 {
     let mut has_road = false;
     for component in scenario.as_vec() {
-        if component.name() == "RoadComponent" {
+        if component.component_type() == QueryComponentType::RoadComponent {
             if has_road {
                 return 0.0;
             }
@@ -17,7 +17,7 @@ fn max_one_road(scenario: &QueryScenario) -> f32 {
 fn max_one_house_num(scenario: &QueryScenario) -> f32 {
     let mut has_house_num = false;
     for component in scenario.as_vec() {
-        if component.name() == "HouseNumberComponent" {
+        if component.component_type() == QueryComponentType::HouseNumberComponent {
             if has_house_num {
                 return 0.0;
             }
@@ -30,7 +30,8 @@ fn max_one_house_num(scenario: &QueryScenario) -> f32 {
 fn house_num_road_together(scenario: &QueryScenario) -> f32 {
     let mut count = 0;
     for component_of_interest in scenario.as_vec().iter().map(|component| {
-        component.name() == "HouseNumberComponent" || component.name() == "RoadComponent"
+        component.component_type() == QueryComponentType::HouseNumberComponent
+            || component.component_type() == QueryComponentType::RoadComponent
     }) {
         if component_of_interest {
             count += 1;
@@ -43,23 +44,10 @@ fn house_num_road_together(scenario: &QueryScenario) -> f32 {
     1.0f32
 }
 
-fn max_one_unit(scenario: &QueryScenario) -> f32 {
-    let mut has_unit = false;
-    for component in scenario.as_vec() {
-        if component.name() == "UnitComponent" {
-            if has_unit {
-                return 0.0;
-            }
-            has_unit = true;
-        }
-    }
-    1.0
-}
-
 fn max_one_locality(scenario: &QueryScenario) -> f32 {
     let mut has_locality = false;
     for component in scenario.as_vec() {
-        if component.name() == "LocalityComponent" {
+        if component.component_type() == QueryComponentType::LocalityComponent {
             if has_locality {
                 return 0.0;
             }
@@ -72,7 +60,7 @@ fn max_one_locality(scenario: &QueryScenario) -> f32 {
 fn max_one_region(scenario: &QueryScenario) -> f32 {
     let mut has_region = false;
     for component in scenario.as_vec() {
-        if component.name() == "RegionComponent" {
+        if component.component_type() == QueryComponentType::RegionComponent {
             if has_region {
                 return 0.0;
             }
@@ -85,7 +73,7 @@ fn max_one_region(scenario: &QueryScenario) -> f32 {
 fn max_one_country(scenario: &QueryScenario) -> f32 {
     let mut has_country = false;
     for component in scenario.as_vec() {
-        if component.name() == "CountryComponent" {
+        if component.component_type() == QueryComponentType::CountryComponent {
             if has_country {
                 return 0.0;
             }
@@ -99,12 +87,12 @@ fn country_not_before_locality(scenario: &QueryScenario) -> f32 {
     let mut has_locality = false;
     let mut country_first = false;
     for component in scenario.as_vec() {
-        if component.name() == "CountryComponent" {
+        if component.component_type() == QueryComponentType::CountryComponent {
             if !has_locality {
                 country_first = true;
             }
         }
-        if component.name() == "LocalityComponent" {
+        if component.component_type() == QueryComponentType::LocalityComponent {
             has_locality = true;
         }
     }
@@ -118,12 +106,12 @@ fn region_not_before_locality(scenario: &QueryScenario) -> f32 {
     let mut has_locality = false;
     let mut region_first = false;
     for component in scenario.as_vec() {
-        if component.name() == "RegionComponent" {
+        if component.component_type() == QueryComponentType::RegionComponent {
             if !has_locality {
                 region_first = true;
             }
         }
-        if component.name() == "LocalityComponent" {
+        if component.component_type() == QueryComponentType::LocalityComponent {
             has_locality = true;
         }
     }
@@ -137,12 +125,12 @@ fn country_not_before_region(scenario: &QueryScenario) -> f32 {
     let mut has_region = false;
     let mut country_first = false;
     for component in scenario.as_vec() {
-        if component.name() == "CountryComponent" {
+        if component.component_type() == QueryComponentType::CountryComponent {
             if !has_region {
                 country_first = true;
             }
         }
-        if component.name() == "RegionComponent" {
+        if component.component_type() == QueryComponentType::RegionComponent {
             has_region = true;
         }
     }
@@ -156,12 +144,12 @@ fn housenum_not_before_placename(scenario: &QueryScenario) -> f32 {
     let mut has_placename = false;
     let mut housenum_first = false;
     for component in scenario.as_vec() {
-        if component.name() == "HouseNumberComponent" {
+        if component.component_type() == QueryComponentType::HouseNumberComponent {
             if !has_placename {
                 housenum_first = true;
             }
         }
-        if component.name() == "PlaceNameComponent" {
+        if component.component_type() == QueryComponentType::PlaceNameComponent {
             has_placename = true;
         }
     }
@@ -175,10 +163,10 @@ fn naked_road_unlikely(scenario: &QueryScenario) -> f32 {
     let mut has_road = false;
     let mut has_house_num = false;
     for component in scenario.as_vec() {
-        if component.name() == "RoadComponent" {
+        if component.component_type() == QueryComponentType::RoadComponent {
             has_road = true;
         }
-        if component.name() == "HouseNumberComponent" {
+        if component.component_type() == QueryComponentType::HouseNumberComponent {
             has_house_num = true;
         }
     }
@@ -192,10 +180,10 @@ fn no_naked_house_num(scenario: &QueryScenario) -> f32 {
     let mut has_road = false;
     let mut has_house_num = false;
     for component in scenario.as_vec() {
-        if component.name() == "RoadComponent" {
+        if component.component_type() == QueryComponentType::RoadComponent {
             has_road = true;
         }
-        if component.name() == "HouseNumberComponent" {
+        if component.component_type() == QueryComponentType::HouseNumberComponent {
             has_house_num = true;
         }
     }
@@ -206,30 +194,15 @@ fn no_naked_house_num(scenario: &QueryScenario) -> f32 {
     1.0
 }
 
-fn no_naked_unit(scenario: &QueryScenario) -> f32 {
-    let mut has_road = false;
-    let mut has_unit = false;
-    for component in scenario.as_vec() {
-        if component.name() == "RoadComponent" {
-            has_road = true;
-        }
-        if component.name() == "UnitComponent" {
-            has_unit = true;
-        }
-    }
-    if !has_road && has_unit {
-        return 0.01;
-    }
-    1.0
-}
-
 fn sublocality_must_preceed_locality(scenario: &QueryScenario) -> f32 {
     let mut last_is_sublocality = false;
     for component in scenario.as_vec() {
-        if last_is_sublocality && component.name() != "LocalityComponent" {
+        if last_is_sublocality
+            && component.component_type() != QueryComponentType::LocalityComponent
+        {
             return 0.01;
         }
-        if component.name() == "SubLocalityComponent" {
+        if component.component_type() == QueryComponentType::SublocalityComponent {
             last_is_sublocality = true;
         } else {
             last_is_sublocality = false;
@@ -242,12 +215,12 @@ fn sublocality_must_preceed_locality(scenario: &QueryScenario) -> f32 {
 fn near_not_last_if_not_category(scenario: &QueryScenario) -> f32 {
     let mut components = scenario.as_vec();
     if let Some(component) = components.pop() {
-        if component.name() != "NearComponent" {
+        if component.component_type() != QueryComponentType::NearComponent {
             return 1.0;
         }
     }
     if let Some(component) = components.pop() {
-        if component.name() != "CategoryComponent" {
+        if component.component_type() != QueryComponentType::CategoryComponent {
             return 0.01;
         }
     }
@@ -276,9 +249,6 @@ lazy_static! {
             score_mult: house_num_road_together,
         },
         QueryScenarioScorer {
-            score_mult: max_one_unit,
-        },
-        QueryScenarioScorer {
             score_mult: max_one_locality,
         },
         QueryScenarioScorer {
@@ -304,9 +274,6 @@ lazy_static! {
         },
         QueryScenarioScorer {
             score_mult: no_naked_house_num,
-        },
-        QueryScenarioScorer {
-            score_mult: no_naked_unit,
         },
         QueryScenarioScorer {
             score_mult: sublocality_must_preceed_locality,
