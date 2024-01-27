@@ -1,0 +1,21 @@
+grocery store
+groceries
+corner store
+convenience store
+supermarket
+market
+food
+breakfast
+lunch
+dinner
+restaurant
+cafe
+coffee
+coffee shop
+bar
+pub
+bank
+pharmacy
+doctor
+er
+emergency room

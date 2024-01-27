@@ -1,0 +1,1446 @@
+#
+abbey
+abby
+acc
+access
+accs
+acres
+acrs
+al
+alee
+alley
+alleyway
+allwy
+ally
+allyway
+alwy
+aly
+ambl
+amble
+ancg
+anchorage
+annex
+anx
+apartments
+apch
+app
+appartments
+appr
+approach
+apts
+arc
+arcade
+art
+arterial
+artery
+artl
+arty
+aut
+autoroute
+av
+ave
+aven
+avens
+avenu
+avenue
+avenues
+avenus
+aves
+avn
+avns
+avnu
+avnue
+avnues
+avnus
+avs
+back
+baech
+bank
+basin
+basn
+bay
+bayoo
+bayou
+bch
+bd
+bde
+bdge
+bdwy
+bdy
+beach
+beech
+belt
+bend
+bg
+bk
+bl
+bl
+blck
+blf
+blfs
+blk
+block
+blt
+bluf
+bluff
+bluffs
+blv
+blvd
+blvde
+blvrd
+bnd
+bnk
+board walk
+boardwalk
+bot
+bottm
+bottms
+bottom
+bottoms
+boul
+boulavard
+boulevard
+boulevarde
+boulv
+boundary
+bowl
+bps
+br
+br
+br
+br
+brace
+brae
+branch
+brce
+brch
+brdg
+brdway
+break
+brg
+brgs
+bri
+bridge
+brk
+brk
+brks
+brnch
+broadway
+brook
+brooks
+brow
+brw
+bsn
+bte
+btm
+btms
+btte
+bttm
+bttms
+burg
+burgs
+burrow
+burw
+butte
+bvd
+bway
+bwk
+bwlk
+bwy
+by
+byp
+bypa
+bypass
+byps
+byu
+byway
+bywy
+c
+camp
+canyon
+cape
+caravan
+caus
+cause
+causeway
+causewy
+cct
+cds
+ce
+cen
+center
+centers
+centre
+centreway
+cetr
+cft
+c h
+c.h
+c.h.
+ch
+ch
+chas
+chase
+c hgwy
+c.hgwy
+c hi
+c.hi
+c hw
+c.hw
+c hway
+c.hway
+c hwy
+c.hwy
+ci
+cir
+circ
+circel
+circle
+circles
+circlet
+circt
+circuit
+circus
+cirs
+cirt
+cl
+claim
+clde
+clf
+clfs
+cliff
+cliffs
+clm
+clnde
+close
+clr
+cls
+clse
+clstr
+clt
+cluster
+cm
+cmmn
+cmmns
+cmn
+cmns
+cnc
+cncd
+cncrd
+cnctr
+cnr
+cnrs
+cntn
+cntr
+cntr
+cnwy
+cnyn
+co hgwy
+co.hgwy
+co hi
+co.hi
+co hw
+co.hw
+co hway
+co.hway
+co hwy
+co.hwy
+colonnade
+com
+comm
+common
+commons
+comms
+con
+conc
+concession
+concord
+concourse
+concs
+concse
+connection
+connector
+conr
+copse
+co r
+co r
+co.r
+co.r
+cor
+co rd
+co.rd
+corner
+corners
+cors
+corseo
+corso
+co rt
+co.rt
+co rte
+co.rte
+county highway
+county road
+county route
+county touring route
+course
+court
+courts
+courtyard
+cov
+cove
+cowy
+cp
+cp
+cpe
+cps
+c r
+c r
+c.r
+c.r
+c.r.
+c.r.
+cr
+cr
+cr
+cr
+crc
+crcs
+crct
+c rd
+c.rd
+crd
+crecent
+creek
+cres
+crescent
+crest
+crf
+crief
+crk
+crn
+crns
+croft
+cross
+crossing
+cross road
+crossroad
+cross roads
+crossroads
+crossway
+crs
+crse
+crsg
+crss
+crst
+c rt
+c.rt
+crt
+c rte
+c.rte
+crts
+cruiseway
+crv
+crve
+crwy
+crwy
+cs
+csac
+cseo
+csg
+cso
+cst
+csway
+cswy
+ct
+ctg
+ctr
+ctrs
+cts
+cttg
+ctyd
+cty hgwy
+cty.hgwy
+cty hi
+cty.hi
+cty hw
+cty.hw
+cty hway
+cty.hway
+cty hwy
+cty.hwy
+cty r
+cty r
+cty.r
+cty.r
+cty rd
+cty.rd
+cty rt
+cty.rt
+cty rte
+cty.rte
+cul
+cul de sac
+cul-de-sac
+culdesac
+curv
+curve
+cusac
+cutt
+cutting
+cuwy
+cv
+c van
+cvan
+cve
+cvn
+cway
+cxn
+cyd
+cyn
+d
+dale
+dell
+dene
+deviation
+devn
+dip
+distributor
+div
+divers
+diversion
+divide
+dle
+dn
+dns
+down
+downs
+dr
+drive
+driveway
+drov
+drove
+drv
+drvwy
+drwy
+dstr
+dv
+dve
+dvwy
+dway
+dwns
+dwy
+easement
+edg
+edge
+elb
+elbow
+elm
+end
+ent
+entr
+entrance
+esmt
+esp
+espl
+esplanade
+est
+estate
+estates
+ests
+ex
+exit
+exp
+expressway
+expway
+expwy
+expy
+ext
+exten
+extension
+extensions
+extn
+exts
+exwy
+fairway
+fall
+falls
+fare
+farm
+farms
+fawy
+fd
+fds
+fern
+ferry
+field
+fields
+fire line
+fireline
+fire track
+firetrack
+fire trail
+firetrail
+fit
+fitr
+fl
+fl
+flat
+flats
+fld
+flds
+fline
+flne
+fls
+flt
+flts
+fmtn
+follow
+folw
+foot way
+footway
+ford
+fore shore
+foreshore
+form
+formation
+fr
+frd
+freeway
+frm
+frms
+frnt
+front
+frontage
+frtg
+frwy
+fry
+fshr
+ftrk
+ftwy
+fw
+fway
+fwy
+fy
+fy
+ga
+gap
+garden
+gardens
+gate
+gates
+gateway
+g bd
+gbd
+g bde
+g bld
+g blvd
+g blvrd
+g boul
+g bvd
+gd bd
+gdbd
+gd bde
+gd bld
+gd blvd
+gd blvrd
+gd boul
+gd bvd
+gdn
+gdns
+gl
+glade
+glch
+gld
+glde
+glen
+gln
+gly
+gn
+gp
+gr
+gra
+grand boulevard
+grange
+gr bd
+grbd
+gr bde
+gr bld
+gr blvd
+gr blvrd
+gr boul
+gr bvd
+grd
+grd bd
+grdbd
+grd bde
+grd bld
+grd blvd
+grd blvrd
+grd boul
+grd bvd
+grdn
+grdns
+grds
+green
+greenway
+gren
+grn
+grnd
+grnds
+gro
+ground
+grounds
+grove
+grv
+grve
+grwy
+gte
+gtes
+gtway
+gtwy
+gulch
+gully
+gway
+gwy
+hanger
+harbor
+harbors
+harbour
+haven
+havn
+hbr
+hbrs
+hd
+hds
+head
+heads
+heath
+heights
+heth
+hghlds
+hghts
+hglds
+hgths
+hgts
+hgwy
+hi
+hieghts
+highlands
+high road
+highroad
+highway
+hill
+hills
+hils
+hi rd
+hi.rd
+hird
+hl
+hlds
+hllw
+hls
+hngr
+hollow
+holw
+hrbr
+hrd
+ht
+hth
+hts
+hub
+hvn
+hw
+hway
+hwy
+hwye
+hywy
+i
+i
+id
+ids
+i h
+ih
+imp
+impasse
+inlet
+inlt
+intchg
+inter change
+interchange
+inter section
+intersection
+inter state
+interstate
+intg
+intn
+intsctn
+is
+isl
+island
+islands
+isld
+islds
+isle
+iss
+j
+jct
+jctn
+jcts
+jnc
+jnct
+jtn
+junct
+junction
+junctions
+key
+keys
+knl
+knls
+knob
+knol
+knoll
+knolls
+ky
+kys
+l
+la
+ladder
+ladr
+lagn
+lagon
+lagoon
+land
+landing
+landng
+lane
+laneway
+ldg
+lees
+lf
+lgn
+lgt
+light
+limits
+line
+link
+lit
+litl
+littl
+little
+lk
+lkt
+lmts
+ln
+ln
+lndg
+lnk
+lnwy
+loaf
+look out
+lookout
+loop
+loops
+lot
+lp
+lps
+lt
+lt
+lt
+ltl
+lttl
+lynn
+lynne
+mall
+manor
+maze
+md
+mdr
+mdw
+mdws
+mead
+meadow
+meadows
+meander
+mew
+mews
+mi
+mile
+mill
+mills
+ml
+ml
+mls
+mndr
+mnr
+moor
+motorway
+mount
+mr
+mt
+mtwy
+mw
+mway
+mws
+mwy
+nbr
+neaves
+nk
+nmbr
+no
+nook
+nr
+num
+number
+nvs
+oaks
+opas
+otlk
+otlt
+out
+outlet
+outlook
+oval
+over bridge
+overbridge
+over look
+overlook
+over pass
+overpass
+ovlk
+ovrb
+paddock
+padk
+palms
+parade
+pard
+park
+park land
+parkland
+park lands
+parklands
+parkway
+parkways
+parkwy
+part
+pasg
+pass
+pass
+passage
+path
+pathway
+pckt
+pde
+peninsula
+phwy
+piaz
+piazza
+pier
+pike
+pine
+pines
+piont
+pk
+pk
+pke
+pkld
+pklds
+pkt
+pkw
+pkway
+pkwy
+pkwys
+pky
+pl
+pl
+pla
+plac
+place
+plain
+plains
+plat
+plateau
+plaza
+plc
+plms
+pln
+plns
+pls
+plt
+plz
+plza
+pn
+pne
+pnes
+pns
+pnt
+pnte
+pocket
+point
+pointe
+pokt
+pond
+port
+ports
+pr
+pr
+prairie
+prarie
+prd
+prde
+priors
+private
+prk
+prkw
+prkway
+prkwy
+prm
+prom
+promenade
+prrs
+prt
+prt
+prts
+ps
+psge
+psla
+pt
+pte
+pth
+pthway
+pthwy
+ptway
+ptwy
+pur
+pursuit
+pvt
+pway
+pwy
+pz
+pzza
+qd
+qd
+qdgl
+qdrt
+quad
+quadrangle
+quadrant
+quay
+quays
+quy
+quys
+qy
+qys
+r
+ra
+radial
+radl
+ramble
+ramp
+ran
+ranae
+ranch
+rang
+range
+range rd
+range road
+raod
+raods
+rapid
+rapids
+rch
+rd
+rdg
+rdge
+rdgs
+rdgwy
+rds
+rdsd
+rdw
+rdwy
+rdy
+reach
+reef
+res
+reserve
+resrv
+rest
+resv
+retreat
+return
+rge rd
+rgwy
+ri
+ride
+ridge
+ridges
+ridge way
+ridgeway
+right of way
+rightofway
+ring
+rise
+riverway
+riviera
+rks
+rmbl
+rmp
+rn
+rnch
+rnd
+rnde
+rng
+rnge
+ro
+roa
+road
+roads
+road side
+roadside
+roadway
+rocks
+r of w
+rofw
+ronde
+rose bowl
+rosebowl
+rotary
+round
+roundabout
+route
+r o w
+row
+row
+rowy
+rpd
+rpds
+r r
+r.r
+rr
+rr
+rsbl
+rserv
+rserve
+rsrv
+rsrve
+rst
+rt
+rt
+rte
+rtn
+rtt
+rty
+run
+rural route
+rvra
+rvwy
+rw
+sbwy
+sdg
+sdng
+service rd
+service road
+serviceway
+s h
+s.h
+s.h.
+sh
+s hgwy
+s.hgwy
+s hi
+s.hi
+s highway
+s.highway
+shl
+shls
+shnt
+shoal
+shoals
+shor
+shore
+shores
+shors
+shr
+shrs
+shun
+shunt
+s hw
+s.hw
+s hway
+s.hway
+s hwy
+s hwy
+s.hwy
+s.hwy
+shwy
+siding
+skwy
+skyway
+slip
+slope
+slp
+slpe
+smt
+snd
+sound
+space
+spc
+spg
+spgs
+spns
+spr
+spring
+springs
+sprn
+sprng
+sprngs
+spur
+sq
+sqr
+sqs
+square
+squares
+s r
+s r
+s.r
+s.r
+s.r.
+s.r.
+sr
+sr
+s rd
+s.rd
+srd
+s road
+s.road
+s route
+s.route
+s rt
+s.rt
+srt
+s rte
+s.rte
+srte
+st
+stairs
+stair way
+stairway
+state highway
+statehighway
+state rd
+staterd
+state road
+stateroad
+state route
+stateroute
+state rt
+statert
+state rte
+steps
+st h
+st.h
+st hgwy
+st.hgwy
+st hi
+st.hi
+st highway
+st.highway
+st hw
+st.hw
+st hway
+st.hway
+st hwy
+st.hwy
+stps
+str
+stra
+stra
+strand
+strands
+strav
+stravenue
+st rd
+st.rd
+strd
+strd
+strds
+stre
+stree
+street
+streets
+strip
+strnd
+strnds
+st road
+st.road
+st route
+st.route
+strp
+strs
+st rt
+st.rt
+strt
+strt
+st rte
+st.rte
+strte
+str way
+str.way
+strwy
+sts
+st wy
+st.wy
+stwy
+subdiv
+subdivision
+subway
+summit
+sumt
+svc rd
+svc road
+svcwy
+sv rd
+svrd
+svwy
+swy
+tarn
+tce
+ter
+terace
+terr
+terrac
+terrace
+terrasse
+t h
+t.h
+t.h.
+th
+thfr
+t hgwy
+t.hgwy
+t hi
+t.hi
+thick
+thicket
+thor
+thorough fare
+thoroughfare
+thoroughway
+thro
+throughfare
+throughway
+thru
+thruway
+t hw
+t.hw
+t hway
+t.hway
+t hwy
+t.hwy
+thwy
+thwy
+tkwy
+tline
+tlwy
+tmwy
+tn
+tn
+tollway
+top
+tor
+tower
+towers
+townline
+township highway
+township rd
+township road
+township route
+tpk
+tpke
+tp rd
+t r
+t r
+t.r
+t.r
+t.r.
+t.r.
+tr
+tr
+tr
+tr
+tr
+trace
+track
+trafficway
+trail
+trailer
+trak
+tram
+tramway
+trc
+trce
+t rd
+t.rd
+trd
+trees
+trfy
+tri
+triangle
+trk
+trktrl
+trl
+trlr
+trn
+trnabt
+trs
+t rt
+t.rt
+trt
+t rte
+t.rte
+truck trail
+trunkway
+trwy
+tshp h
+tshp.h
+tshp hgwy
+tshp.hgwy
+tshp hi
+tshp.hi
+tshp hw
+tshp.hw
+tshp hway
+tshp.hway
+tshp hwy
+tshp.hwy
+tshp r
+tshp r
+tshp.r
+tshp.r
+tshp rd
+tshp.rd
+tshp rt
+tshp.rt
+tshp rte
+tshp.rte
+tsse
+tun
+tunl
+tunnel
+turn
+turnabout
+turnpike
+twp h
+twp.h
+twp hgwy
+twp.hgwy
+twp hi
+twp.hi
+twp hw
+twp.hw
+twp hway
+twp.hway
+twp hwy
+twp.hwy
+twp r
+twp r
+twp.r
+twp.r
+twpr
+twpr
+twp rd
+twp.rd
+twp rt
+twp.rt
+twp rte
+twp.rte
+twr
+twrs
+twy
+un
+under pass
+underpass
+union
+unions
+uns
+upas
+upass
+ups
+us highway
+u s hwy
+us hwy
+us route
+u s rte
+us rte
+va
+vale
+valley
+valleys
+vdct
+vennel
+via
+viad
+viadct
+viaduct
+view
+views
+villa
+village
+villas
+vis
+vista
+vl
+vla
+vlas
+vlge
+vlly
+vllys
+vly
+vlys
+vst
+vsta
+vue
+vw
+vws
+vy
+wade
+walk
+walkway
+waters
+way
+ways
+well
+wells
+wharf
+whf
+whrf
+wk
+wkwy
+wky
+wl
+wlk
+wlkwy
+wls
+wtrs
+wy
+wyn
+wynd
+wys
+x ing
+x-ing
+xing
+x rd
+x-rd
+xrd
+xrds
+x road
+x-road
+xroad
+x way
+x-way
+xway
+x-wy
+xwy
+xwy
+yard
+yd
+yrd
