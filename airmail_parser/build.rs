@@ -86,6 +86,12 @@ fn main() {
         ],
         &[],
     );
+    helper.build_fst(
+        "dicts/en/sublocality.txt",
+        "dicts/en/sublocality.fst",
+        &[],
+        &[],
+    );
     // We need a synonym system.
     helper.build_fst(
         "dicts/en/wof_localities.txt",

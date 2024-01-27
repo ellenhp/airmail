@@ -1,0 +1,5 @@
+east
+west
+north
+south
+downtown

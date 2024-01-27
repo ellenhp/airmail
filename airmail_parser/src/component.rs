@@ -20,6 +20,9 @@ lazy_static! {
     static ref LOCALITIES_FST: KeyedFst = KeyedFst::new(
         fst::Set::new(include_bytes!("../dicts/en/wof_localities.fst").to_vec()).unwrap()
     );
+    static ref SUBLOCALITY_FST: KeyedFst = KeyedFst::new(
+        fst::Set::new(include_bytes!("../dicts/en/sublocality.fst").to_vec()).unwrap()
+    );
     static ref REGIONS_FST: KeyedFst = KeyedFst::new(
         fst::Set::new(include_bytes!("../dicts/en/wof_regions.fst").to_vec()).unwrap()
     );
@@ -347,6 +350,12 @@ impl QueryComponent for RoadComponent {
     }
 }
 
+fn parse_sublocality(text: &str) -> IResult<&str, &str> {
+    parse_fst(&SUBLOCALITY_FST, FstMatchMode::GreedyLevenshtein(0), text)
+}
+
+define_component!(SublocalityComponent, parse_sublocality, 0.9f32);
+
 fn parse_locality(text: &str) -> IResult<&str, &str> {
     parse_fst(&LOCALITIES_FST, FstMatchMode::GreedyLevenshtein(0), text)
 }
@@ -588,6 +597,9 @@ lazy_static! {
         },
         ComponentParser {
             function: IntersectionComponent::parse_boxed,
+        },
+        ComponentParser {
+            function: SublocalityComponent::parse_boxed,
         },
         ComponentParser {
             function: LocalityComponent::parse_boxed,

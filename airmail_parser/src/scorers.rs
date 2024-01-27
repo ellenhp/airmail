@@ -223,6 +223,21 @@ fn no_naked_unit(scenario: &QueryScenario) -> f32 {
     1.0
 }
 
+fn sublocality_must_preceed_locality(scenario: &QueryScenario) -> f32 {
+    let mut last_is_sublocality = false;
+    for component in scenario.as_vec() {
+        if last_is_sublocality && component.name() != "LocalityComponent" {
+            return 0.01;
+        }
+        if component.name() == "SubLocalityComponent" {
+            last_is_sublocality = true;
+        } else {
+            last_is_sublocality = false;
+        }
+    }
+    1.0
+}
+
 pub struct QueryScenarioScorer {
     score_mult: fn(query: &QueryScenario) -> f32,
 }
@@ -276,6 +291,9 @@ lazy_static! {
         },
         QueryScenarioScorer {
             score_mult: no_naked_unit,
+        },
+        QueryScenarioScorer {
+            score_mult: sublocality_must_preceed_locality,
         },
     ];
 }

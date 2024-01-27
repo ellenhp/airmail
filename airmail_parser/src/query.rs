@@ -169,4 +169,39 @@ mod tests {
         assert_eq!(scenario.components[0].as_ref().name(), "LocalityComponent");
         assert_eq!(scenario.components[1].as_ref().name(), "PlaceNameComponent");
     }
+
+    #[test]
+    fn sublocality_penalized_over_road_suffix() {
+        let now = Instant::now();
+        let query = Query::parse("100 fremont avenue north seattle");
+        println!("took {:?}", now.elapsed());
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
+        dbg!(&scenario);
+        assert_eq!(scenario.components.len(), 3);
+        assert_eq!(
+            scenario.components[0].as_ref().name(),
+            "HouseNumberComponent"
+        );
+        assert_eq!(scenario.components[1].as_ref().name(), "RoadComponent");
+        assert_eq!(scenario.components[2].as_ref().name(), "LocalityComponent");
+    }
+
+    #[test]
+    fn sublocality() {
+        let now = Instant::now();
+        let query = Query::parse("food in downtown seattle");
+        println!("took {:?}", now.elapsed());
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
+        dbg!(&scenario);
+        assert_eq!(scenario.components.len(), 4);
+        assert_eq!(scenario.components[0].as_ref().name(), "CategoryComponent");
+        assert_eq!(scenario.components[1].as_ref().name(), "NearComponent");
+        assert_eq!(
+            scenario.components[2].as_ref().name(),
+            "SublocalityComponent"
+        );
+        assert_eq!(scenario.components[3].as_ref().name(), "LocalityComponent");
+    }
 }
