@@ -1,5 +1,6 @@
 use tantivy::{
     collector::{Count, TopDocs},
+    directory::MmapDirectory,
     schema::{Schema, INDEXED, STORED, TEXT},
 };
 
@@ -65,7 +66,8 @@ impl AirmailIndex {
 
     pub fn create(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let schema = Self::schema();
-        let tantivy_index = tantivy::Index::create_in_dir(index_dir, schema)?;
+        let tantivy_index =
+            tantivy::Index::open_or_create(MmapDirectory::open(index_dir)?, schema)?;
         Ok(Self { tantivy_index })
     }
 

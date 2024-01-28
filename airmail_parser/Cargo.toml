@@ -16,8 +16,5 @@ cached = { version = "0.48.1", features = ["proc_macro"] }
 deunicode = "1.4.2"
 fst = "0.4.7"
 
-[profile.release]
-debug = 1
-
 [[bin]]
 name = "query"

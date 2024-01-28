@@ -19,6 +19,28 @@ pub struct AirmailPoi {
 }
 
 impl AirmailPoi {
+    pub fn from_address(
+        name: Option<String>,
+        category: Option<String>,
+        house_number: Option<String>,
+        road: Option<String>,
+        unit: Option<String>,
+        lat: f64,
+        lng: f64,
+    ) -> Self {
+        let s2cell = s2::cellid::CellID::from(s2::latlng::LatLng::from_degrees(lat, lng)).0;
+        Self {
+            name,
+            category,
+            house_number,
+            road,
+            unit,
+            locality: None,
+            region: None,
+            s2cell,
+        }
+    }
+
     pub fn from_openaddresses_geojson(
         object: &geojson::GeoJson,
     ) -> Result<Self, Box<dyn std::error::Error>> {
@@ -32,32 +54,27 @@ impl AirmailPoi {
                 let road =
                     sanitize_oa_field(properties.get("street").map(|v| v.as_str()).flatten());
                 let unit = sanitize_oa_field(properties.get("unit").map(|v| v.as_str()).flatten());
-                let locality =
-                    sanitize_oa_field(properties.get("city").map(|v| v.as_str()).flatten());
 
-                let s2cell = match &feature.geometry {
+                let (lat, lng) = match &feature.geometry {
                     Some(geometry) => match &geometry.value {
                         Value::Point(point) => {
                             let lat = point[1];
                             let lng = point[0];
-                            let s2cell: s2::cellid::CellID =
-                                s2::latlng::LatLng::from_degrees(lat, lng).into();
-                            s2cell
+                            (lat, lng)
                         }
                         _ => panic!(),
                     },
                     None => panic!(),
                 };
-                Ok(Self {
+                Ok(Self::from_address(
                     name,
                     category,
                     house_number,
                     road,
                     unit,
-                    locality,
-                    region: None,
-                    s2cell: s2cell.0,
-                })
+                    lat,
+                    lng,
+                ))
             }
             _ => Err("Not a feature".into()),
         }
