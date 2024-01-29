@@ -16,7 +16,22 @@ tantivy = "0.21.1"
 tantivy-common = "0.6.0"
 tantivy-fst = "0.4.0"
 tempfile = "3.9.0"
-tokio = { version = "1.35.1", features = ["full"] }
+airmail_common = { path = "../airmail_common" }
+deunicode = "1.4.2"
+regex = "1.10.3"
+lazy_static = "1.4.0"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0.196", features = ["derive"] }
+log = "0.4.20"
+env_logger = "0.11.1"
+crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
+rayon = "1.8.1"
+serde_json = "1.0.113"
+airmail_parser = { path = "../airmail_parser" }
 
 [[bin]]
 name = "index"
+
+[[bin]]
+name = "query"

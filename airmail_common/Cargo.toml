@@ -1,0 +1,13 @@
+[package]
+name = "airmail_common"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cached = "0.48.1"
+fst = { version = "0.4.7", features = ["levenshtein"] }
+lazy_static = "1.4.0"
+
+[build-dependencies]
+deunicode = "1.4.2"
+fst = "0.4.7"

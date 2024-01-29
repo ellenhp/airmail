@@ -1,104 +1,10 @@
-use std::{
-    hash::Hash,
-    sync::{Arc, Mutex},
-};
-
-use cached::proc_macro::cached;
-use fst::{
-    automaton::{Levenshtein, Str},
-    Automaton, IntoStreamer, Streamer,
+use airmail_common::{
+    dicts::KeyedFst,
+    fst::{search_fst, FstMatchMode},
 };
 use nom::IResult;
 
 use crate::common::{query_sep, query_term};
-
-// Hold the global key count in a mutex.
-lazy_static! {
-    static ref KEY_COUNT: Mutex<usize> = Mutex::new(0);
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct FstKey(usize);
-
-#[derive(Debug, Clone)]
-pub struct KeyedFst {
-    fst: Arc<fst::Set<Vec<u8>>>,
-    key: FstKey,
-}
-
-impl Hash for KeyedFst {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.key.hash(state);
-    }
-}
-
-impl PartialEq for KeyedFst {
-    fn eq(&self, other: &Self) -> bool {
-        self.key == other.key
-    }
-}
-
-impl Eq for KeyedFst {}
-
-impl KeyedFst {
-    pub fn new(fst: fst::Set<Vec<u8>>) -> Self {
-        let mut key_count = KEY_COUNT.lock().unwrap();
-        let key = FstKey(*key_count);
-        *key_count += 1;
-        Self {
-            fst: Arc::new(fst),
-            key,
-        }
-    }
-
-    pub fn key(&self) -> FstKey {
-        self.key
-    }
-
-    pub fn fst(&self) -> &fst::Set<Vec<u8>> {
-        &self.fst
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum FstMatchMode {
-    Prefix,
-    Levenshtein(u32),
-    GreedyLevenshtein(u32),
-}
-
-#[cached(size = 131072)]
-fn search_fst(fst: KeyedFst, query: String, dist: u32, prefix: bool) -> bool {
-    if dist > 0 {
-        if prefix {
-            fst.fst
-                .search(Levenshtein::new(&query, dist).unwrap().starts_with())
-                .into_stream()
-                .next()
-                .is_some()
-        } else {
-            fst.fst
-                .search(Levenshtein::new(&query, dist).unwrap())
-                .into_stream()
-                .next()
-                .is_some()
-        }
-    } else {
-        if prefix {
-            fst.fst
-                .search(Str::new(&query).starts_with())
-                .into_stream()
-                .next()
-                .is_some()
-        } else {
-            fst.fst
-                .search(Str::new(&query))
-                .into_stream()
-                .next()
-                .is_some()
-        }
-    }
-}
 
 pub fn parse_fst<'a>(
     fst: &KeyedFst,
@@ -252,23 +158,3 @@ mod test {
         assert_eq!(remainder, "");
     }
 }
-
-// struct FstParser<'a> {
-//     fst: fst::Set<&'a [u8]>,
-// }
-
-// impl<'a> FstParser<'a> {
-//     pub fn new(data: &'a [u8]) -> Result<Self, Box<dyn Error>> {
-//         let fst = fst::Set::new(data)?;
-//         Ok(Self { fst })
-//     }
-// }
-
-// impl<'a, O, E> Parser<&str, O, E> for FstParser<'a> {
-//     fn parse(&mut self, input: &str) -> nom::IResult<&str, O, E> {
-//         let (input, bytes) = take_while(|c| c.is_ascii_alphanumeric())(input)?;
-//         let bytes = bytes.as_bytes();
-//         let bytes = self.fst.find(bytes);
-//         Ok((input, bytes))
-//     }
-// }

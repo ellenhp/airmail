@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr, sync::Arc};
 
+use airmail::poi::{openaddresses::parse_oa_geojson, AirmailPoi};
 use bollard::{
     container::{
         CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
@@ -10,7 +11,15 @@ use bollard::{
     Docker, API_DEFAULT_VERSION,
 };
 use clap::Parser;
+use crossbeam::channel::{Receiver, Sender};
 use futures_util::TryStreamExt;
+use geojson::GeoJson;
+use tokio::{
+    io::{AsyncBufReadExt, BufReader},
+    spawn,
+    sync::Mutex,
+    task::spawn_blocking,
+};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -23,6 +32,12 @@ struct Args {
     /// Whether to forcefully recreate the container. Default false.
     #[clap(long, short, default_value = "false")]
     recreate: bool,
+    /// Path to an OpenAddresses data file.
+    #[clap(long, short)]
+    openaddresses: Option<String>,
+    /// Path to the Airmail index.
+    #[clap(long, short)]
+    index: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -160,8 +175,123 @@ async fn maybe_start_container(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
     let args = Args::parse();
     maybe_start_container(&args.wof_db, args.recreate).await?;
+
+    if let Some(openaddresses_path) = args.openaddresses {
+        let openaddresses_file = tokio::fs::File::open(openaddresses_path).await?;
+        let reader = BufReader::new(openaddresses_file);
+        let mut lines = reader.lines();
+        let count = Arc::new(Mutex::new(0));
+        let start = std::time::Instant::now();
+        let (raw_sender, raw_receiver): (Sender<String>, Receiver<String>) =
+            crossbeam::channel::bounded(1024);
+        let (no_admin_sender, no_admin_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
+            crossbeam::channel::bounded(1024);
+        let (to_index_sender, to_index_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
+            crossbeam::channel::bounded(1024);
+        let mut blocking_join_handles = Vec::new();
+        let mut nonblocking_join_handles = Vec::new();
+        for _ in 0..16 {
+            let receiver = raw_receiver.clone();
+            let no_admin_sender = no_admin_sender.clone();
+            let count = count.clone();
+            blocking_join_handles.push(spawn_blocking(move || loop {
+                {
+                    let mut count = count.blocking_lock();
+                    *count += 1;
+                    if *count % 1000 == 0 {
+                        println!(
+                            "{} POIs parsed in {} seconds, {} per second.",
+                            *count,
+                            start.elapsed().as_secs(),
+                            *count as f64 / start.elapsed().as_secs_f64()
+                        );
+                    }
+                }
+
+                let line = if let Ok(line) = receiver.recv() {
+                    line
+                } else {
+                    break;
+                };
+                let geojson = if let Ok(geojson) = GeoJson::from_str(&line) {
+                    geojson
+                } else {
+                    println!("Failed to parse line: {}", line);
+                    continue;
+                };
+                match parse_oa_geojson(&geojson) {
+                    Ok(poi) => {
+                        no_admin_sender.send(poi).unwrap();
+                    }
+                    Err(err) => {
+                        println!("Failed to parse line. {}", err);
+                    }
+                }
+            }));
+        }
+        for _ in 0..16 {
+            let no_admin_receiver = no_admin_receiver.clone();
+            let to_index_sender = to_index_sender.clone();
+            nonblocking_join_handles.push(spawn(async move {
+                loop {
+                    let mut poi = if let Ok(poi) = no_admin_receiver.recv() {
+                        poi
+                    } else {
+                        break;
+                    };
+                    let mut sent = false;
+                    for _attempt in 0..5 {
+                        if let Err(err) = poi.populate_admin_areas().await {
+                            println!("Failed to populate admin areas. {}", err);
+                        } else {
+                            to_index_sender.send(poi).unwrap();
+                            sent = true;
+                            break;
+                        }
+                    }
+                    if !sent {
+                        println!("Failed to populate admin areas after 5 attempts.");
+                    }
+                }
+            }));
+        }
+        let indexing_join_handle = spawn(async move {
+            let mut index = airmail::index::AirmailIndex::create(&args.index).unwrap();
+            let mut writer = index.writer().unwrap();
+            loop {
+                if let Ok(poi) = to_index_receiver.recv() {
+                    if let Err(err) = writer.add_poi(poi) {
+                        println!("Failed to add POI to index. {}", err);
+                    }
+                } else {
+                    break;
+                }
+            }
+            writer.commit().unwrap();
+        });
+        loop {
+            if let Some(line) = lines.next_line().await? {
+                raw_sender.send(line)?;
+            } else {
+                break;
+            }
+        }
+        drop(raw_sender);
+        println!("Waiting for threads to finish.");
+        for handle in blocking_join_handles {
+            handle.await.unwrap();
+        }
+        drop(no_admin_sender);
+        println!("Waiting for tasks to finish.");
+        for handle in nonblocking_join_handles {
+            handle.await.unwrap();
+        }
+        drop(to_index_sender);
+        indexing_join_handle.await.unwrap();
+    }
 
     Ok(())
 }

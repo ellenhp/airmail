@@ -1,0 +1,418 @@
+abbey|abby
+access|accs|acc
+acres|acrs
+alley|aly|ally|alee|al
+alleyway|alwy|allyway|allwy
+amble|ambl
+anchorage|ancg
+annex|anx
+apartments|apts|appartments
+approach|app|apch|appr
+arcade|arc
+arterial|artl
+artery|art|arty
+avenue|av|ave|aven|avenu|avn|avnu|avnue
+avenues|avs|aves|avens|avenus|avns|avnus|avnues
+autoroute|aut
+back|bk
+bank|bnk
+basin|basn|bsn
+bay|by
+bayou|byu|bayoo
+beach|baech|bch|beech
+belt|blt
+bend|bnd
+block|blk|blck
+bluff|blf|bluf|bluffs|blfs
+boardwalk|bwk|bwlk|board walk
+boulevard|blvd|bd|bde|blv|bl|blvde|blvrd|boulavard|boul|boulv|bvd|boulevarde
+bottom|bot|bottm|btm|bttm
+bottoms|bttms|btms|bottms
+boundary|bdy
+bowl|bl
+brace|br|brce
+branch|br|brnch|brch
+brae|br
+break|brk
+bridge|bdge|br|brdg|bri|brg
+broadway|bdwy|bway|bwy|brdway
+brook|brk
+brooks|brks
+brow|brw
+burg|bg
+burgs|brgs
+burrow|burw
+butte|btte|bte
+bypass|bypa|byps|bps|byp
+byway|bywy
+camp|cp
+cape|cpe|cp
+canyon|cyn|cnyn
+caravan|cvan|cvn|c van
+causeway|csway|cswy|causewy|caus|cause|cway
+center|centre|cetr|cntr|ctr|c|cen
+centers|ctrs
+centreway|cnwy
+chase|ch|chas
+circle|cir|circel
+circles|cirs
+circlet|clt
+circuit|crct|circ|cct|cirt|ci|circt
+circus|crcs|crc
+claim|clm
+cliff|clf
+cliffs|clfs
+close|cl|cls|clse
+cluster|clr|clstr
+colonnade|clde|clnde
+common|cmmn|comm|cmn|com|cm
+commons|cmmns|cmns|comms
+concord|cncd|cncrd
+concession|conc
+concourse|con|concs|concse|cnc
+connection|cntn|cxn
+connector|conr|cnctr|cntr
+copse|cps
+corner|cnr|crn|cor
+corners|cnrs|crns|cors
+corseo|cseo
+corso|cso
+county highway|ch|c.h.|c.h|c h|c.hw|c hw|co.hw|co hw|cty.hw|cty hw|c.hgwy|c hgwy|co.hgwy|co hgwy|cty.hgwy|cty hgwy|c.hway|c hway|co.hway|co hway|cty.hway|cty hway|c.hwy|c hwy|co.hwy|co hwy|cty.hwy|cty hwy|c.hi|c hi|co.hi|co hi|cty.hi|cty hi
+county road|cr|c.r.|c.r|c r|co.r|co r|c.rd|c rd|co.rd|co rd|cty.r|cty r|cty.rd|cty rd
+county route|cr|c.r.|c.r|c r|co.r|co r|c.rt|c rt|co.rt|co rt|cty.r|cty r|cty.rt|cty rt|c.rte|c rte|co.rte|co rte|cty.rte|cty rte|county touring route
+course|crse
+court|ct|crt
+courts|crts|cts
+courtyard|cyd|ctyd
+cove|cov|ce|cv
+creek|cr|crk
+crescent|cr|cres|crs|crecent
+crest|crst|cst
+crief|crf
+croft|cft
+cross|cs|crss
+crossing|crsg|xing|csg|x ing|x-ing
+crossroad|crd|cross road|xroad|x-road|x road|xrd|x-rd|x rd
+crossroads|cross roads|xrds
+crossway|cowy|crwy|xway|xwy|x-way|x way|x-wy|xwy
+cruiseway|cuwy|crwy
+cul
+cul de sac|cul-de-sac|culdesac|cds|cusac|csac
+curve|cve|crv|crve|curv
+cutting|cttg|ctg|cutt
+dale|dle
+dell
+dene
+deviation|devn
+dip
+distributor|dstr
+divide|div
+diversion|divers
+down|dn
+downs|dns|dwns
+drive|dr|drv|dv|dve|d
+driveway|drwy|dvwy|dwy|dway|drvwy
+drove|drov
+easement|esmt
+edge|edg
+elbow|elb
+elm
+end
+entrance|ent|entr
+esplanade|esp|espl
+estate|est
+estates|ests
+exit
+expressway|exp|expwy|expway|expy|exwy
+extension|ex|ext|extn|exten
+extensions|exts
+fairway|fawy|fy
+fall|fl
+falls|fls
+fare
+farm|frm
+farms|frms
+fern
+ferry|fry|fy
+field|fld|fd
+fields|flds|fds
+fireline|fline|fire line|flne
+firetrack|ftrk|fire track
+firetrail|fit|fitr|fire trail
+flat|fl|flt
+flats|flts
+follow|folw
+footway|ftwy|foot way
+ford|frd
+foreshore|fshr|fore shore
+formation|form|fmtn
+freeway|frwy|fw|fwy|fway
+front|frnt
+frontage|frtg|fr
+gap|gp
+garden|gdn|grd|grdn
+gardens|gdns|grds|grdns
+gate|ga|gte
+gates|gtes
+gateway|gwy|gway|gtwy|gtway
+glade|gl|gld|glde
+glen|gln
+grand boulevard|gbd|grbd|grdbd|gdbd|g bd|gr bd|grd bd|gd bd|g blvd|gr blvd|grd blvd|gd blvd|g bde|gr bde|grd bde|gd bde|g blvrd|gr blvrd|grd blvrd|gd blvrd|g boul|gr boul|grd boul|gd boul|g bvd|gr bvd|grd bvd|gd bvd|g bld|gr bld|grd bld|gd bld
+grange|gra
+green|grn|gn|gren
+greenway|grwy
+ground|grnd
+grounds|grnds
+grove|gr|grv|grve|gro
+gulch|glch
+gully|gly
+hanger|hngr
+harbor|harbour|hbr|hrbr
+harbors|hbrs
+haven|hvn|havn
+head|hd
+heads|hds
+heath|hth|heth
+heights|hghts|hgts|hieghts|ht|hts|hgths
+highlands|hghlds|hlds|hglds
+highroad|hrd|high road|hird|hi.rd|hi rd
+highway|hgwy|hw|hway|hwy|hi|hwye|hywy
+hill|hl
+hills|hls|hils
+hollow|hllw|holw
+hub
+impasse|imp
+inlet|inlt
+interchange|intg|intchg|inter change
+intersection|intn|inter section|intsctn
+interstate|inter state|i|ih|i h
+island|is|id|i|isl|isld
+islands|iss|ids|islds
+isle
+junction|jct|jnc|jnct|jctn|jtn|junct|j
+junctions|jcts
+key|ky
+keys|kys
+knob
+knoll|knol|knl
+knolls|knls
+ladder|ladr
+lagoon|lagn|lgn|lagon
+land
+landing|ldg|lndg|landng
+lane|l|ln|la
+laneway|lnwy
+lees
+light|lgt|lt
+limits|lmts
+line|ln
+link|lnk|lk
+little|ltl|lttl|littl|litl|lit|lt
+loaf|lf
+lookout|lkt|look out
+loop|lp
+loops|lps
+lot|lt
+lynne|lynn
+mall|ml
+manor|mnr
+maze
+meadow|mdw
+meadows|mdws|mead
+mead|md
+meander|mndr|mdr|mr
+mew|mw
+mews|mws
+mile|mi
+mill|ml
+mills|mls
+moor
+motorway|mway|mwy|mtwy
+mount|mt
+neaves|nvs
+nook|nk
+number|#|nbr|num|no|nmbr|nr
+oaks
+outlet|otlt
+outlook|out|otlk
+oval
+overbridge|ovrb|over bridge
+overlook|over look|ovlk
+overpass|over pass|opas
+paddock|padk
+palms|plms
+parade|pde|prd|prde|pard
+park|pk|prk
+parklands|pkld|pklds|parkland|park lands|park land
+parkway|pkwy|parkwy|pky|pkway|prkwy|prkway|pkw|pwy|prkw
+parkways|pkwys
+part|prt
+pass|ps
+passage|psge|pass|pasg
+path|pth
+pathway|phwy|pway|pthway|pthwy|ptway|ptwy
+peninsula|psla
+piazza|piaz|pzza
+pier
+pike|pk|pke
+pine|pne|pn
+pines|pns|pnes
+pond
+place|pl|pla|plc|plac
+plain|pln|pl
+plains|plns|pls
+plateau|plat|plt
+plaza|plz|plza|pz
+prarie|pr
+pocket|pkt|pokt|pckt
+point|piont|pnt|pt
+pointe|pte|pnte
+port|prt
+ports|prts
+prairie|pr
+priors|prrs
+private|pvt
+promenade|prom|prm
+pursuit|pur
+quad|qd
+quadrangle|qdgl
+quadrant|qdrt|qd
+quay|quy|qy
+quays|quys|qys
+radial|radl
+ramble|ra|rmbl
+ramp|rmp
+ranae|ran
+ranch|rnch
+rapid|rpd
+rapids|rpds
+range|rng|rnge|rang
+range road|rge rd|range rd|rr
+reach|rch
+reef
+reserve|res|resrv|resv|rsrv|rserv|rserve|rsrve
+rest|rst
+retreat|rt|rtt
+return|rtn
+ride
+ridge|rdge|rdg
+ridges|rdgs
+ridgeway|rgwy|rdgwy|ridge way
+right of way|rowy|rightofway|rofw|row|r o w|r of w
+ring
+rise|ri
+riverway|rvwy
+riviera|rvra
+road|rd|ro|r|roa|raod
+roads|raods|rds
+roadside|rdsd|road side
+roadway|rdwy|rdw|rdy
+rocks|rks
+ronde|rnde
+rosebowl|rsbl|rose bowl
+rotary|rty
+round|rnd
+roundabout
+route|rt|rte
+row|rw
+run|rn
+rural route|rr|r.r|r r
+service road|svc rd|svc road|service rd|sv rd|svrd
+serviceway|swy|svwy|svcwy
+shoal|shl
+shoals|shls
+shore|shor|shr
+shores|shors|shrs
+shunt|shun|shnt
+siding|sdng|sdg
+skyway|skwy
+slip
+slope|slpe|slp
+sound|snd
+space|spc
+spring|spg|sprng|sprn
+springs|spgs|sprngs|spns
+spur|spr
+square|sq|sqr
+squares|sqs
+stairs|strs
+stairway|stwy|strwy|stair way|st.wy|st wy|str.way|str way
+state highway|s.highway|s highway|st.highway|st highway|sh|s.h.|s.h|s h|st.h|st h|s.hw|s hw|st.hw|st hw|s.hwy|s hwy|shwy|s.hgwy|s hgwy|st.hgwy|st hgwy|s.hway|s hway|st.hway|st hway|s.hwy|s hwy|st.hwy|st hwy|s.hi|s hi|st.hi|st hi|statehighway
+state road|sr|stateroad|s.r.|s.r|s r|s.road|s road|st.road|st road|staterd|srd|s.rd|s rd|state rd|strd|st.rd|st rd
+state route|sr|stateroute|s.r.|s.r|s r|s.route|s route|st.route|st route|statert|srt|s.rt|s rt|srte|s.rte|s rte|state rt|state rte|strt|strte|st.rt|st rt|st.rte|st rte
+steps|stps
+strand|stra|strnd|strd
+strands|strnds|strds
+stravenue|stra|strav
+street|st|str|stre|stree|strt
+streets|sts
+strip|strp
+subdivision|subdiv
+subway|sbwy
+summit|smt|sumt
+tarn|tn
+terrace|tce|ter|tr|terr|terace|terrac|terrasse|tsse
+thicket|thick
+thoroughfare|thor|throughfare|thorough fare|thfr
+thoroughway|thwy
+throughway|thru|thro|thruway|trwy|thwy
+tollway|tlwy|twy
+top
+tor
+township highway|th|t.h.|t.h|t h|twp.h|twp h|tshp.h|tshp h|t.hw|t hw|twp.hw|twp hw|tshp.hw|tshp hw|t.hgwy|t hgwy|twp.hgwy|twp hgwy|tshp.hgwy|tshp hgwy|t.hway|t hway|twp.hway|twp hway|tshp.hway|tshp hway|t.hwy|t hwy|twp.hwy|twp hwy|tshp.hwy|tshp hwy|t.hi|t hi|twp.hi|twp hi|tshp.hi|tshp hi
+township road|tr|t.r.|t.r|t r|t rd|t.rd|trd|twpr|twp.r|twp r|twp.rd|twp rd|tshp.r|tshp r|tshp.rd|tshp rd|township rd|tp rd
+township route|tr|t.r.|t.r|t r|t rt|t.rt|trt|t.rte|t rte|twpr|twp.r|twp r|twp.rt|twp rt|twp.rte|twp rte|tshp.r|tshp r|tshp.rt|tshp rt|tshp.rte|tshp rte
+tower|twr
+towers|twrs
+townline|tline
+trace|trce|trc
+track|tr|trk|trak
+trafficway|trfy
+trail|tr|trl
+trailer|trlr
+tram
+tramway|tmwy
+trees|trs
+triangle|tri
+truck trail|trktrl
+trunkway|tkwy
+tunnel|tun|tunl
+turnabout|trnabt
+turn|tn|trn
+turnpike|tpk|tpke
+underpass|upas|upass|ups|under pass
+union|un
+unions|uns
+us highway|us hwy|u s hwy
+us route|us rte|u s rte
+vale|va|vl
+valley|vlly|vly|vy
+valleys|vlys|vllys
+vennel
+viaduct|via|viad|vdct|viadct
+view|vw
+views|vws
+villa|vla
+village|vlge
+villas|vlas
+vista|vst|vsta|vis
+vue
+wade
+walk|wlk|wk
+walkway|wkwy|wky|wlkwy
+waters|wtrs
+way|wy
+ways|wys
+well|wl
+wells|wls
+wharf|whrf|whf
+wynd|wyn
+yard|yd|yrd
+north|n
+south|s
+east|e
+west|w
+northwest|nw
+northeast|ne
+southwest|sw
+southeast|se

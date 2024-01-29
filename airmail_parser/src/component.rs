@@ -1,46 +1,11 @@
-use std::{collections::HashSet, fmt::Formatter, sync::Arc};
+use std::{fmt::Formatter, sync::Arc};
 
 use crate::{
     common::{query_sep, query_term},
-    fst::{parse_fst, FstMatchMode, KeyedFst},
+    fst::parse_fst,
 };
-use fst::IntoStreamer;
+use airmail_common::{dicts::*, fst::FstMatchMode};
 use nom::{bytes::complete::take_while, IResult};
-
-// Use lazy_static to lazy load the FSTs from include_bytes!.
-lazy_static! {
-    static ref NEARBY_WORDS_FST: KeyedFst =
-        KeyedFst::new(fst::Set::new(include_bytes!("../dicts/en/near.fst").to_vec()).unwrap());
-    static ref CATEGORY_WORDS_FST: KeyedFst =
-        KeyedFst::new(fst::Set::new(include_bytes!("../dicts/en/category.fst").to_vec()).unwrap());
-    static ref STREET_SUFFIXES_FST: KeyedFst = KeyedFst::new(
-        fst::Set::new(include_bytes!("../dicts/en/lp_street_suffixes.fst").to_vec()).unwrap()
-    );
-    static ref LOCALITIES_FST: KeyedFst = KeyedFst::new(
-        fst::Set::new(include_bytes!("../dicts/en/wof_localities.fst").to_vec()).unwrap()
-    );
-    static ref SUBLOCALITY_FST: KeyedFst = KeyedFst::new(
-        fst::Set::new(include_bytes!("../dicts/en/sublocality.fst").to_vec()).unwrap()
-    );
-    static ref REGIONS_FST: KeyedFst = KeyedFst::new(
-        fst::Set::new(include_bytes!("../dicts/en/wof_regions.fst").to_vec()).unwrap()
-    );
-    static ref COUNTRIES_FST: KeyedFst = KeyedFst::new(
-        fst::Set::new(include_bytes!("../dicts/en/wof_countries.fst").to_vec()).unwrap()
-    );
-    static ref INTERSECTION_JOIN_WORDS_FST: KeyedFst = KeyedFst::new(
-        fst::Set::new(include_bytes!("../dicts/en/intersection_join.fst").to_vec()).unwrap()
-    );
-    static ref BRICK_AND_MORTAR_WORDS: HashSet<String> =
-        fst::Set::new(include_bytes!("../dicts/en/brick_and_mortar.fst").to_vec())
-            .unwrap()
-            .into_stream()
-            .into_strs()
-            .unwrap()
-            .iter()
-            .cloned()
-            .collect();
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum QueryComponentType {
@@ -187,7 +152,7 @@ macro_rules! define_component {
 
 fn parse_category(text: &str) -> IResult<&str, &str> {
     parse_fst(
-        &CATEGORY_WORDS_FST,
+        &category_words_fst(),
         FstMatchMode::GreedyLevenshtein(0),
         text,
     )
@@ -196,7 +161,11 @@ fn parse_category(text: &str) -> IResult<&str, &str> {
 define_component!(CategoryComponent, parse_category, |_| 1.0f32);
 
 fn parse_near(text: &str) -> IResult<&str, &str> {
-    parse_fst(&NEARBY_WORDS_FST, FstMatchMode::GreedyLevenshtein(0), text)
+    parse_fst(
+        &nearby_words_fst(),
+        FstMatchMode::GreedyLevenshtein(0),
+        text,
+    )
 }
 
 define_component!(NearComponent, parse_near, |text: &str| 1.5f32
@@ -204,7 +173,7 @@ define_component!(NearComponent, parse_near, |text: &str| 1.5f32
 
 fn parse_intersection_join_word(text: &str) -> IResult<&str, &str> {
     parse_fst(
-        &INTERSECTION_JOIN_WORDS_FST,
+        &intersection_join_words_fst(),
         FstMatchMode::GreedyLevenshtein(0),
         text,
     )
@@ -266,7 +235,7 @@ impl RoadComponent {
 
         for i in 1..3 {
             if let Ok((remainder, next_token)) = parse_fst(
-                &STREET_SUFFIXES_FST,
+                &street_suffixes_fst(),
                 FstMatchMode::GreedyLevenshtein(0),
                 &text[substring_len + sep_len..],
             ) {
@@ -333,25 +302,25 @@ impl QueryComponent for RoadComponent {
 }
 
 fn parse_sublocality(text: &str) -> IResult<&str, &str> {
-    parse_fst(&SUBLOCALITY_FST, FstMatchMode::GreedyLevenshtein(0), text)
+    parse_fst(&sublocality_fst(), FstMatchMode::GreedyLevenshtein(0), text)
 }
 
 define_component!(SublocalityComponent, parse_sublocality, |_| 0.9f32);
 
 fn parse_locality(text: &str) -> IResult<&str, &str> {
-    parse_fst(&LOCALITIES_FST, FstMatchMode::GreedyLevenshtein(0), text)
+    parse_fst(&localities_fst(), FstMatchMode::GreedyLevenshtein(0), text)
 }
 
 define_component!(LocalityComponent, parse_locality, |_| 1.5f32);
 
 fn parse_region(text: &str) -> IResult<&str, &str> {
-    parse_fst(&REGIONS_FST, FstMatchMode::GreedyLevenshtein(0), text)
+    parse_fst(&regions_fst(), FstMatchMode::GreedyLevenshtein(0), text)
 }
 
 define_component!(RegionComponent, parse_region, |_| 1.0f32);
 
 fn parse_country(text: &str) -> IResult<&str, &str> {
-    parse_fst(&COUNTRIES_FST, FstMatchMode::GreedyLevenshtein(0), text)
+    parse_fst(&countries_fst(), FstMatchMode::GreedyLevenshtein(0), text)
 }
 
 define_component!(CountryComponent, parse_country, |_| 1.0f32);
@@ -534,7 +503,7 @@ impl QueryComponent for PlaceNameComponent {
     }
 
     fn penalty_mult(&self) -> f32 {
-        if BRICK_AND_MORTAR_WORDS.contains(&self.text.to_lowercase()) {
+        if brick_and_mortar_words().contains(&self.text.to_lowercase()) {
             1.1f32
         } else {
             0.75f32 * 0.9f32.powi(self.text.split_whitespace().count() as i32)
