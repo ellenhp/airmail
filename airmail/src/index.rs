@@ -82,6 +82,10 @@ impl AirmailIndex {
             .unwrap()
     }
 
+    pub fn field_s2cell(&self) -> tantivy::schema::Field {
+        self.tantivy_index.schema().get_field(FIELD_S2CELL).unwrap()
+    }
+
     pub fn field_region(&self) -> tantivy::schema::Field {
         self.tantivy_index.schema().get_field(FIELD_REGION).unwrap()
     }
@@ -192,9 +196,17 @@ impl AirmailIndex {
                 .get_all(self.field_locality())
                 .filter_map(|v| v.as_text())
                 .collect();
+            let s2cell = doc
+                .get_first(self.field_s2cell())
+                .unwrap()
+                .as_u64()
+                .unwrap();
+            let cellid = s2::cellid::CellID(s2cell);
+            let latlng = s2::latlng::LatLng::from(cellid);
+
             println!(
-                "house_num: {:?}, road: {:?}, unit: {:?}, locality: {:?}",
-                house_num, road, unit, locality
+                "house_num: {:?}, road: {:?}, unit: {:?}, locality: {:?}, latlng: {:?}",
+                house_num, road, unit, locality, latlng
             );
         }
 
