@@ -1,8 +1,9 @@
 use std::error::Error;
 
 use airmail_common::categories::PoiCategory;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AirmailPoi {
     pub name: Vec<String>,
     pub source: String,

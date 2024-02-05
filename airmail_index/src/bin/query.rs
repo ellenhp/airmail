@@ -38,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!();
         if let Some(results) = results {
             for result in &results {
-                println!("  - {}", result);
+                println!("  - {:?}", result);
             }
             println!("{} results found in {:?}", results.len(), start.elapsed());
         } else {

@@ -74,8 +74,8 @@ pub(super) fn permute_housenum(housenum: &str) -> Result<Vec<String>, Box<dyn Er
 }
 
 pub(super) fn permute_road(road: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    let mut permutations = Vec::new();
     let road = sanitize(road);
+    let mut permutations = vec![road.clone()];
     // This may be a bad way of handling it, I don't know enough about non-ascii whitespace to be sure.
     let road_components: Vec<Vec<String>> = road
         .split_whitespace()

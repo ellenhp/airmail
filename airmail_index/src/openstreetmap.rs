@@ -152,10 +152,13 @@ pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Err
         },
     )?;
 
+    println!("Beginning second pass. Expect fewer log messages. Indexing is still progressing.");
+
     let file = File::open(pbf_path)?;
     let reader = osmpbf::reader::ElementReader::new(file);
     let ways_of_interest = ways_of_interest.into_iter().collect::<HashMap<_, _>>();
     reader.for_each(|obj| {
+        // FIXME: This could be a node?
         if let Element::Way(way) = obj {
             if ways_of_interest.contains_key(&way.id()) {
                 let tags = ways_of_interest.get(&way.id()).unwrap();
