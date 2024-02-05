@@ -4,7 +4,10 @@ use crate::{
     common::{query_sep, query_term},
     fst::parse_fst,
 };
-use airmail_common::{dicts::*, fst::FstMatchMode};
+use airmail_common::{
+    dicts::*,
+    fst::{search_fst, FstMatchMode},
+};
 use nom::{bytes::complete::take_while, IResult};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -185,8 +188,6 @@ define_component!(
     |_| 1.0f32
 );
 
-// define_component!(HouseNameComponent);
-
 fn parse_house_number(text: &str) -> IResult<&str, &str> {
     // TODO: This should be more general. Not all house numbers are numbers.
     take_while(|c: char| c.is_ascii_digit())(text)
@@ -307,11 +308,89 @@ fn parse_sublocality(text: &str) -> IResult<&str, &str> {
 
 define_component!(SublocalityComponent, parse_sublocality, |_| 0.9f32);
 
-fn parse_locality(text: &str) -> IResult<&str, &str> {
-    parse_fst(&localities_fst(), FstMatchMode::GreedyLevenshtein(0), text)
+#[derive(Debug, Clone)]
+pub struct LocalityComponent {
+    text: String,
 }
 
-define_component!(LocalityComponent, parse_locality, |_| 1.5f32);
+impl LocalityComponent {
+    fn new(text: String) -> Self {
+        Self { text }
+    }
+
+    pub fn parse(text: &str) -> Vec<(Self, &str)> {
+        let mut scenarios = Vec::new();
+        let mut substring_len = if let Ok((_, token)) = query_term(text) {
+            token.len()
+        } else {
+            return scenarios;
+        };
+
+        scenarios.push((
+            Self::new(text[..substring_len].to_string()),
+            &text[substring_len..],
+        ));
+
+        let mut sep_len = if let Ok((_, sep)) = query_sep(&text[substring_len..]) {
+            sep.len()
+        } else {
+            return scenarios;
+        };
+
+        loop {
+            substring_len += if let Ok((_, token)) = query_term(&text[substring_len + sep_len..]) {
+                if token.is_empty() {
+                    break;
+                }
+                token.len()
+            } else {
+                break;
+            };
+            substring_len += sep_len;
+            scenarios.push((
+                Self::new(text[..substring_len].to_string()),
+                &text[substring_len..],
+            ));
+            if let Ok((_, sep)) = query_sep(&text[substring_len..]) {
+                sep_len = sep.len();
+            } else {
+                break;
+            }
+        }
+        return scenarios;
+    }
+
+    pub fn parse_boxed(text: &str) -> Vec<(Arc<dyn QueryComponent>, &str)> {
+        Self::parse(text)
+            .into_iter()
+            .map(|(component, remainder)| {
+                (Arc::new(component) as Arc<dyn QueryComponent>, remainder)
+            })
+            .collect()
+    }
+}
+
+impl QueryComponent for LocalityComponent {
+    fn text(&self) -> &str {
+        &self.text
+    }
+
+    fn penalty_mult(&self) -> f32 {
+        if search_fst(localities_fst(), self.text.clone(), 0, false) {
+            1.5f32
+        } else {
+            0.75f32
+        }
+    }
+
+    fn debug_name(&self) -> &'static str {
+        "LocalityComponent"
+    }
+
+    fn component_type(&self) -> QueryComponentType {
+        QueryComponentType::LocalityComponent
+    }
+}
 
 fn parse_region(text: &str) -> IResult<&str, &str> {
     parse_fst(&regions_fst(), FstMatchMode::GreedyLevenshtein(0), text)

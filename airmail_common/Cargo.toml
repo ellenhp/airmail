@@ -7,6 +7,7 @@ edition = "2021"
 cached = "0.48.1"
 fst = { version = "0.4.7", features = ["levenshtein"] }
 lazy_static = "1.4.0"
+deunicode = "1.4.2"
 
 [build-dependencies]
 deunicode = "1.4.2"

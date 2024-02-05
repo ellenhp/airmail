@@ -2,8 +2,8 @@ use airmail_parser::{component::QueryComponentType, query::QueryScenario};
 use tantivy::{
     collector::TopDocs,
     directory::MmapDirectory,
-    query::{BooleanQuery, PhrasePrefixQuery, Query, TermQuery},
-    schema::{IndexRecordOption, Schema, INDEXED, STORED, TEXT},
+    query::{BooleanQuery, FuzzyTermQuery, PhrasePrefixQuery, Query},
+    schema::{FacetOptions, Schema, INDEXED, STORED, TEXT},
     Term,
 };
 
@@ -11,6 +11,7 @@ use crate::poi::AirmailPoi;
 
 // Field name keys.
 pub const FIELD_NAME: &str = "name";
+pub const FIELD_SOURCE: &str = "source";
 pub const FIELD_CATEGORY: &str = "category";
 pub const FIELD_HOUSE_NUMBER: &str = "house_number";
 pub const FIELD_ROAD: &str = "road";
@@ -18,6 +19,7 @@ pub const FIELD_UNIT: &str = "unit";
 pub const FIELD_LOCALITY: &str = "locality";
 pub const FIELD_REGION: &str = "region";
 pub const FIELD_S2CELL: &str = "s2cell";
+pub const FIELD_TAGS: &str = "tags";
 
 pub struct AirmailIndex {
     tantivy_index: tantivy::Index,
@@ -26,6 +28,8 @@ pub struct AirmailIndex {
 fn query_for_terms(
     field: tantivy::schema::Field,
     terms: Vec<&str>,
+    is_prefix: bool,
+    distance: u8,
 ) -> Result<Box<dyn Query>, Box<dyn std::error::Error>> {
     if terms.len() > 1 {
         Ok(Box::new(PhrasePrefixQuery::new(
@@ -35,10 +39,19 @@ fn query_for_terms(
                 .collect(),
         )))
     } else {
-        Ok(Box::new(TermQuery::new(
-            Term::from_field_text(field, terms[0]),
-            IndexRecordOption::Basic,
-        )))
+        if is_prefix {
+            Ok(Box::new(FuzzyTermQuery::new_prefix(
+                Term::from_field_text(field, terms[0]),
+                distance,
+                true,
+            )))
+        } else {
+            Ok(Box::new(FuzzyTermQuery::new(
+                Term::from_field_text(field, terms[0]),
+                distance,
+                true,
+            )))
+        }
     }
 }
 
@@ -46,7 +59,9 @@ impl AirmailIndex {
     fn schema() -> tantivy::schema::Schema {
         let mut schema_builder = Schema::builder();
         let _ = schema_builder.add_text_field(FIELD_NAME, TEXT | STORED);
-        let _ = schema_builder.add_text_field(FIELD_CATEGORY, TEXT | STORED);
+        let _ = schema_builder.add_text_field(FIELD_SOURCE, TEXT | STORED);
+        let _ =
+            schema_builder.add_facet_field(FIELD_CATEGORY, FacetOptions::default().set_stored());
         let _ = schema_builder.add_text_field(FIELD_HOUSE_NUMBER, TEXT | STORED);
         let _ = schema_builder.add_text_field(FIELD_ROAD, TEXT | STORED);
         let _ = schema_builder.add_text_field(FIELD_UNIT, TEXT | STORED);
@@ -110,7 +125,7 @@ impl AirmailIndex {
     }
 
     pub fn writer(&mut self) -> Result<AirmailIndexWriter, Box<dyn std::error::Error>> {
-        let tantivy_writer = self.tantivy_index.writer(50_000_000)?;
+        let tantivy_writer = self.tantivy_index.writer(200_000_000)?;
         let writer = AirmailIndexWriter {
             tantivy_writer,
             schema: self.tantivy_index.schema(),
@@ -122,8 +137,15 @@ impl AirmailIndex {
         let tantivy_reader = self.tantivy_index.reader()?;
         let searcher = tantivy_reader.searcher();
         let mut queries: Vec<Box<dyn Query>> = Vec::new();
-        for component in &query.as_vec() {
-            let terms: Vec<&str> = component.text().split_whitespace().collect();
+        let query_vec = query.as_vec();
+        for (i, component) in query_vec.iter().enumerate() {
+            let is_prefix = i == query_vec.len() - 1;
+            let terms: Vec<String> = component
+                .text()
+                .split_whitespace()
+                .map(|term| term.to_lowercase())
+                .collect();
+            let term_strs = terms.iter().map(|s| s.as_str()).collect();
             if terms.is_empty() {
                 continue;
             }
@@ -137,11 +159,16 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::HouseNumberComponent => {
-                    queries.push(query_for_terms(self.field_house_number(), terms)?);
+                    queries.push(query_for_terms(
+                        self.field_house_number(),
+                        term_strs,
+                        is_prefix,
+                        0, // Never fuzzy match house numbers.
+                    )?);
                 }
 
                 QueryComponentType::RoadComponent => {
-                    queries.push(query_for_terms(self.field_road(), terms)?);
+                    queries.push(query_for_terms(self.field_road(), term_strs, is_prefix, 1)?);
                 }
 
                 QueryComponentType::IntersectionComponent => {
@@ -149,15 +176,25 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::SublocalityComponent => {
-                    // No-op
+                    // No-op, and probably always will be. "Downtown" is very subjective, for example.
                 }
 
                 QueryComponentType::LocalityComponent => {
-                    queries.push(query_for_terms(self.field_locality(), terms)?);
+                    queries.push(query_for_terms(
+                        self.field_locality(),
+                        term_strs,
+                        is_prefix,
+                        1,
+                    )?);
                 }
 
                 QueryComponentType::RegionComponent => {
-                    queries.push(query_for_terms(self.field_region(), terms)?);
+                    queries.push(query_for_terms(
+                        self.field_region(),
+                        term_strs,
+                        is_prefix,
+                        1,
+                    )?);
                 }
 
                 QueryComponentType::CountryComponent => {
@@ -165,7 +202,21 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::PlaceNameComponent => {
-                    // No-op
+                    let mut new_terms = Vec::new();
+                    for term in &terms {
+                        if term.ends_with("'s") {
+                            new_terms.push(term.trim_end_matches("'s"));
+                        } else if term.ends_with("s") {
+                            new_terms.push(term.trim_end_matches('s'));
+                        }
+                    }
+                    let original = query_for_terms(self.field_name(), term_strs, is_prefix, 1)?;
+                    if new_terms.is_empty() {
+                        queries.push(original);
+                    } else {
+                        let modified = query_for_terms(self.field_name(), new_terms, is_prefix, 1)?;
+                        queries.push(Box::new(BooleanQuery::union(vec![original, modified])));
+                    }
                 }
 
                 QueryComponentType::IntersectionJoinWordComponent => {
@@ -176,8 +227,7 @@ impl AirmailIndex {
 
         let query = BooleanQuery::intersection(queries);
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
-        println!("Found {} hits", top_docs.len());
-        let results = Vec::new();
+        let mut results = Vec::new();
         for (_score, doc_address) in top_docs {
             let doc = searcher.doc(doc_address)?;
             let house_num: Vec<&str> = doc
@@ -203,11 +253,15 @@ impl AirmailIndex {
                 .unwrap();
             let cellid = s2::cellid::CellID(s2cell);
             let latlng = s2::latlng::LatLng::from(cellid);
+            let names = doc
+                .get_all(self.field_name())
+                .filter_map(|v| v.as_text())
+                .collect::<Vec<&str>>();
 
-            println!(
-                "house_num: {:?}, road: {:?}, unit: {:?}, locality: {:?}, latlng: {:?}",
-                house_num, road, unit, locality, latlng
-            );
+            results.push(format!(
+                "names: {:?}, house_num: {:?}, road: {:?}, unit: {:?}, locality: {:?}, latlng: {:?}",
+                names, house_num, road, unit, locality, latlng
+            ));
         }
 
         Ok(results)
@@ -224,6 +278,10 @@ impl AirmailIndexWriter {
         let mut doc = tantivy::Document::default();
         for name in poi.name {
             doc.add_text(self.schema.get_field(FIELD_NAME).unwrap(), name);
+        }
+        doc.add_text(self.schema.get_field(FIELD_SOURCE).unwrap(), poi.source);
+        for category in poi.category {
+            doc.add_facet(self.schema.get_field(FIELD_CATEGORY).unwrap(), &category);
         }
         for house_number in poi.house_number {
             doc.add_text(

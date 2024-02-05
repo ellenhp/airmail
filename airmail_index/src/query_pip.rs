@@ -11,6 +11,7 @@ pub struct PipAdminArea {
 #[derive(Debug, Clone, Deserialize)]
 pub struct PipResponse {
     pub locality: Option<Vec<PipAdminArea>>,
+    pub neighbourhood: Option<Vec<PipAdminArea>>,
     pub county: Option<Vec<PipAdminArea>>,
     pub region: Option<Vec<PipAdminArea>>,
     pub country: Option<Vec<PipAdminArea>>,
@@ -20,8 +21,8 @@ thread_local! {
     static HTTP_CLIENT: reqwest::Client = reqwest::Client::new();
 }
 
-pub async fn query_pip(lat: f64, lng: f64) -> Result<PipResponse, Box<dyn Error>> {
-    let url = format!("http://localhost:3102/{}/{}", lng, lat);
+pub async fn query_pip(lat: f64, lng: f64, port: usize) -> Result<PipResponse, Box<dyn Error>> {
+    let url = format!("http://localhost:{}/{}/{}", port, lng, lat);
     let response = HTTP_CLIENT.with(|client| client.get(&url).send()).await?;
     if response.status() != 200 {
         return Err(format!("HTTP error: {}", response.status()).into());

@@ -6,8 +6,7 @@ use regex::Regex;
 lazy_static! {
     static ref ASCII_WHITESPACE_RE: Regex = Regex::new(r"[ \t\r\n]+").unwrap();
     static ref STREET_SUFFIXES_SUBS: SubstitutionDict =
-        SubstitutionDict::from_str(include_str!("../../permute_dicts/en/street_types.txt"))
-            .unwrap();
+        SubstitutionDict::from_str(include_str!("../permute_dicts/en/street_types.txt")).unwrap();
 }
 
 pub(super) struct SubstitutionDict {

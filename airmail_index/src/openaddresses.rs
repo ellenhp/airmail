@@ -1,3 +1,4 @@
+use airmail_common::categories::PoiCategory;
 use geojson::{GeoJson, Value};
 
 use super::{
@@ -12,7 +13,7 @@ pub fn parse_oa_geojson(
         GeoJson::Feature(feature) => {
             let properties = feature.properties.as_ref().unwrap();
             let name = vec![];
-            let category = vec![];
+            let category = vec![PoiCategory::Address];
             let house_number =
                 if let Some(house_num) = properties.get("number").map(|v| v.as_str()).flatten() {
                     permute_housenum(house_num)?
@@ -43,12 +44,14 @@ pub fn parse_oa_geojson(
             };
             Ok(AirmailPoi::new(
                 name,
+                "openaddresses".to_string(),
                 category,
                 house_number,
                 road,
                 unit,
                 lat,
                 lng,
+                vec![], // OpenAddresses doesn't have tags. :(
             )?)
         }
         _ => Err("Not a feature".into()),

@@ -161,16 +161,19 @@ fn housenum_not_before_placename(scenario: &QueryScenario) -> f32 {
 
 fn naked_road_unlikely(scenario: &QueryScenario) -> f32 {
     let mut has_road = false;
-    let mut has_house_num = false;
+    let mut has_other = false;
     for component in scenario.as_vec() {
         if component.component_type() == QueryComponentType::RoadComponent {
             has_road = true;
         }
         if component.component_type() == QueryComponentType::HouseNumberComponent {
-            has_house_num = true;
+            has_other = true;
+        }
+        if component.component_type() == QueryComponentType::PlaceNameComponent {
+            has_other = true;
         }
     }
-    if has_road && !has_house_num {
+    if has_road && !has_other {
         return 0.05;
     }
     1.0
