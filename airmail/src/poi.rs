@@ -15,6 +15,8 @@ pub struct AirmailPoi {
     pub region: Vec<String>,
     pub country: Vec<String>,
     pub s2cell: u64,
+    pub lat: f64,
+    pub lng: f64,
     pub tags: Vec<(String, String)>,
 }
 
@@ -46,6 +48,8 @@ impl AirmailPoi {
             region: Vec::new(),
             country: Vec::new(),
             s2cell,
+            lat,
+            lng,
             tags,
         })
     }
