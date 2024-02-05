@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use airmail::{index::AirmailIndex, poi::AirmailPoi};
+use airmail_parser::query::QueryScenario;
 use axum::{
     extract::{Query, State},
     routing::get,
@@ -8,13 +9,20 @@ use axum::{
 };
 use clap::Parser;
 use deunicode::deunicode;
-use log::trace;
-use serde_json::Value;
+use log::{debug, trace};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 #[derive(Debug, Parser)]
 struct Args {
     #[clap(long, short)]
     index_path: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Response {
+    metadata: HashMap<String, Value>,
+    features: Vec<AirmailPoi>,
 }
 
 async fn search(
@@ -27,7 +35,8 @@ async fn search(
     let parsed = airmail_parser::query::Query::parse(&query);
 
     let scenarios = parsed.scenarios();
-    let results: Option<Vec<AirmailPoi>> = scenarios
+    let start = std::time::Instant::now();
+    let mut results: Vec<(AirmailPoi, f32, QueryScenario)> = scenarios
         .iter()
         .take(10)
         .filter_map(|scenario| {
@@ -35,16 +44,63 @@ async fn search(
             if results.is_empty() {
                 None
             } else {
-                Some(results)
+                Some(
+                    results
+                        .iter()
+                        .map(|(poi, score)| {
+                            (
+                                poi.clone(),
+                                *score * scenario.penalty_mult(),
+                                scenario.clone(),
+                            )
+                        })
+                        .collect::<Vec<_>>(),
+                )
             }
         })
-        .next();
+        .take(3)
+        .flatten()
+        .collect();
 
-    if let Some(results) = results {
-        Json(serde_json::to_value(results).unwrap())
-    } else {
-        Json(serde_json::Value::Array(vec![]))
+    results.sort_by(|(_, a, _), (_, b, _)| b.partial_cmp(a).unwrap());
+
+    println!("{} results found in {:?}", results.len(), start.elapsed());
+
+    let mut response = Response {
+        metadata: HashMap::new(),
+        features: results
+            .clone()
+            .iter()
+            .map(|(results, _, _)| results.clone())
+            .collect::<Vec<AirmailPoi>>(),
+    };
+
+    response
+        .metadata
+        .insert("query".to_string(), Value::String(query));
+    if params.get("debug").is_some() {
+        // response.metadata.insert(
+        //     "parsed".to_string(),
+        //     results
+        //         .iter()
+        //         .map(|(_, scenario)| {
+        //             Value::Array(
+        //                 scenario
+        //                     .as_vec()
+        //                     .iter()
+        //                     .map(|component| {
+        //                         let text = Value::String(component.text().to_string());
+        //                         let component = Value::String(component.debug_name().to_string());
+        //                         json!({"text": text, "component": component})
+        //                     })
+        //                     .collect(),
+        //             )
+        //         })
+        //         .unwrap_or(Value::Null),
+        // );
     }
+
+    Json(serde_json::to_value(response).unwrap())
 }
 
 #[tokio::main]

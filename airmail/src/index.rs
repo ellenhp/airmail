@@ -3,8 +3,9 @@ use serde_json::Value;
 use tantivy::{
     collector::TopDocs,
     directory::MmapDirectory,
-    query::{BooleanQuery, FuzzyTermQuery, PhrasePrefixQuery, Query},
-    schema::{FacetOptions, Schema, INDEXED, STORED, TEXT},
+    query::{BooleanQuery, DisjunctionMaxQuery, FuzzyTermQuery, PhraseQuery, Query, TermQuery},
+    query_grammar::Occur,
+    schema::{FacetOptions, IndexRecordOption, Schema, INDEXED, STORED, TEXT},
     Term,
 };
 
@@ -32,29 +33,52 @@ fn query_for_terms(
     terms: Vec<&str>,
     is_prefix: bool,
     distance: u8,
-) -> Result<Box<dyn Query>, Box<dyn std::error::Error>> {
-    if terms.len() > 1 {
-        Ok(Box::new(PhrasePrefixQuery::new(
-            terms
-                .iter()
-                .map(|token| Term::from_field_text(field, token))
-                .collect(),
-        )))
-    } else {
-        if is_prefix {
-            Ok(Box::new(FuzzyTermQuery::new_prefix(
-                Term::from_field_text(field, terms[0]),
-                distance,
-                true,
-            )))
-        } else {
-            Ok(Box::new(FuzzyTermQuery::new(
-                Term::from_field_text(field, terms[0]),
-                distance,
-                true,
-            )))
+) -> Result<Vec<Box<dyn Query>>, Box<dyn std::error::Error>> {
+    let mut queries: Vec<Box<dyn Query>> = Vec::new();
+    let mut phrase = Vec::new();
+    for (i, term) in terms.iter().enumerate() {
+        let mut this_term_queries: Vec<(Occur, Box<dyn Query>)> = Vec::new();
+        if term.len() < 3 {
+            continue;
         }
+        phrase.push(Term::from_field_text(field, term));
+        this_term_queries.push((
+            Occur::Should,
+            Box::new(TermQuery::new(
+                Term::from_field_text(field, term),
+                IndexRecordOption::Basic,
+            )),
+        ));
+        if distance != 0 {
+            if i == terms.len() - 1 && is_prefix {
+                this_term_queries.push((
+                    Occur::Must,
+                    Box::new(FuzzyTermQuery::new_prefix(
+                        Term::from_field_text(field, term),
+                        distance,
+                        true,
+                    )),
+                ));
+            } else {
+                this_term_queries.push((
+                    Occur::Must,
+                    Box::new(FuzzyTermQuery::new(
+                        Term::from_field_text(field, term),
+                        distance,
+                        true,
+                    )),
+                ));
+            };
+        }
+        queries.push(Box::new(BooleanQuery::new(this_term_queries)));
     }
+    if phrase.len() > 1 {
+        queries.push(Box::new(PhraseQuery::new(phrase)));
+    }
+    let queries: Vec<Box<dyn Query>> = vec![Box::new(DisjunctionMaxQuery::with_tie_breaker(
+        queries, 5.0,
+    ))];
+    Ok(queries)
 }
 
 impl AirmailIndex {
@@ -148,7 +172,7 @@ impl AirmailIndex {
     pub fn search(
         &self,
         query: &QueryScenario,
-    ) -> Result<Vec<AirmailPoi>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<(AirmailPoi, f32)>, Box<dyn std::error::Error>> {
         let tantivy_reader = self.tantivy_index.reader()?;
         let searcher = tantivy_reader.searcher();
         let mut queries: Vec<Box<dyn Query>> = Vec::new();
@@ -174,7 +198,7 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::HouseNumberComponent => {
-                    queries.push(query_for_terms(
+                    queries.extend(query_for_terms(
                         self.field_house_number(),
                         term_strs,
                         is_prefix,
@@ -183,7 +207,7 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::RoadComponent => {
-                    queries.push(query_for_terms(self.field_road(), term_strs, is_prefix, 1)?);
+                    queries.extend(query_for_terms(self.field_road(), term_strs, is_prefix, 1)?);
                 }
 
                 QueryComponentType::IntersectionComponent => {
@@ -195,7 +219,7 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::LocalityComponent => {
-                    queries.push(query_for_terms(
+                    queries.extend(query_for_terms(
                         self.field_locality(),
                         term_strs,
                         is_prefix,
@@ -204,7 +228,7 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::RegionComponent => {
-                    queries.push(query_for_terms(
+                    queries.extend(query_for_terms(
                         self.field_region(),
                         term_strs,
                         is_prefix,
@@ -213,7 +237,7 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::CountryComponent => {
-                    queries.push(query_for_terms(
+                    queries.extend(query_for_terms(
                         self.field_country(),
                         term_strs,
                         is_prefix,
@@ -226,16 +250,13 @@ impl AirmailIndex {
                     for term in &terms {
                         if term.ends_with("'s") {
                             new_terms.push(term.trim_end_matches("'s"));
-                        } else if term.ends_with("s") {
-                            new_terms.push(term.trim_end_matches('s'));
                         }
                     }
                     let original = query_for_terms(self.field_name(), term_strs, is_prefix, 1)?;
-                    if new_terms.is_empty() {
-                        queries.push(original);
-                    } else {
-                        let modified = query_for_terms(self.field_name(), new_terms, is_prefix, 1)?;
-                        queries.push(Box::new(BooleanQuery::union(vec![original, modified])));
+                    queries.extend(original);
+                    if !new_terms.is_empty() {
+                        let modified = query_for_terms(self.field_name(), new_terms, false, 1)?;
+                        queries.extend(modified);
                     }
                 }
 
@@ -245,10 +266,10 @@ impl AirmailIndex {
             }
         }
 
-        let query = BooleanQuery::intersection(queries);
+        let query = DisjunctionMaxQuery::with_tie_breaker(queries, 5.0);
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
         let mut results = Vec::new();
-        for (_score, doc_address) in top_docs {
+        for (score, doc_address) in top_docs {
             let doc = searcher.doc(doc_address)?;
             let house_num: Option<&str> = doc
                 .get_first(self.field_house_number())
@@ -312,7 +333,7 @@ impl AirmailIndex {
             poi.locality = locality.iter().map(|s| s.to_string()).collect();
             poi.region = region.map(|s| s.to_string()).into_iter().collect();
             poi.country = country.map(|s| s.to_string()).into_iter().collect();
-            results.push(poi);
+            results.push((poi, score));
         }
 
         Ok(results)

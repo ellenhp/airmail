@@ -243,7 +243,7 @@ impl RoadComponent {
                 // Don't even bother returning penalized scenarios because suffixes make things very unambiguous.
                 let component = Self::new(
                     text[..substring_len + sep_len + next_token.len()].to_string(),
-                    2.0f32,
+                    1.2f32,
                 );
                 return vec![(component, remainder)];
             }
@@ -379,7 +379,7 @@ impl QueryComponent for LocalityComponent {
         if search_fst(localities_fst(), self.text.clone(), 0, false) {
             1.5f32
         } else {
-            0.75f32
+            0.5f32
         }
     }
 

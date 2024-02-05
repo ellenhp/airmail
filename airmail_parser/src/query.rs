@@ -211,6 +211,21 @@ mod tests {
     }
 
     #[test]
+    fn parse_burger_place() {
+        let now = Instant::now();
+        let query = Query::parse("next level");
+        println!("took {:?}", now.elapsed());
+        let scenarios = query.scenarios();
+        let scenario = scenarios.iter().next().unwrap();
+        dbg!(&scenario);
+        assert_eq!(scenario.components.len(), 1);
+        assert_eq!(
+            scenario.components[0].as_ref().debug_name(),
+            "PlaceNameComponent"
+        );
+    }
+
+    #[test]
     fn sublocality_penalized_over_road_suffix() {
         let now = Instant::now();
         let query = Query::parse("100 fremont avenue north seattle");
