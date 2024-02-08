@@ -377,7 +377,7 @@ impl QueryComponent for LocalityComponent {
 
     fn penalty_mult(&self) -> f32 {
         if search_fst(localities_fst(), self.text.clone(), 0, false) {
-            1.5f32
+            1.1f32
         } else {
             0.5f32
         }
@@ -585,7 +585,7 @@ impl QueryComponent for PlaceNameComponent {
         if brick_and_mortar_words().contains(&self.text.to_lowercase()) {
             1.1f32
         } else {
-            0.75f32 * 0.9f32.powi(self.text.split_whitespace().count() as i32)
+            0.99f32.powi(self.text.split_whitespace().count() as i32)
         }
     }
 

@@ -15,4 +15,4 @@ Cargo.lock
 
 **.geojson
 
-index
+data/

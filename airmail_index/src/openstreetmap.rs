@@ -1,21 +1,27 @@
-use std::{collections::HashMap, fs::File};
+use std::collections::HashMap;
 
 use airmail::poi::AirmailPoi;
 use airmail_common::categories::{
     AmenityPoiCategory, EmergencyPoiCategory, FoodPoiCategory, PoiCategory, ShopPoiCategory,
 };
-use geo::{Centroid, Coord, LineString, Polygon};
-use log::warn;
-use osmpbf::Element;
+use geo::{Centroid, Coord, LineString, MultiPoint, Point, Polygon};
+use log::{debug, warn};
+use turbosm::{
+    element::{Relation, RelationMember, Way},
+    Turbosm,
+};
 
 use crate::substitutions::{permute_housenum, permute_road, permute_unit};
 
-fn tags_to_poi(tags: &HashMap<&str, &str>, lat: f64, lng: f64) -> Option<AirmailPoi> {
+fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<AirmailPoi> {
+    if tags.is_empty() {
+        return None;
+    }
     if tags.contains_key("highway") {
         return None;
     }
 
-    let category = tags.get("amenity").map(|s| match *s {
+    let category = tags.get("amenity").map(|s| match s.as_str() {
         "fast_food" | "food_court" | "cafe" | "pub" | "restaurant" => {
             PoiCategory::Shop(ShopPoiCategory::Food(FoodPoiCategory::Restaurant(None)))
         }
@@ -74,115 +80,106 @@ fn tags_to_poi(tags: &HashMap<&str, &str>, lat: f64, lng: f64) -> Option<Airmail
             lat,
             lng,
             tags.iter()
-                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .filter_map(|(k, v)| {
+                    if k.starts_with("addr:") || v.len() > 1024 {
+                        None
+                    } else {
+                        Some((k.to_string(), v.to_string()))
+                    }
+                })
                 .collect(),
         )
         .unwrap(),
     )
 }
 
+fn way_centroid(way: &Way) -> Option<(f64, f64)> {
+    let node_positions: Vec<Coord> = way
+        .nodes()
+        .iter()
+        .filter_map(|node| Some(Coord::from((node.lng(), node.lat()))))
+        .collect();
+
+    if node_positions.is_empty() {
+        debug!("Empty node_positions: {:?}", way.id());
+    }
+    let linestring = LineString::new(node_positions);
+    let polygon = Polygon::new(linestring, vec![]);
+    let centroid = polygon.centroid();
+    if centroid.is_none() {
+        debug!("No centroid for way: {:?}", way.id());
+    }
+    let centroid = centroid?;
+    Some((centroid.x(), centroid.y()))
+}
+
+fn index_way(tags: &HashMap<String, String>, way: &Way) -> Option<AirmailPoi> {
+    let (lng, lat) = way_centroid(way)?;
+    tags_to_poi(&tags, lat, lng)
+}
+
+fn relation_centroid(relation: &Relation, level: u32) -> Option<(f64, f64)> {
+    let mut points = Vec::new();
+    if level > 3 {
+        debug!("Skipping relation with level > 10: {:?}", relation.id());
+        return None;
+    }
+    for member in relation.members() {
+        match member {
+            RelationMember::Node(_, node) => {
+                points.push(Point::new(node.lng(), node.lat()));
+            }
+            RelationMember::Way(_, way) => {
+                if let Some(centroid) = way_centroid(&way) {
+                    points.push(Point::new(centroid.0, centroid.1));
+                }
+            }
+            RelationMember::Relation(_, relation) => {
+                if let Some(centroid) = relation_centroid(&relation, level + 1) {
+                    points.push(Point::new(centroid.0, centroid.1));
+                } else {
+                    debug!("Skipping relation with no centroid: {:?}", relation.id());
+                }
+            }
+        }
+    }
+    let multipoint = MultiPoint::from(points);
+    let centroid = multipoint.centroid()?;
+    Some((centroid.x(), centroid.y()))
+}
+
 pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Error>>>(
-    pbf_path: &str,
+    db_path: &str,
     callback: &CB,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let file = File::open(pbf_path)?;
-    let reader = osmpbf::reader::ElementReader::new(file);
-    let ways_of_interest = reader.par_map_reduce(
-        |obj| match obj {
-            osmpbf::Element::Node(node) => {
-                let tags = node.tags().clone().collect();
-                let lat = node.lat();
-                let lng = node.lon();
-                if let Some(poi) = tags_to_poi(&tags, lat, lng) {
-                    if let Err(err) = callback(poi) {
-                        warn!("Error: {}", err);
-                    }
-                }
-                vec![]
+    let mut osm = Turbosm::open(db_path).unwrap();
+    println!("Processing nodes");
+    osm.process_all_nodes(|node| {
+        if let Some(poi) = tags_to_poi(node.tags(), node.lat(), node.lng()) {
+            if let Err(err) = callback(poi) {
+                warn!("Error from callback: {}", err);
             }
-            osmpbf::Element::DenseNode(densenode) => {
-                let tags = densenode.tags().clone().collect();
-                let lat = densenode.lat();
-                let lng = densenode.lon();
-                if let Some(poi) = tags_to_poi(&tags, lat, lng) {
-                    if let Err(err) = callback(poi) {
-                        warn!("Error: {}", err);
-                    }
-                }
-                vec![]
+        }
+    })?;
+    println!("Processing ways");
+    osm.process_all_ways(|way| {
+        index_way(way.tags(), &way).map(|poi| {
+            if let Err(err) = callback(poi) {
+                warn!("Error from callback: {}", err);
             }
-            osmpbf::Element::Way(way) => {
-                let tags = way.tags().clone().collect();
-                let node_positions: Vec<Coord> = way
-                    .node_locations()
-                    .map(|node| Coord {
-                        x: node.lon(),
-                        y: node.lat(),
-                    })
-                    .collect();
-                if node_positions.len() < 3 {
-                    return vec![];
-                }
-                let linestring = LineString::new(node_positions);
-                let polygon = Polygon::new(linestring, vec![]);
-                let (lng, lat) = polygon.centroid().unwrap().into();
-                if let Some(poi) = tags_to_poi(&tags, lat, lng) {
-                    if let Err(err) = callback(poi) {
-                        warn!("Error: {}", err);
-                    }
-                }
-                vec![]
-            }
-            osmpbf::Element::Relation(relation) => {
-                if let Some(outer) = relation.members().next() {
-                    let tags: HashMap<String, String> = relation
-                        .tags()
-                        .map(|(a, b)| (a.to_string(), b.to_string()))
-                        .collect();
-                    return vec![(outer.member_id, tags)];
-                }
-                vec![]
-            }
-        },
-        || vec![],
-        |a, b| {
-            let mut a = a.clone();
-            a.extend(b);
-            a
-        },
-    )?;
-
-    println!("Beginning second pass. Expect fewer log messages. Indexing is still progressing.");
-
-    let file = File::open(pbf_path)?;
-    let reader = osmpbf::reader::ElementReader::new(file);
-    let ways_of_interest = ways_of_interest.into_iter().collect::<HashMap<_, _>>();
-    reader.for_each(|obj| {
-        // FIXME: This could be a node?
-        if let Element::Way(way) = obj {
-            if ways_of_interest.contains_key(&way.id()) {
-                let tags = ways_of_interest.get(&way.id()).unwrap();
-                let node_positions: Vec<Coord> = way
-                    .node_locations()
-                    .map(|node| Coord {
-                        x: node.lon(),
-                        y: node.lat(),
-                    })
-                    .collect();
-                if node_positions.len() < 3 {
-                    return;
-                }
-                let linestring = LineString::new(node_positions);
-                let polygon = Polygon::new(linestring, vec![]);
-                let (lng, lat) = polygon.centroid().unwrap().into();
-                let tags_str = tags.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
-                if let Some(poi) = tags_to_poi(&tags_str, lat, lng) {
-                    if let Err(err) = callback(poi) {
-                        warn!("Error: {}", err);
-                    }
+        });
+    })?;
+    println!("Processing relations");
+    osm.process_all_relations(|relation| {
+        let centroid = relation_centroid(&relation, 0);
+        if let Some(centroid) = centroid {
+            if let Some(poi) = tags_to_poi(relation.tags(), centroid.1, centroid.0) {
+                if let Err(err) = callback(poi) {
+                    warn!("Error from callback: {}", err);
                 }
             }
         }
     })?;
+    println!("Done");
     Ok(())
 }

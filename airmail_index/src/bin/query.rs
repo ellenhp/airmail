@@ -30,6 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if results.is_empty() {
                     None
                 } else {
+                    dbg!(scenario);
                     Some(results)
                 }
             })

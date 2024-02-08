@@ -5,7 +5,11 @@ use tantivy::{
     directory::MmapDirectory,
     query::{BooleanQuery, DisjunctionMaxQuery, FuzzyTermQuery, PhraseQuery, Query, TermQuery},
     query_grammar::Occur,
-    schema::{FacetOptions, IndexRecordOption, Schema, INDEXED, STORED, TEXT},
+    schema::{
+        FacetOptions, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED,
+        TEXT,
+    },
+    tokenizer::{LowerCaser, RawTokenizer, TextAnalyzer},
     Term,
 };
 
@@ -84,12 +88,16 @@ fn query_for_terms(
 impl AirmailIndex {
     fn schema() -> tantivy::schema::Schema {
         let mut schema_builder = Schema::builder();
+        let street_options = TextOptions::default()
+            .set_stored()
+            .set_indexing_options(TextFieldIndexing::default().set_tokenizer("street_tokenizer"));
+
         let _ = schema_builder.add_text_field(FIELD_NAME, TEXT | STORED);
         let _ = schema_builder.add_text_field(FIELD_SOURCE, TEXT | STORED);
         let _ =
             schema_builder.add_facet_field(FIELD_CATEGORY, FacetOptions::default().set_stored());
         let _ = schema_builder.add_text_field(FIELD_HOUSE_NUMBER, TEXT | STORED);
-        let _ = schema_builder.add_text_field(FIELD_ROAD, TEXT | STORED);
+        let _ = schema_builder.add_text_field(FIELD_ROAD, street_options);
         let _ = schema_builder.add_text_field(FIELD_UNIT, TEXT | STORED);
         let _ = schema_builder.add_text_field(FIELD_LOCALITY, TEXT | STORED);
         let _ = schema_builder.add_text_field(FIELD_REGION, TEXT | STORED);
@@ -150,13 +158,25 @@ impl AirmailIndex {
 
     pub fn create(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let schema = Self::schema();
+        let street_tokenizer = TextAnalyzer::builder(RawTokenizer::default())
+            .filter(LowerCaser)
+            .build();
         let tantivy_index =
             tantivy::Index::open_or_create(MmapDirectory::open(index_dir)?, schema)?;
+        tantivy_index
+            .tokenizers()
+            .register("street_tokenizer", street_tokenizer);
         Ok(Self { tantivy_index })
     }
 
     pub fn new(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let street_tokenizer = TextAnalyzer::builder(RawTokenizer::default())
+            .filter(LowerCaser)
+            .build();
         let tantivy_index = tantivy::Index::open_in_dir(index_dir)?;
+        tantivy_index
+            .tokenizers()
+            .register("street_tokenizer", street_tokenizer);
         Ok(Self { tantivy_index })
     }
 
@@ -167,6 +187,12 @@ impl AirmailIndex {
             schema: self.tantivy_index.schema(),
         };
         Ok(writer)
+    }
+
+    pub async fn merge(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let ids = self.tantivy_index.searchable_segment_ids()?;
+        self.tantivy_index.writer(200_000_000)?.merge(&ids).await?;
+        Ok(())
     }
 
     pub fn search(
@@ -189,10 +215,6 @@ impl AirmailIndex {
                 continue;
             }
             match component.component_type() {
-                QueryComponentType::CategoryComponent => {
-                    // No-op
-                }
-
                 QueryComponentType::NearComponent => {
                     // No-op
                 }
@@ -207,7 +229,19 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::RoadComponent => {
-                    queries.extend(query_for_terms(self.field_road(), term_strs, is_prefix, 1)?);
+                    if is_prefix {
+                        queries.push(Box::new(FuzzyTermQuery::new_prefix(
+                            Term::from_field_text(self.field_road(), component.text()),
+                            1,
+                            true,
+                        )));
+                    } else {
+                        queries.push(Box::new(FuzzyTermQuery::new(
+                            Term::from_field_text(self.field_road(), component.text()),
+                            1,
+                            true,
+                        )));
+                    }
                 }
 
                 QueryComponentType::IntersectionComponent => {
@@ -245,7 +279,7 @@ impl AirmailIndex {
                     )?);
                 }
 
-                QueryComponentType::PlaceNameComponent => {
+                QueryComponentType::CategoryComponent | QueryComponentType::PlaceNameComponent => {
                     let mut new_terms = Vec::new();
                     for term in &terms {
                         if term.ends_with("'s") {

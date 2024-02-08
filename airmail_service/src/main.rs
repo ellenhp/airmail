@@ -9,14 +9,14 @@ use axum::{
 };
 use clap::Parser;
 use deunicode::deunicode;
-use log::{debug, trace};
+use log::trace;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 
 #[derive(Debug, Parser)]
 struct Args {
     #[clap(long, short)]
-    index_path: String,
+    index: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,7 +107,7 @@ async fn search(
 async fn main() {
     env_logger::init();
     let args = Args::parse();
-    let index = Arc::new(AirmailIndex::new(&args.index_path).unwrap());
+    let index = Arc::new(AirmailIndex::new(&args.index).unwrap());
     let app = Router::new().route("/search", get(search).with_state(index));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
