@@ -6,7 +6,7 @@ Airmail is an extremely lightweight geocoder[^1] written in pure Rust. Built on 
 
 ### Features
 
-Airmail's killer feature is sub-100MB memory consumption for a serving instance for the full planet. The search index is memory mapped, so performance suffers on resource-constrained systems, Airmail is able to serve requests under extraordinary memory pressure. Once Airmail is ready for production use, hosting a planet-scale web maps service for a small userbase on a low-end VPS will finally be possible.
+Airmail's killer feature is sub-100MB memory consumption for a serving instance. The search index is memory mapped, so while performance suffers on resource-constrained systems, Airmail is able to serve requests under extraordinary memory pressure. Once Airmail is ready for production use, hosting a planet-scale web maps service for a small userbase on a low-end VPS will finally be possible.
 
 ### Roadmap
 
