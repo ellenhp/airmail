@@ -1,0 +1,24 @@
+[package]
+name = "turbosm"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.4.18", features = ["derive"] }
+env_logger = "0.11.1"
+log = "0.4.20"
+memmap2 = "0.9.4"
+osmpbf = "0.3.3"
+rayon = "1.8.1"
+roaring = { version = "0.10.2", features = ["serde"] }
+rustyline = "13.0.0"
+s2 = "0.0.12"
+parking_lot = "0.12.1"
+
+[[bin]]
+name = "inflate"
+
+[[bin]]
+name = "query"

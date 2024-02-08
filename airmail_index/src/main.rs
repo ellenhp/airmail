@@ -21,7 +21,7 @@ use crossbeam::channel::{Receiver, Sender};
 use futures_util::TryStreamExt;
 use geojson::GeoJson;
 use s2::{cellid::CellID, latlng::LatLng};
-use std::{collections::HashMap, env::temp_dir, error::Error, str::FromStr, sync::Arc};
+use std::{collections::HashMap, error::Error, str::FromStr, sync::Arc};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     spawn,
@@ -78,9 +78,12 @@ struct Args {
     /// Path to an OpenAddresses data file.
     #[clap(long, short)]
     openaddresses: Option<String>,
-    /// Path to an OpenStreetMap pbf file.
+    /// Path to an OpenStreetMap file in "turbosm" form. Use turbosm to convert if need be.
     #[clap(long, short)]
-    osmpbf: Option<String>,
+    turbosm: Option<String>,
+    /// Path to flat nodes file for turbosm.
+    #[clap(long, short)]
+    turbosm_nodes: Option<String>,
     /// Path to the Airmail index.
     #[clap(long, short)]
     index: String,
@@ -104,9 +107,10 @@ async fn docker_connect() -> Result<Docker, Box<dyn std::error::Error>> {
     Ok(docker)
 }
 
-async fn get_container_status(idx: usize) -> Result<ContainerStatus, Box<dyn std::error::Error>> {
-    let docker = docker_connect().await?;
-
+async fn get_container_status(
+    idx: usize,
+    docker: &Docker,
+) -> Result<ContainerStatus, Box<dyn std::error::Error>> {
     let containers = &docker
         .list_containers(Some(ListContainersOptions::<String> {
             all: true,
@@ -132,8 +136,9 @@ async fn maybe_start_pip_container(
     wof_db_path: &str,
     idx: usize,
     recreate: bool,
+    docker: &Docker,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let container_state = get_container_status(idx).await?;
+    let container_state = get_container_status(idx, docker).await?;
     if container_state == ContainerStatus::Running && !recreate {
         println!(
             "Container `airmail-pip-service-{}` is already running.",
@@ -211,18 +216,19 @@ async fn maybe_start_pip_container(
             .await?;
     }
 
-    println!("Starting container `airmail-pip-service-{}`", idx);
-    let _ = &docker
-        .start_container(
-            &format!("airmail-pip-service-{}", idx),
-            None::<StartContainerOptions<String>>,
-        )
-        .await?;
+    if get_container_status(idx, &docker).await? != ContainerStatus::Running {
+        println!("Starting container `airmail-pip-service-{}`", idx);
+        let _ = &docker
+            .start_container(
+                &format!("airmail-pip-service-{}", idx),
+                None::<StartContainerOptions<String>>,
+            )
+            .await?;
+        println!("Waiting for container to start.");
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
 
-    println!("Waiting for container to start.");
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-
-    if get_container_status(idx).await? == ContainerStatus::Running {
+    if get_container_status(idx, &docker).await? == ContainerStatus::Running {
         println!("Container `airmail-pip-service-{}` is running.", idx);
     } else {
         println!("Container `airmail-pip-service-{}` failed to start.", idx);
@@ -237,26 +243,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let args = Args::parse();
     let index_path = args.index.clone();
-    let max_pip = 4;
+    let docker = docker_connect().await?;
+    let max_pip = 8;
     for i in 0..max_pip {
-        let new_wof_file = temp_dir().join(format!("wof-{}.db", i));
-        std::fs::copy(&args.wof_db, &new_wof_file)?;
-        // We don't care if this doesn't work.
         let _ = subprocess::Exec::cmd("chcon")
             .arg("-t")
             .arg("container_file_t")
-            .arg(&new_wof_file)
+            .arg(&args.wof_db)
             .join();
-        maybe_start_pip_container(&new_wof_file.to_string_lossy(), i, args.recreate).await?;
+        maybe_start_pip_container(&args.wof_db, i, args.recreate, &docker).await?;
     }
 
-    if let Some(osmpbf_path) = args.osmpbf {
+    if let Some(turbosm_path) = args.turbosm {
         let mut nonblocking_join_handles = Vec::new();
         let (no_admin_sender, no_admin_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
             crossbeam::channel::bounded(1024);
         let (to_index_sender, to_index_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
             crossbeam::channel::bounded(1024);
-        for _ in 0..16 {
+        for _ in 0..128 {
             let no_admin_receiver = no_admin_receiver.clone();
             let to_index_sender = to_index_sender.clone();
             nonblocking_join_handles.push(spawn(async move {
@@ -278,7 +282,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     if !sent {
-                        println!("Failed to populate admin areas after 5 attempts.");
+                        println!("Failed to populate admin areas after 5 attempts. Skipping POI.");
                     }
                 }
             }));
@@ -289,6 +293,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let count = count.clone();
 
         let indexing_join_handle = spawn(async move {
+            if !std::path::Path::new(&index_path).exists() {
+                std::fs::create_dir(&index_path).unwrap();
+            }
             let mut index = airmail::index::AirmailIndex::create(&index_path).unwrap();
             let mut writer = index.writer().unwrap();
             loop {
@@ -300,7 +307,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "{} POIs parsed in {} seconds, {} per second.",
                             *count,
                             start.elapsed().as_secs(),
-                            *count as f64 / start.elapsed().as_secs_f64()
+                            *count as f64 / start.elapsed().as_secs_f64(),
                         );
                     }
                 }
@@ -316,7 +323,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             writer.commit().unwrap();
         });
 
-        openstreetmap::parse_osm(&osmpbf_path, &mut |poi| {
+        openstreetmap::parse_osm(&turbosm_path, &mut |poi| {
             no_admin_sender.send(poi).unwrap();
             Ok(())
         })
@@ -357,7 +364,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "{} POIs parsed in {} seconds, {} per second.",
                             *count,
                             start.elapsed().as_secs(),
-                            *count as f64 / start.elapsed().as_secs_f64()
+                            *count as f64 / start.elapsed().as_secs_f64(),
                         );
                     }
                 }
@@ -444,6 +451,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         drop(to_index_sender);
         indexing_join_handle.await.unwrap();
     }
+
+    println!("Done. Merging segments.");
+    let index_path = args.index.clone();
+    let mut index = airmail::index::AirmailIndex::new(&index_path)?;
+    index.merge().await?;
 
     Ok(())
 }
