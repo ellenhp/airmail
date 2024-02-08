@@ -17,3 +17,7 @@ log = "0.4.20"
 airmail_parser = { path = "../airmail_parser" }
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
+reqwest = { version = "0.11.24", features = ["blocking"] }
+lru = "0.12.2"
+async-trait = "0.1.77"
+tokio = { version = "1.36.0", features = ["full"] }

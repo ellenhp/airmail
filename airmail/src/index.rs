@@ -13,7 +13,7 @@ use tantivy::{
     Term,
 };
 
-use crate::poi::AirmailPoi;
+use crate::{directory::HttpDirectory, poi::AirmailPoi};
 
 // Field name keys.
 pub const FIELD_NAME: &str = "name";
@@ -46,13 +46,13 @@ fn query_for_terms(
             continue;
         }
         phrase.push(Term::from_field_text(field, term));
-        this_term_queries.push((
-            Occur::Should,
-            Box::new(TermQuery::new(
-                Term::from_field_text(field, term),
-                IndexRecordOption::Basic,
-            )),
-        ));
+        // this_term_queries.push((
+        //     Occur::Should,
+        //     Box::new(TermQuery::new(
+        //         Term::from_field_text(field, term),
+        //         IndexRecordOption::Basic,
+        //     )),
+        // ));
         if distance != 0 {
             if i == terms.len() - 1 && is_prefix {
                 this_term_queries.push((
@@ -77,7 +77,7 @@ fn query_for_terms(
         queries.push(Box::new(BooleanQuery::new(this_term_queries)));
     }
     if phrase.len() > 1 {
-        queries.push(Box::new(PhraseQuery::new(phrase)));
+        // queries.push(Box::new(PhraseQuery::new(phrase)));
     }
     let queries: Vec<Box<dyn Query>> = vec![Box::new(DisjunctionMaxQuery::with_tie_breaker(
         queries, 5.0,
@@ -180,6 +180,17 @@ impl AirmailIndex {
         Ok(Self { tantivy_index })
     }
 
+    pub fn new_remote(base_url: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let street_tokenizer = TextAnalyzer::builder(RawTokenizer::default())
+            .filter(LowerCaser)
+            .build();
+        let tantivy_index = tantivy::Index::open(HttpDirectory::new(base_url))?;
+        tantivy_index
+            .tokenizers()
+            .register("street_tokenizer", street_tokenizer);
+        Ok(Self { tantivy_index })
+    }
+
     pub fn writer(&mut self) -> Result<AirmailIndexWriter, Box<dyn std::error::Error>> {
         let tantivy_writer = self.tantivy_index.writer(200_000_000)?;
         let writer = AirmailIndexWriter {
@@ -257,7 +268,7 @@ impl AirmailIndex {
                         self.field_locality(),
                         term_strs,
                         is_prefix,
-                        1,
+                        0,
                     )?);
                 }
 
@@ -286,10 +297,10 @@ impl AirmailIndex {
                             new_terms.push(term.trim_end_matches("'s"));
                         }
                     }
-                    let original = query_for_terms(self.field_name(), term_strs, is_prefix, 1)?;
+                    let original = query_for_terms(self.field_name(), term_strs, is_prefix, 0)?;
                     queries.extend(original);
                     if !new_terms.is_empty() {
-                        let modified = query_for_terms(self.field_name(), new_terms, false, 1)?;
+                        let modified = query_for_terms(self.field_name(), new_terms, false, 0)?;
                         queries.extend(modified);
                     }
                 }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, error::Error, sync::Arc};
 
 use airmail::{index::AirmailIndex, poi::AirmailPoi};
 use airmail_parser::query::QueryScenario;
@@ -58,7 +58,7 @@ async fn search(
                 )
             }
         })
-        .take(3)
+        .take(1)
         .flatten()
         .collect();
 
@@ -78,37 +78,22 @@ async fn search(
     response
         .metadata
         .insert("query".to_string(), Value::String(query));
-    if params.get("debug").is_some() {
-        // response.metadata.insert(
-        //     "parsed".to_string(),
-        //     results
-        //         .iter()
-        //         .map(|(_, scenario)| {
-        //             Value::Array(
-        //                 scenario
-        //                     .as_vec()
-        //                     .iter()
-        //                     .map(|component| {
-        //                         let text = Value::String(component.text().to_string());
-        //                         let component = Value::String(component.debug_name().to_string());
-        //                         json!({"text": text, "component": component})
-        //                     })
-        //                     .collect(),
-        //             )
-        //         })
-        //         .unwrap_or(Value::Null),
-        // );
-    }
 
     Json(serde_json::to_value(response).unwrap())
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     let args = Args::parse();
-    let index = Arc::new(AirmailIndex::new(&args.index).unwrap());
+    let index_path = args.index.clone();
+    let index = if index_path.starts_with("http") {
+        Arc::new(AirmailIndex::new_remote(&index_path)?)
+    } else {
+        Arc::new(AirmailIndex::new(&index_path)?)
+    };
     let app = Router::new().route("/search", get(search).with_state(index));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+    Ok(())
 }

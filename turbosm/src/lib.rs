@@ -25,11 +25,12 @@ pub struct ElementTable<'a, E> {
     ids: &'a mut [(u64, u64, u64)],
     blobs: &'a mut [u8],
     constructor: fn(u64, &[u8], &Turbosm) -> Result<E, Box<dyn Error>>,
-    cache: HashMap<u64, (u64, u64)>,
+    cache: Option<HashMap<u64, (u64, u64)>>,
     indices_mmap: MmapMut,
     blobs_mmap: MmapMut,
     indices_file: std::fs::File,
     blobs_file: std::fs::File,
+    cache_size: Option<usize>,
 }
 
 impl<'a, E> ElementTable<'a, E> {
@@ -43,6 +44,7 @@ impl<'a, E> ElementTable<'a, E> {
         blobs_mmap: MmapMut,
         indices_file: std::fs::File,
         blobs_file: std::fs::File,
+        cache_size: Option<usize>,
     ) -> ElementTable<'a, E> {
         let table = ElementTable {
             cursor: unsafe { &mut *cursor },
@@ -51,11 +53,16 @@ impl<'a, E> ElementTable<'a, E> {
             ids: unsafe { std::slice::from_raw_parts_mut(ids, (indices_mmap.len() - 16) / 24) },
             blobs: unsafe { std::slice::from_raw_parts_mut(blobs, blobs_mmap.len()) },
             constructor,
-            cache: Default::default(),
+            cache: if cache_size.is_some() {
+                Some(HashMap::new())
+            } else {
+                None
+            },
             indices_mmap,
             blobs_mmap,
             indices_file,
             blobs_file,
+            cache_size,
         };
         table
     }
@@ -63,6 +70,7 @@ impl<'a, E> ElementTable<'a, E> {
     pub fn create(
         base_path: &str,
         initial_size: Option<usize>,
+        cache_size: Option<usize>,
         constructor: fn(u64, &[u8], &Turbosm) -> Result<E, Box<dyn Error>>,
     ) -> Result<ElementTable<'a, E>, Box<dyn Error>> {
         let indices_path = format!("{}_indices", &base_path);
@@ -106,25 +114,19 @@ impl<'a, E> ElementTable<'a, E> {
             blobs_mmap,
             indices_file,
             blobs_file,
+            cache_size,
         );
-        if initial_size.is_some() {
-            table.ids.iter_mut().for_each(|(id, offset, len)| {
-                *id = 0;
-                *offset = 0;
-                *len = 0;
-            });
-            table.blobs.iter_mut().for_each(|b| *b = 0);
-        } else {
+        if initial_size.is_none() {
             table.sorted_limit = *table.cursor;
         }
         Ok(table)
     }
 
-    pub fn open(
+    pub fn open_ro(
         base_path: &str,
         constructor: fn(u64, &[u8], &Turbosm) -> Result<E, Box<dyn Error>>,
     ) -> Result<ElementTable<'a, E>, Box<dyn Error>> {
-        Self::create(base_path, None, constructor)
+        Self::create(base_path, None, None, constructor)
     }
 
     pub fn get(&self, id: &u64, turbosm: &Turbosm) -> Option<E> {
@@ -140,9 +142,10 @@ impl<'a, E> ElementTable<'a, E> {
     }
 
     pub fn get_raw(&self, id: &u64) -> Option<&[u8]> {
-        if self.cache.contains_key(id) {
-            let (offset, len) = self.cache[id];
-            return Some(&self.blobs[offset as usize..(offset + len) as usize]);
+        if let Some(cache) = &self.cache {
+            if let Some((offset, len)) = cache.get(id) {
+                return Some(&self.blobs[*offset as usize..(*offset + *len) as usize]);
+            }
         }
         if let Ok(idx) =
             self.ids[..self.sorted_limit as usize].binary_search_by_key(&id, |(id, _, _)| id)
@@ -207,8 +210,14 @@ impl<'a, E> ElementTable<'a, E> {
             };
         }
 
-        self.cache
-            .insert(*id, (*self.blob_cursor, blob.len() as u64));
+        if let Some(cache) = &mut self.cache {
+            cache.insert(*id, (*self.blob_cursor, blob.len() as u64));
+
+            if cache.len() > self.cache_size.unwrap_or(1024 * 1024) {
+                println!("Flushing cache");
+                self.sort();
+            }
+        }
 
         self.ids[*self.cursor as usize] = (
             *id,
@@ -219,17 +228,15 @@ impl<'a, E> ElementTable<'a, E> {
             .copy_from_slice(blob);
         *self.blob_cursor += blob.len() as u64;
         *self.cursor += 1;
-
-        if self.cache.len() > 1024 * 1024 * 1024 {
-            println!("Flushing cache");
-            self.sort();
-        }
     }
 
     pub fn sort(&mut self) {
-        self.ids[..*self.cursor as usize].sort_unstable_by_key(|(id, _, _)| *id);
-        self.sorted_limit = *self.cursor;
-        self.cache.clear();
+        if let Some(cache) = &mut self.cache {
+            self.ids[..*self.cursor as usize].sort_unstable_by_key(|(id, _, _)| *id);
+            self.sorted_limit = *self.cursor;
+            cache.clear();
+            cache.shrink_to_fit();
+        }
     }
 
     pub fn for_each<Callback: Fn(E)>(&self, turbosm: &Turbosm, callback: Callback) {
@@ -248,7 +255,7 @@ fn count_entities<R: Read + Send>(
         |element| match element {
             Element::Node(_) => (1u64, 0u64, 0u64),
             Element::DenseNode(_) => (1u64, 0u64, 0u64),
-            Element::Way(_) => (0u64, 0u64, 1u64),
+            Element::Way(_) => (0u64, 1u64, 0u64),
             Element::Relation(_) => (0u64, 0u64, 1u64),
         },
         || (0, 0, 0),
@@ -401,36 +408,42 @@ impl<'a> Turbosm<'a> {
         let nodes = ElementTable::create(
             &*nodes_path.to_string_lossy(),
             Some(node_count as usize),
+            None,
             Node::from_bytes,
         )?;
         let ways_path = PathBuf::from_str(db_path)?.join("ways");
         let ways = ElementTable::create(
             &*ways_path.to_string_lossy(),
             Some(way_count as usize),
+            None,
             Way::from_bytes,
         )?;
         let relations_path = PathBuf::from_str(db_path)?.join("relations");
         let relations = ElementTable::create(
             &*relations_path.to_string_lossy(),
             Some(relation_count as usize),
+            None,
             Relation::from_bytes,
         )?;
         let keys_path = PathBuf::from_str(db_path)?.join("keys");
         let keys = ElementTable::create(
             &*keys_path.to_string_lossy(),
             Some(1024 * 1024),
+            Some(1024 * 1024 * 32),
             |_id, bytes, _| Ok(bytes.to_vec()),
         )?;
         let values_path = PathBuf::from_str(db_path)?.join("values");
         let values = ElementTable::create(
             &*values_path.to_string_lossy(),
             Some(1024 * 1024),
+            Some(1024 * 1024 * 128),
             |_id, bytes, _| Ok(bytes.to_vec()),
         )?;
         let roles_path = PathBuf::from_str(db_path)?.join("roles");
         let roles = ElementTable::create(
             &*roles_path.to_string_lossy(),
             Some(1024 * 1024),
+            Some(1024 * 1024 * 16),
             |_id, bytes, _| Ok(bytes.to_vec()),
         )?;
 
@@ -450,22 +463,22 @@ impl<'a> Turbosm<'a> {
 
     pub fn open(db_path: &str) -> Result<Turbosm, Box<dyn std::error::Error>> {
         let nodes_path = PathBuf::from_str(db_path)?.join("nodes");
-        let nodes = ElementTable::open(&*nodes_path.to_string_lossy(), Node::from_bytes)?;
+        let nodes = ElementTable::open_ro(&*nodes_path.to_string_lossy(), Node::from_bytes)?;
         let ways_path = PathBuf::from_str(db_path)?.join("ways");
-        let ways = ElementTable::open(&*ways_path.to_string_lossy(), Way::from_bytes)?;
+        let ways = ElementTable::open_ro(&*ways_path.to_string_lossy(), Way::from_bytes)?;
         let relations_path = PathBuf::from_str(db_path)?.join("relations");
         let relations =
-            ElementTable::open(&*relations_path.to_string_lossy(), Relation::from_bytes)?;
+            ElementTable::open_ro(&*relations_path.to_string_lossy(), Relation::from_bytes)?;
         let keys_path = PathBuf::from_str(db_path)?.join("keys");
-        let keys = ElementTable::open(&*keys_path.to_string_lossy(), |_id, bytes, _| {
+        let keys = ElementTable::open_ro(&*keys_path.to_string_lossy(), |_id, bytes, _| {
             Ok(bytes.to_vec())
         })?;
         let values_path = PathBuf::from_str(db_path)?.join("values");
-        let values = ElementTable::open(&*values_path.to_string_lossy(), |_id, bytes, _| {
+        let values = ElementTable::open_ro(&*values_path.to_string_lossy(), |_id, bytes, _| {
             Ok(bytes.to_vec())
         })?;
         let roles_path = PathBuf::from_str(db_path)?.join("roles");
-        let roles = ElementTable::open(&*roles_path.to_string_lossy(), |_id, bytes, _| {
+        let roles = ElementTable::open_ro(&*roles_path.to_string_lossy(), |_id, bytes, _| {
             Ok(bytes.to_vec())
         })?;
 
