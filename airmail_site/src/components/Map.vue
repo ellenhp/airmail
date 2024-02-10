@@ -62,6 +62,14 @@ export default {
                 style: `https://maps.earth/tileserver/styles/basic/style.json`,
             });
             map.on('load', async () => {
+                map["dragRotate"].disable();
+                map["touchZoomRotate"].disable();
+                map["doubleClickZoom"].disable();
+                map["scrollZoom"].disable();
+                map["boxZoom"].disable();
+                map["keyboard"].disable();
+                map["dragPan"].disable();
+                map["touchPitch"].disable();
                 mapRef.value = markRaw(map);
                 console.log("Map loaded", map);
                 const image = await map.loadImage(`${location.protocol}//${window.location.host}/images/pin.png`);
@@ -81,7 +89,8 @@ export default {
                     'source': 'point',
                     'layout': {
                         'icon-image': 'marker',
-                        'icon-size': 0.05
+                        'icon-size': 0.05,
+                        'icon-anchor': 'bottom',
                     }
                 });
             });

@@ -58,7 +58,7 @@ async fn search(
                 )
             }
         })
-        .take(3)
+        .take(2)
         .flatten()
         .collect();
 

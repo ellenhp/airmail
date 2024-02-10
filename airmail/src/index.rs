@@ -36,52 +36,29 @@ fn query_for_terms(
     field: tantivy::schema::Field,
     terms: Vec<&str>,
     is_prefix: bool,
-    distance: u8,
 ) -> Result<Vec<Box<dyn Query>>, Box<dyn std::error::Error>> {
     let mut queries: Vec<Box<dyn Query>> = Vec::new();
     let mut phrase = Vec::new();
     for (i, term) in terms.iter().enumerate() {
-        let mut this_term_queries: Vec<(Occur, Box<dyn Query>)> = Vec::new();
-        if term.len() < 3 {
+        if term.len() < 2 {
             continue;
         }
         phrase.push(Term::from_field_text(field, term));
-        this_term_queries.push((
-            Occur::Should,
-            Box::new(TermQuery::new(
+        if i == terms.len() - 1 && is_prefix {
+            queries.push(Box::new(FuzzyTermQuery::new_prefix(
                 Term::from_field_text(field, term),
-                IndexRecordOption::Basic,
-            )),
-        ));
-        if distance != 0 {
-            if i == terms.len() - 1 && is_prefix {
-                this_term_queries.push((
-                    Occur::Must,
-                    Box::new(FuzzyTermQuery::new_prefix(
-                        Term::from_field_text(field, term),
-                        distance,
-                        true,
-                    )),
-                ));
-            } else {
-                this_term_queries.push((
-                    Occur::Must,
-                    Box::new(FuzzyTermQuery::new(
-                        Term::from_field_text(field, term),
-                        distance,
-                        true,
-                    )),
-                ));
-            };
-        }
-        queries.push(Box::new(BooleanQuery::new(this_term_queries)));
+                0,
+                true,
+            )));
+        } else {
+            queries.push(Box::new(FuzzyTermQuery::new(
+                Term::from_field_text(field, term),
+                0,
+                true,
+            )));
+        };
     }
-    if phrase.len() > 1 {
-        queries.push(Box::new(PhraseQuery::new(phrase)));
-    }
-    let queries: Vec<Box<dyn Query>> = vec![Box::new(DisjunctionMaxQuery::with_tie_breaker(
-        queries, 5.0,
-    ))];
+    let queries: Vec<Box<dyn Query>> = vec![Box::new(BooleanQuery::intersection(queries))];
     Ok(queries)
 }
 
@@ -224,7 +201,6 @@ impl AirmailIndex {
                         self.field_house_number(),
                         term_strs,
                         is_prefix,
-                        0, // Never fuzzy match house numbers.
                     )?);
                 }
 
@@ -232,13 +208,13 @@ impl AirmailIndex {
                     if is_prefix {
                         queries.push(Box::new(FuzzyTermQuery::new_prefix(
                             Term::from_field_text(self.field_road(), component.text()),
-                            1,
+                            0,
                             true,
                         )));
                     } else {
                         queries.push(Box::new(FuzzyTermQuery::new(
                             Term::from_field_text(self.field_road(), component.text()),
-                            1,
+                            0,
                             true,
                         )));
                     }
@@ -257,26 +233,15 @@ impl AirmailIndex {
                         self.field_locality(),
                         term_strs,
                         is_prefix,
-                        1,
                     )?);
                 }
 
                 QueryComponentType::RegionComponent => {
-                    queries.extend(query_for_terms(
-                        self.field_region(),
-                        term_strs,
-                        is_prefix,
-                        0, // Regions are often abbreviations, so no fuzzy matching.
-                    )?);
+                    queries.extend(query_for_terms(self.field_region(), term_strs, is_prefix)?);
                 }
 
                 QueryComponentType::CountryComponent => {
-                    queries.extend(query_for_terms(
-                        self.field_country(),
-                        term_strs,
-                        is_prefix,
-                        0, // Countries are often abbreviations, so no fuzzy matching.
-                    )?);
+                    queries.extend(query_for_terms(self.field_country(), term_strs, is_prefix)?);
                 }
 
                 QueryComponentType::CategoryComponent | QueryComponentType::PlaceNameComponent => {
@@ -286,10 +251,10 @@ impl AirmailIndex {
                             new_terms.push(term.trim_end_matches("'s"));
                         }
                     }
-                    let original = query_for_terms(self.field_name(), term_strs, is_prefix, 1)?;
+                    let original = query_for_terms(self.field_name(), term_strs, is_prefix)?;
                     queries.extend(original);
                     if !new_terms.is_empty() {
-                        let modified = query_for_terms(self.field_name(), new_terms, false, 1)?;
+                        let modified = query_for_terms(self.field_name(), new_terms, false)?;
                         queries.extend(modified);
                     }
                 }
