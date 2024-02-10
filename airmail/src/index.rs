@@ -272,7 +272,7 @@ impl AirmailIndex {
             }
         }
 
-        let query = DisjunctionMaxQuery::with_tie_breaker(queries, 5.0);
+        let query = BooleanQuery::intersection(queries);
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
         let mut results = Vec::new();
         for (score, doc_address) in top_docs {
