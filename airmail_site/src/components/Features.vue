@@ -5,14 +5,14 @@ const items = [
   {
     id: 1,
     name: "Open-source",
-    des: "Freely available under a permissive license for commercial use.",
+    des: "Freely available under a permissive license (MIT/Apache 2.0 dual license).",
     icon: "mdi-xml",
     color: "background-color: #6fe7dd",
   },
   {
     id: 2,
     name: "Lightweight",
-    des: "Lightweight enough for client-side use, enabling offline operation.",
+    des: "Lightweight enough for client-side use, enabling offline operation. In theory.",
     icon: "mdi-airplane",
     color: "background-color: #ffc93c",
   },
@@ -26,7 +26,7 @@ const items = [
   {
     id: 4,
     name: "Batteries-included",
-    des: "Easy setup, whether you're bringing your own data or using an existing OpenStreetMap index.",
+    des: "Easy-ish setup, whether you're bringing your own data or using an existing OpenStreetMap index.",
     icon: "mdi-battery",
     color: "background-color: #7f26bf",
   },

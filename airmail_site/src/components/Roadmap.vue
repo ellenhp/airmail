@@ -10,7 +10,7 @@ const items = [
   },
   {
     id: 2,
-    name: "Cateogrical search",
+    name: "Categorical search",
     des: "Search for \"Food near me\".",
     icon: "mdi-food",
     color: "background-color: #ffc93c",
@@ -19,7 +19,7 @@ const items = [
     id: 3,
     name: "Viewport biasing",
     des: "Restrict returned POIs with a custom bounding box.",
-    icon: "mdi-redo",
+    icon: "mdi-crop",
     color: "background-color: #f73859",
   },
   {

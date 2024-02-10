@@ -41,7 +41,7 @@ async function fetchSearchResults(query) {
           <div class="mb-4" data-aos="fade-up" data-aos-delay="0">
             <h2 class="heading">{{ heading }}</h2>
             <p>
-              Airmail is pre-alpha quality software. Points of interest may be missing and search results may be
+              Airmail is pre-alpha quality software. Data is incomplete and search results may be
               incorrect, missing, or very far away.
             </p>
             <p>
