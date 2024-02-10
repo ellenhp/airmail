@@ -118,20 +118,13 @@ impl<'a, E> ElementTable<'a, E> {
             blobs_file,
             iter_key_blocklist,
         );
-        if initial_size.is_some() {
-            table.ids.iter_mut().for_each(|(id, offset, len)| {
-                *id = 0;
-                *offset = 0;
-                *len = 0;
-            });
-            table.blobs.iter_mut().for_each(|b| *b = 0);
-        } else {
+        if initial_size.is_none() {
             table.sorted_limit = *table.cursor;
         }
         Ok(table)
     }
 
-    pub fn open(
+    pub fn open_ro(
         base_path: &str,
         constructor: fn(u64, &[u8], &Turbosm) -> Result<E, Box<dyn Error>>,
         tag_constructor: fn(&[u8], &Turbosm) -> Result<Vec<u64>, Box<dyn Error>>,
@@ -228,9 +221,6 @@ impl<'a, E> ElementTable<'a, E> {
             };
         }
 
-        self.cache
-            .insert(*id, (*self.blob_cursor, blob.len() as u64));
-
         self.ids[*self.cursor as usize] = (
             *id,
             *self.blob_cursor,
@@ -240,11 +230,6 @@ impl<'a, E> ElementTable<'a, E> {
             .copy_from_slice(blob);
         *self.blob_cursor += blob.len() as u64;
         *self.cursor += 1;
-
-        if self.cache.len() > 1024 * 1024 * 1024 {
-            println!("Flushing cache");
-            self.sort();
-        }
     }
 
     pub fn sort(&mut self) {
@@ -285,7 +270,7 @@ fn count_entities<R: Read + Send>(
         |element| match element {
             Element::Node(_) => (1u64, 0u64, 0u64),
             Element::DenseNode(_) => (1u64, 0u64, 0u64),
-            Element::Way(_) => (0u64, 0u64, 1u64),
+            Element::Way(_) => (0u64, 1u64, 0u64),
             Element::Relation(_) => (0u64, 0u64, 1u64),
         },
         || (0, 0, 0),
@@ -510,42 +495,42 @@ impl<'a> Turbosm<'a> {
             })
             .collect::<Vec<_>>();
         let nodes_path = PathBuf::from_str(db_path)?.join("nodes");
-        let nodes = ElementTable::open(
+        let nodes = ElementTable::open_ro(
             &*nodes_path.to_string_lossy(),
             Node::from_bytes,
             Node::tags_from_bytes,
             blocked_keys.clone(),
         )?;
         let ways_path = PathBuf::from_str(db_path)?.join("ways");
-        let ways = ElementTable::open(
+        let ways = ElementTable::open_ro(
             &*ways_path.to_string_lossy(),
             Way::from_bytes,
             Way::tags_from_bytes,
             blocked_keys.clone(),
         )?;
         let relations_path = PathBuf::from_str(db_path)?.join("relations");
-        let relations = ElementTable::open(
+        let relations = ElementTable::open_ro(
             &*relations_path.to_string_lossy(),
             Relation::from_bytes,
             Relation::tags_from_bytes,
             blocked_keys.clone(),
         )?;
         let keys_path = PathBuf::from_str(db_path)?.join("keys");
-        let keys = ElementTable::open(
+        let keys = ElementTable::open_ro(
             &*keys_path.to_string_lossy(),
             |_id, bytes, _| Ok(bytes.to_vec()),
             |_bytes, _| Ok(vec![]),
             vec![],
         )?;
         let values_path = PathBuf::from_str(db_path)?.join("values");
-        let values = ElementTable::open(
+        let values = ElementTable::open_ro(
             &*values_path.to_string_lossy(),
             |_id, bytes, _| Ok(bytes.to_vec()),
             |_bytes, _| Ok(vec![]),
             vec![],
         )?;
         let roles_path = PathBuf::from_str(db_path)?.join("roles");
-        let roles = ElementTable::open(
+        let roles = ElementTable::open_ro(
             &*roles_path.to_string_lossy(),
             |_id, bytes, _| Ok(bytes.to_vec()),
             |_bytes, _| Ok(vec![]),

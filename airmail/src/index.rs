@@ -3,17 +3,13 @@ use serde_json::Value;
 use tantivy::{
     collector::TopDocs,
     directory::MmapDirectory,
-    query::{BooleanQuery, DisjunctionMaxQuery, FuzzyTermQuery, PhraseQuery, Query, TermQuery},
-    query_grammar::Occur,
-    schema::{
-        FacetOptions, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED,
-        TEXT,
-    },
+    query::{BooleanQuery, DisjunctionMaxQuery, FuzzyTermQuery, Query},
+    schema::{FacetOptions, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED, TEXT},
     tokenizer::{LowerCaser, RawTokenizer, TextAnalyzer},
     Term,
 };
 
-use crate::poi::AirmailPoi;
+use crate::{directory::HttpDirectory, poi::AirmailPoi};
 
 // Field name keys.
 pub const FIELD_NAME: &str = "name";
@@ -151,6 +147,17 @@ impl AirmailIndex {
             .filter(LowerCaser)
             .build();
         let tantivy_index = tantivy::Index::open_in_dir(index_dir)?;
+        tantivy_index
+            .tokenizers()
+            .register("street_tokenizer", street_tokenizer);
+        Ok(Self { tantivy_index })
+    }
+
+    pub fn new_remote(base_url: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let street_tokenizer = TextAnalyzer::builder(RawTokenizer::default())
+            .filter(LowerCaser)
+            .build();
+        let tantivy_index = tantivy::Index::open(HttpDirectory::new(base_url))?;
         tantivy_index
             .tokenizers()
             .register("street_tokenizer", street_tokenizer);
