@@ -12,7 +12,7 @@ struct Args {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let args = Args::parse();
-    let osm = Turbosm::open(&args.db_path)?;
+    let osm = Turbosm::open(&args.db_path, &[])?;
 
     let mut editor = rustyline::DefaultEditor::new()?;
     loop {

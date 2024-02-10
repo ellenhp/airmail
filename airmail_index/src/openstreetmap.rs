@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, error::Error};
 
 use airmail::poi::AirmailPoi;
 use airmail_common::categories::{
@@ -79,15 +79,7 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
             unit,
             lat,
             lng,
-            tags.iter()
-                .filter_map(|(k, v)| {
-                    if k.starts_with("addr:") || v.len() > 1024 {
-                        None
-                    } else {
-                        Some((k.to_string(), v.to_string()))
-                    }
-                })
-                .collect(),
+            vec![],
         )
         .unwrap(),
     )
@@ -118,11 +110,15 @@ fn index_way(tags: &HashMap<String, String>, way: &Way) -> Option<AirmailPoi> {
     tags_to_poi(&tags, lat, lng)
 }
 
-fn relation_centroid(relation: &Relation, level: u32) -> Option<(f64, f64)> {
+fn relation_centroid(
+    relation: &Relation,
+    level: u32,
+    turbosm: &Turbosm,
+) -> Result<(f64, f64), Box<dyn Error>> {
     let mut points = Vec::new();
     if level > 3 {
         debug!("Skipping relation with level > 10: {:?}", relation.id());
-        return None;
+        return Err("Skipping relation with level > 10".into());
     }
     for member in relation.members() {
         match member {
@@ -134,8 +130,9 @@ fn relation_centroid(relation: &Relation, level: u32) -> Option<(f64, f64)> {
                     points.push(Point::new(centroid.0, centroid.1));
                 }
             }
-            RelationMember::Relation(_, relation) => {
-                if let Some(centroid) = relation_centroid(&relation, level + 1) {
+            RelationMember::Relation(_, other_relation) => {
+                let other_relation = turbosm.relation(*other_relation)?;
+                if let Ok(centroid) = relation_centroid(&other_relation, level + 1, turbosm) {
                     points.push(Point::new(centroid.0, centroid.1));
                 } else {
                     debug!("Skipping relation with no centroid: {:?}", relation.id());
@@ -144,17 +141,18 @@ fn relation_centroid(relation: &Relation, level: u32) -> Option<(f64, f64)> {
         }
     }
     let multipoint = MultiPoint::from(points);
-    let centroid = multipoint.centroid()?;
-    Some((centroid.x(), centroid.y()))
+    let centroid = multipoint.centroid().ok_or("No centroid")?;
+    Ok((centroid.x(), centroid.y()))
 }
 
 pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Error>>>(
     db_path: &str,
     callback: &CB,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut osm = Turbosm::open(db_path).unwrap();
+    let mut osm =
+        Turbosm::open(db_path, &["natural", "highway", "admin_level", "boundary"]).unwrap();
     println!("Processing nodes");
-    osm.process_all_nodes(|node| {
+    osm.process_all_nodes(|node, _| {
         if let Some(poi) = tags_to_poi(node.tags(), node.lat(), node.lng()) {
             if let Err(err) = callback(poi) {
                 warn!("Error from callback: {}", err);
@@ -162,7 +160,7 @@ pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Err
         }
     })?;
     println!("Processing ways");
-    osm.process_all_ways(|way| {
+    osm.process_all_ways(|way, _| {
         index_way(way.tags(), &way).map(|poi| {
             if let Err(err) = callback(poi) {
                 warn!("Error from callback: {}", err);
@@ -170,9 +168,9 @@ pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Err
         });
     })?;
     println!("Processing relations");
-    osm.process_all_relations(|relation| {
-        let centroid = relation_centroid(&relation, 0);
-        if let Some(centroid) = centroid {
+    osm.process_all_relations(|relation, turbosm| {
+        let centroid = relation_centroid(&relation, 0, turbosm);
+        if let Ok(centroid) = centroid {
             if let Some(poi) = tags_to_poi(relation.tags(), centroid.1, centroid.0) {
                 if let Err(err) = callback(poi) {
                     warn!("Error from callback: {}", err);

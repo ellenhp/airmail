@@ -16,6 +16,7 @@ use element::{Node, Relation, Way};
 use log::info;
 use memmap2::MmapMut;
 use osmpbf::{Element, ElementReader, RelMemberType};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use s2::{cellid::CellID, latlng::LatLng};
 
 pub struct ElementTable<'a, E> {
@@ -25,11 +26,13 @@ pub struct ElementTable<'a, E> {
     ids: &'a mut [(u64, u64, u64)],
     blobs: &'a mut [u8],
     constructor: fn(u64, &[u8], &Turbosm) -> Result<E, Box<dyn Error>>,
+    tag_constructor: fn(&[u8], &Turbosm) -> Result<Vec<u64>, Box<dyn Error>>,
     cache: HashMap<u64, (u64, u64)>,
     indices_mmap: MmapMut,
     blobs_mmap: MmapMut,
     indices_file: std::fs::File,
     blobs_file: std::fs::File,
+    iter_key_blocklist: Vec<u64>,
 }
 
 impl<'a, E> ElementTable<'a, E> {
@@ -39,10 +42,12 @@ impl<'a, E> ElementTable<'a, E> {
         ids: *mut (u64, u64, u64),
         blobs: *mut u8,
         constructor: fn(u64, &[u8], &Turbosm) -> Result<E, Box<dyn Error>>,
+        tag_constructor: fn(&[u8], &Turbosm) -> Result<Vec<u64>, Box<dyn Error>>,
         indices_mmap: MmapMut,
         blobs_mmap: MmapMut,
         indices_file: std::fs::File,
         blobs_file: std::fs::File,
+        iter_key_blocklist: Vec<u64>,
     ) -> ElementTable<'a, E> {
         let table = ElementTable {
             cursor: unsafe { &mut *cursor },
@@ -51,11 +56,13 @@ impl<'a, E> ElementTable<'a, E> {
             ids: unsafe { std::slice::from_raw_parts_mut(ids, (indices_mmap.len() - 16) / 24) },
             blobs: unsafe { std::slice::from_raw_parts_mut(blobs, blobs_mmap.len()) },
             constructor,
+            tag_constructor,
             cache: Default::default(),
             indices_mmap,
             blobs_mmap,
             indices_file,
             blobs_file,
+            iter_key_blocklist,
         };
         table
     }
@@ -64,6 +71,8 @@ impl<'a, E> ElementTable<'a, E> {
         base_path: &str,
         initial_size: Option<usize>,
         constructor: fn(u64, &[u8], &Turbosm) -> Result<E, Box<dyn Error>>,
+        tag_constructor: fn(&[u8], &Turbosm) -> Result<Vec<u64>, Box<dyn Error>>,
+        iter_key_blocklist: Vec<u64>,
     ) -> Result<ElementTable<'a, E>, Box<dyn Error>> {
         let indices_path = format!("{}_indices", &base_path);
         let blob_path = format!("{}_blobs", &base_path);
@@ -102,10 +111,12 @@ impl<'a, E> ElementTable<'a, E> {
             unsafe { (indices_mmap.as_ptr().add(16)) as *mut (u64, u64, u64) },
             blobs_mmap.as_mut_ptr(),
             constructor,
+            tag_constructor,
             indices_mmap,
             blobs_mmap,
             indices_file,
             blobs_file,
+            iter_key_blocklist,
         );
         if initial_size.is_some() {
             table.ids.iter_mut().for_each(|(id, offset, len)| {
@@ -123,8 +134,16 @@ impl<'a, E> ElementTable<'a, E> {
     pub fn open(
         base_path: &str,
         constructor: fn(u64, &[u8], &Turbosm) -> Result<E, Box<dyn Error>>,
+        tag_constructor: fn(&[u8], &Turbosm) -> Result<Vec<u64>, Box<dyn Error>>,
+        iter_key_blocklist: Vec<u64>,
     ) -> Result<ElementTable<'a, E>, Box<dyn Error>> {
-        Self::create(base_path, None, constructor)
+        Self::create(
+            base_path,
+            None,
+            constructor,
+            tag_constructor,
+            iter_key_blocklist,
+        )
     }
 
     pub fn get(&self, id: &u64, turbosm: &Turbosm) -> Option<E> {
@@ -173,6 +192,7 @@ impl<'a, E> ElementTable<'a, E> {
             self.indices_mmap = unsafe {
                 memmap2::MmapOptions::new()
                     .len(self.indices_file.metadata().unwrap().len() as usize)
+                    .huge(None)
                     .map_mut(&self.indices_file)
                     .unwrap()
             };
@@ -199,6 +219,7 @@ impl<'a, E> ElementTable<'a, E> {
             self.blobs_mmap = unsafe {
                 memmap2::MmapOptions::new()
                     .len(self.blobs_file.metadata().unwrap().len() as usize)
+                    .huge(None)
                     .map_mut(&self.blobs_file)
                     .unwrap()
             };
@@ -232,12 +253,28 @@ impl<'a, E> ElementTable<'a, E> {
         self.cache.clear();
     }
 
-    pub fn for_each<Callback: Fn(E)>(&self, turbosm: &Turbosm, callback: Callback) {
-        for (id, _, _) in &self.ids[..*self.cursor as usize] {
-            if let Some(element) = self.get(id, turbosm) {
-                callback(element);
-            }
-        }
+    pub fn sort_blobs(&mut self) {
+        self.blobs[..*self.blob_cursor as usize].sort_unstable();
+    }
+
+    pub fn for_each<Callback: Sync + Fn(E, &Turbosm)>(
+        &self,
+        turbosm: &Turbosm,
+        callback: Callback,
+    ) {
+        self.ids[..*self.cursor as usize]
+            .par_iter()
+            .for_each(|(id, _, _)| {
+                if !self.iter_key_blocklist.is_empty() {
+                    let tags = (self.tag_constructor)(&self.get_raw(id).unwrap(), turbosm).unwrap();
+                    if tags.iter().any(|t| self.iter_key_blocklist.contains(t)) {
+                        return;
+                    }
+                }
+                if let Some(element) = self.get(id, turbosm) {
+                    callback(element, turbosm);
+                }
+            });
     }
 }
 
@@ -402,36 +439,48 @@ impl<'a> Turbosm<'a> {
             &*nodes_path.to_string_lossy(),
             Some(node_count as usize),
             Node::from_bytes,
+            Node::tags_from_bytes,
+            vec![],
         )?;
         let ways_path = PathBuf::from_str(db_path)?.join("ways");
         let ways = ElementTable::create(
             &*ways_path.to_string_lossy(),
             Some(way_count as usize),
             Way::from_bytes,
+            Way::tags_from_bytes,
+            vec![],
         )?;
         let relations_path = PathBuf::from_str(db_path)?.join("relations");
         let relations = ElementTable::create(
             &*relations_path.to_string_lossy(),
             Some(relation_count as usize),
             Relation::from_bytes,
+            Relation::tags_from_bytes,
+            vec![],
         )?;
         let keys_path = PathBuf::from_str(db_path)?.join("keys");
         let keys = ElementTable::create(
             &*keys_path.to_string_lossy(),
             Some(1024 * 1024),
             |_id, bytes, _| Ok(bytes.to_vec()),
+            |_bytes, _| Ok(vec![]),
+            vec![],
         )?;
         let values_path = PathBuf::from_str(db_path)?.join("values");
         let values = ElementTable::create(
             &*values_path.to_string_lossy(),
             Some(1024 * 1024),
             |_id, bytes, _| Ok(bytes.to_vec()),
+            |_bytes, _| Ok(vec![]),
+            vec![],
         )?;
         let roles_path = PathBuf::from_str(db_path)?.join("roles");
         let roles = ElementTable::create(
             &*roles_path.to_string_lossy(),
             Some(1024 * 1024),
             |_id, bytes, _| Ok(bytes.to_vec()),
+            |_bytes, _| Ok(vec![]),
+            vec![],
         )?;
 
         let mut osm = Turbosm {
@@ -448,26 +497,60 @@ impl<'a> Turbosm<'a> {
         Ok(osm)
     }
 
-    pub fn open(db_path: &str) -> Result<Turbosm, Box<dyn std::error::Error>> {
+    pub fn open(
+        db_path: &'_ str,
+        blocked_keys: &'_ [&'_ str],
+    ) -> Result<Turbosm<'a>, Box<dyn std::error::Error>> {
+        let blocked_keys = blocked_keys
+            .iter()
+            .map(|k| {
+                let mut hasher = DefaultHasher::new();
+                k.hash(&mut hasher);
+                hasher.finish()
+            })
+            .collect::<Vec<_>>();
         let nodes_path = PathBuf::from_str(db_path)?.join("nodes");
-        let nodes = ElementTable::open(&*nodes_path.to_string_lossy(), Node::from_bytes)?;
+        let nodes = ElementTable::open(
+            &*nodes_path.to_string_lossy(),
+            Node::from_bytes,
+            Node::tags_from_bytes,
+            blocked_keys.clone(),
+        )?;
         let ways_path = PathBuf::from_str(db_path)?.join("ways");
-        let ways = ElementTable::open(&*ways_path.to_string_lossy(), Way::from_bytes)?;
+        let ways = ElementTable::open(
+            &*ways_path.to_string_lossy(),
+            Way::from_bytes,
+            Way::tags_from_bytes,
+            blocked_keys.clone(),
+        )?;
         let relations_path = PathBuf::from_str(db_path)?.join("relations");
-        let relations =
-            ElementTable::open(&*relations_path.to_string_lossy(), Relation::from_bytes)?;
+        let relations = ElementTable::open(
+            &*relations_path.to_string_lossy(),
+            Relation::from_bytes,
+            Relation::tags_from_bytes,
+            blocked_keys.clone(),
+        )?;
         let keys_path = PathBuf::from_str(db_path)?.join("keys");
-        let keys = ElementTable::open(&*keys_path.to_string_lossy(), |_id, bytes, _| {
-            Ok(bytes.to_vec())
-        })?;
+        let keys = ElementTable::open(
+            &*keys_path.to_string_lossy(),
+            |_id, bytes, _| Ok(bytes.to_vec()),
+            |_bytes, _| Ok(vec![]),
+            vec![],
+        )?;
         let values_path = PathBuf::from_str(db_path)?.join("values");
-        let values = ElementTable::open(&*values_path.to_string_lossy(), |_id, bytes, _| {
-            Ok(bytes.to_vec())
-        })?;
+        let values = ElementTable::open(
+            &*values_path.to_string_lossy(),
+            |_id, bytes, _| Ok(bytes.to_vec()),
+            |_bytes, _| Ok(vec![]),
+            vec![],
+        )?;
         let roles_path = PathBuf::from_str(db_path)?.join("roles");
-        let roles = ElementTable::open(&*roles_path.to_string_lossy(), |_id, bytes, _| {
-            Ok(bytes.to_vec())
-        })?;
+        let roles = ElementTable::open(
+            &*roles_path.to_string_lossy(),
+            |_id, bytes, _| Ok(bytes.to_vec()),
+            |_bytes, _| Ok(vec![]),
+            vec![],
+        )?;
 
         Ok(Turbosm {
             nodes,
@@ -630,7 +713,7 @@ impl<'a> Turbosm<'a> {
             .ok_or("Relation not found".into())
     }
 
-    pub fn process_all_nodes<Callback: Sync + Fn(Node) -> ()>(
+    pub fn process_all_nodes<Callback: Sync + Fn(Node, &Turbosm) -> ()>(
         &mut self,
         cb: Callback,
     ) -> Result<(), Box<dyn Error>> {
@@ -638,7 +721,7 @@ impl<'a> Turbosm<'a> {
         Ok(())
     }
 
-    pub fn process_all_ways<Callback: Sync + Fn(Way) -> ()>(
+    pub fn process_all_ways<Callback: Sync + Fn(Way, &Turbosm) -> ()>(
         &mut self,
         cb: Callback,
     ) -> Result<(), Box<dyn Error>> {
@@ -646,7 +729,7 @@ impl<'a> Turbosm<'a> {
         Ok(())
     }
 
-    pub fn process_all_relations<Callback: Sync + Fn(Relation) -> ()>(
+    pub fn process_all_relations<Callback: Sync + Fn(Relation, &Turbosm) -> ()>(
         &mut self,
         cb: Callback,
     ) -> Result<(), Box<dyn Error>> {

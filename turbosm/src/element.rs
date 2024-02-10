@@ -13,6 +13,23 @@ pub struct Node {
 }
 
 impl Node {
+    pub(crate) fn tags_from_bytes(
+        bytes: &[u8],
+        _turbosm: &Turbosm,
+    ) -> Result<Vec<u64>, Box<dyn Error>> {
+        let mut cursor = 8usize;
+        let mut tags = Vec::new();
+        loop {
+            if cursor >= bytes.len() {
+                break;
+            }
+            let key_hash = u64::from_le_bytes(bytes[cursor..cursor + 8].try_into()?);
+            tags.push(key_hash);
+            cursor += 16;
+        }
+        Ok(tags)
+    }
+
     pub(crate) fn from_bytes(
         id: u64,
         bytes: &[u8],
@@ -73,6 +90,24 @@ pub struct Way {
 }
 
 impl Way {
+    pub(crate) fn tags_from_bytes(
+        bytes: &[u8],
+        _turbosm: &Turbosm,
+    ) -> Result<Vec<u64>, Box<dyn Error>> {
+        let node_count = u64::from_le_bytes(bytes[0..8].try_into()?);
+        let mut cursor = 8usize + 8 * node_count as usize;
+        let mut tags = Vec::new();
+        loop {
+            if cursor >= bytes.len() {
+                break;
+            }
+            let key_hash = u64::from_le_bytes(bytes[cursor..cursor + 8].try_into()?);
+            tags.push(key_hash);
+            cursor += 16;
+        }
+        Ok(tags)
+    }
+
     pub(crate) fn from_bytes(
         id: u64,
         bytes: &[u8],
@@ -124,7 +159,7 @@ impl Way {
 pub enum RelationMember {
     Node(String, Node),
     Way(String, Way),
-    Relation(String, Box<Relation>),
+    Relation(String, u64),
 }
 
 #[derive(Debug, Clone)]
@@ -135,6 +170,25 @@ pub struct Relation {
 }
 
 impl Relation {
+    pub(crate) fn tags_from_bytes(
+        bytes: &[u8],
+        _turbosm: &Turbosm,
+    ) -> Result<Vec<u64>, Box<dyn Error>> {
+        let member_count = u64::from_le_bytes(bytes[0..8].try_into()?);
+        let mut cursor = 8usize + 17 * member_count as usize;
+        let mut tags = Vec::new();
+        loop {
+            if cursor >= bytes.len() {
+                break;
+            }
+            let key_hash = u64::from_le_bytes(bytes[cursor..cursor + 8].try_into()?);
+            tags.push(key_hash);
+            cursor += 16;
+        }
+
+        Ok(tags)
+    }
+
     pub(crate) fn from_bytes(
         id: u64,
         bytes: &[u8],
@@ -158,7 +212,7 @@ impl Relation {
             let member = match member_type {
                 0 => RelationMember::Node(role, turbosm.node(member_id)?),
                 1 => RelationMember::Way(role, turbosm.way(member_id)?),
-                2 => RelationMember::Relation(role, Box::new(turbosm.relation(member_id)?)),
+                2 => RelationMember::Relation(role, member_id),
                 _ => return Err("invalid member type".into()),
             };
             members.push(member);

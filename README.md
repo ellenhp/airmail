@@ -15,10 +15,11 @@ Airmail's killer feature is sub-100MB memory consumption for a serving instance.
 - [x] Index OpenAddresses data.
 - [ ] Index WhosOnFirst data.
 - [x] API server.
+- [ ] Support and test planet-scale indices.
 - [ ] Extend query parser for other locales.
 - [ ] Categorical search, e.g. "coffee shops near me".
 - [ ] Bounding box biasing and restriction.
-- [ ] Investigate feasibility of executing queries against remote indices via HTTP range requests.
+- [ ] Minutely updates.
 - [ ] Systematic/automatic quality testing in CI.
 - [ ] Alternate results, e.g. returning Starbucks locations for "Dunkin Donuts" queries on the US west coast.[^2]
 

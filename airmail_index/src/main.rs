@@ -39,22 +39,22 @@ pub async fn populate_admin_areas(poi: &mut AirmailPoi, port: usize) -> Result<(
         .locality
         .unwrap_or_default()
         .iter()
-        .map(|a| a.name.to_lowercase())
+        .map(|a| a.to_lowercase())
         .collect();
     if let Some(neighbourhood) = pip_response.neighbourhood {
-        locality.extend(neighbourhood.iter().map(|a| a.name.to_lowercase()));
+        locality.extend(neighbourhood.iter().map(|a| a.to_lowercase()));
     }
     let region = pip_response
         .region
         .unwrap_or_default()
         .iter()
-        .map(|a| a.name.to_lowercase())
+        .map(|a| a.to_lowercase())
         .collect();
     let country = pip_response
         .country
         .unwrap_or_default()
         .iter()
-        .map(|a| a.name.to_lowercase())
+        .map(|a| a.to_lowercase())
         .collect();
 
     poi.locality = locality;
@@ -69,7 +69,7 @@ struct Args {
     /// Path to the Docker socket.
     #[clap(long, short)]
     docker_socket: Option<String>,
-    /// Path to the Who's On First SQLite database.
+    /// Path to the Who's On First Spatialite database.
     #[clap(long, short)]
     wof_db: String,
     /// Whether to forcefully recreate the container. Default false.
@@ -96,7 +96,7 @@ enum ContainerStatus {
     DoesNotExist,
 }
 
-const PIP_SERVICE_IMAGE: &str = "docker.io/pelias/pip-service:latest";
+const PIP_SERVICE_IMAGE: &str = "docker.io/pelias/spatial:latest";
 
 async fn docker_connect() -> Result<Docker, Box<dyn std::error::Error>> {
     let docker = if let Some(docker_socket) = &Args::parse().docker_socket {
@@ -134,10 +134,11 @@ async fn get_container_status(
 
 async fn maybe_start_pip_container(
     wof_db_path: &str,
-    idx: usize,
     recreate: bool,
     docker: &Docker,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // Holdover from when we had multiple containers.
+    let idx = 0;
     let container_state = get_container_status(idx, docker).await?;
     if container_state == ContainerStatus::Running && !recreate {
         println!(
@@ -154,7 +155,7 @@ async fn maybe_start_pip_container(
         env: Some(vec![]),
         host_config: Some(HostConfig {
             port_bindings: Some(HashMap::from([(
-                3102.to_string(),
+                3000.to_string(),
                 Some(vec![bollard::models::PortBinding {
                     host_ip: None,
                     host_port: Some(format!("{}", 3102 + idx)),
@@ -162,15 +163,18 @@ async fn maybe_start_pip_container(
             )])),
             mounts: Some(vec![bollard::models::Mount {
                 source: Some(wof_db_path.to_string()),
-                target: Some(
-                    "/mnt/pelias/whosonfirst/sqlite/whosonfirst-data-mapped.db".to_string(),
-                ),
+                target: Some("/mnt/whosonfirst/whosonfirst-spatialite.db".to_string()),
                 typ: Some(MountTypeEnum::BIND),
                 ..Default::default()
             }]),
             ..Default::default()
         }),
-        exposed_ports: Some(HashMap::from([("3102/tcp", HashMap::new())])),
+        cmd: Some(vec![
+            "server",
+            "--db",
+            "/mnt/whosonfirst/whosonfirst-spatialite.db",
+        ]),
+        exposed_ports: Some(HashMap::from([("3000/tcp", HashMap::new())])),
         ..Default::default()
     };
 
@@ -244,23 +248,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let index_path = args.index.clone();
     let docker = docker_connect().await?;
-    let max_pip = 8;
-    for i in 0..max_pip {
-        let _ = subprocess::Exec::cmd("chcon")
-            .arg("-t")
-            .arg("container_file_t")
-            .arg(&args.wof_db)
-            .join();
-        maybe_start_pip_container(&args.wof_db, i, args.recreate, &docker).await?;
-    }
+    let _ = subprocess::Exec::cmd("chcon")
+        .arg("-t")
+        .arg("container_file_t")
+        .arg(&args.wof_db)
+        .join();
+    maybe_start_pip_container(&args.wof_db, args.recreate, &docker).await?;
 
     if let Some(turbosm_path) = args.turbosm {
         let mut nonblocking_join_handles = Vec::new();
         let (no_admin_sender, no_admin_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
-            crossbeam::channel::bounded(1024);
+            crossbeam::channel::bounded(1024 * 64);
         let (to_index_sender, to_index_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
-            crossbeam::channel::bounded(1024);
-        for _ in 0..128 {
+            crossbeam::channel::bounded(1024 * 64);
+
+        for _ in 0..1.max(num_cpus::get() / 2) {
             let no_admin_receiver = no_admin_receiver.clone();
             let to_index_sender = to_index_sender.clone();
             nonblocking_join_handles.push(spawn(async move {
@@ -271,8 +273,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         break;
                     };
                     let mut sent = false;
-                    for _attempt in 0..5 {
-                        let port = (rand::random::<usize>() % max_pip) + 3102;
+                    for attempt in 0..5 {
+                        if attempt > 0 {
+                            println!("Retrying to populate admin areas.");
+                            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+                        }
+                        let port = 3102;
                         if let Err(err) = populate_admin_areas(&mut poi, port).await {
                             println!("Failed to populate admin areas. {}", err);
                         } else {
@@ -351,7 +357,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             crossbeam::channel::bounded(1024);
         let mut blocking_join_handles = Vec::new();
         let mut nonblocking_join_handles = Vec::new();
-        for _ in 0..16 {
+        for _ in 0..64 {
             let receiver = raw_receiver.clone();
             let no_admin_sender = no_admin_sender.clone();
             let count = count.clone();
@@ -402,7 +408,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     };
                     let mut sent = false;
                     for _attempt in 0..5 {
-                        let port = (rand::random::<usize>() % max_pip) + 3102;
+                        let port = 3102;
                         if let Err(err) = populate_admin_areas(&mut poi, port).await {
                             println!("Failed to populate admin areas. {}", err);
                         } else {

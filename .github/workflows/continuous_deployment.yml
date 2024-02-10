@@ -7,20 +7,14 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-
-      - uses: jetli/trunk-action@v0.1.0
-      - uses: jetli/wasm-bindgen-action@v0.1.0
-
       - uses: actions/checkout@v2
 
-      - run: cd parser_demo && trunk build --release
+      - uses: actions/setup-node@v3
+
+      - run: cd airmail_site && yarn install && yarn build
 
       - uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./parser_demo/dist
+          publish_dir: ./airmail_site/dist

@@ -30,7 +30,8 @@ rand = "0.8.5"
 subprocess = "0.2.9"
 rustyline = "13.0.0"
 turbosm = { path = "../turbosm" }
-redb = "1.5.0"
+num_cpus = "1.16.0"
+lru = "0.12.2"
 
 [[bin]]
 name = "query"
