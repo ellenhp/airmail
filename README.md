@@ -12,9 +12,12 @@ Airmail's killer feature is the ability to query remote indices, e.g. on S3. Thi
 
 - [x] English/North American query parser for addresses, place names, and place name queries with locality or neighborhood.
 - [x] Index OpenStreetMap data.
-- [x] Index OpenAddresses data.
+- [x] Index OpenAddresses data (not currently used in demo).
 - [ ] Index WhosOnFirst data.
 - [x] API server.
+- [x] Address queries.
+- [x] Named POI queries.
+- [x] Prefix queries.
 - [x] Query remote indices.
 - [x] Support and test planet-scale indices.
 - [ ] Extend query parser for other locales.
