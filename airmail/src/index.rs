@@ -3,7 +3,7 @@ use serde_json::Value;
 use tantivy::{
     collector::TopDocs,
     directory::MmapDirectory,
-    query::{BooleanQuery, DisjunctionMaxQuery, FuzzyTermQuery, Query},
+    query::{BooleanQuery, FuzzyTermQuery, Query},
     schema::{FacetOptions, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED, TEXT},
     tokenizer::{LowerCaser, RawTokenizer, TextAnalyzer},
     Term,

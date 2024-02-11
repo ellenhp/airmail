@@ -36,39 +36,41 @@ async fn search(
 
     let scenarios = parsed.scenarios();
     let start = std::time::Instant::now();
-    let mut results: Vec<(AirmailPoi, f32, QueryScenario)> = scenarios
-        .iter()
-        .take(10)
-        .filter_map(|scenario| {
-            let results = index.search(scenario).unwrap();
-            if results.is_empty() {
-                None
-            } else {
-                Some(
-                    results
-                        .iter()
-                        .map(|(poi, score)| {
-                            (
-                                poi.clone(),
-                                *score * scenario.penalty_mult(),
-                                scenario.clone(),
-                            )
-                        })
-                        .collect::<Vec<_>>(),
-                )
-            }
-        })
-        .take(3)
-        .flatten()
-        .collect();
+    let mut all_results: Vec<(AirmailPoi, f32, QueryScenario)> = vec![];
+    for scenario in scenarios.iter().take(3) {
+        if all_results.len() > 20 {
+            break;
+        }
+        let results = index.search(scenario).unwrap();
+        if results.is_empty() {
+            continue;
+        } else {
+            all_results.extend(
+                results
+                    .iter()
+                    .map(|(poi, score)| {
+                        (
+                            poi.clone(),
+                            *score * scenario.penalty_mult(),
+                            scenario.clone(),
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+            );
+        }
+    }
 
-    results.sort_by(|(_, a, _), (_, b, _)| b.partial_cmp(a).unwrap());
+    all_results.sort_by(|(_, a, _), (_, b, _)| b.partial_cmp(a).unwrap());
 
-    println!("{} results found in {:?}", results.len(), start.elapsed());
+    println!(
+        "{} results found in {:?}",
+        all_results.len(),
+        start.elapsed()
+    );
 
     let mut response = Response {
         metadata: HashMap::new(),
-        features: results
+        features: all_results
             .clone()
             .iter()
             .map(|(results, _, _)| results.clone())

@@ -13,10 +13,9 @@ async function fetchSearchResults(query) {
     pins.value = [];
     return;
   }
-  const url = `https://api.airmail.rs/search?q=${query}`;
+  const url = `https://api2.airmail.rs/search?q=${query}`;
   const response = await fetch(url);
   const data = await response.json();
-  console.log(data);
   var newPins = data.features.map((poi) => {
     return {
       "type": "Feature",
