@@ -34,8 +34,8 @@ const total = 4;
 </script>
 
 <template>
-  <div class="untree_co-section" id="roadmap-section">
-    <div class="container">
+  <div class="untree_co-section bg-light" id="roadmap-section">
+    <div class="container ">
       <div class="feature-section-header">
         <h1>
           Roadmap
@@ -44,18 +44,18 @@ const total = 4;
       <div class="row justify-content-between">
 
         <div class="col-lg-5 order-lg-2 js-custom-dots">
-          <a v-for="item in items" href="#" class="service link horizontal d-flex active" data-aos="fade-left"
+          <p v-for="item in items" href="#" class="service link horizontal d-flex active" data-aos="fade-left"
             data-aos-delay="0">
-            <div class="service-icon mb-4" :style=item.color>
-              <div class="service-icon-center">
-                <v-icon :icon=item.icon></v-icon>
-              </div>
+          <div class="service-icon mb-4" :style=item.color>
+            <div class="service-icon-center">
+              <v-icon :icon=item.icon></v-icon>
             </div>
-            <div class="service-contents">
-              <h3>{{ item.name }}</h3>
-              <p>{{ item.des }}</p>
-            </div>
-          </a>
+          </div>
+          <div class="service-contents">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.des }}</p>
+          </div>
+          </p>
         </div>
       </div>
     </div>

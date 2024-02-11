@@ -40,7 +40,7 @@ async function fetchSearchResults(query) {
 </script>
 
 <template>
-  <div class="untree_co-section bg-light" id="demo-section">
+  <div class="untree_co-section" id="demo-section">
     <div class="container">
       <div class="row justify-content-between">
         <div class="mb-4" data-aos="fade-up" data-aos-delay="0">

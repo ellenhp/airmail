@@ -18,26 +18,28 @@ const buttonGithub = "GitHub";
             <div class="col-lg-5">
               <h1 class="heading" data-aos="fade-up" data-aos-delay="0">
                 <p>
-                  Geocode the planet with <span style="
-                      color: themeColor;
-                    ">Airmail</span>
+                  Search the planet with Airmail.
                 </p>
               </h1>
               <div class="excerpt" data-aos="fade-up" data-aos-delay="100">
                 <p>
-                  Airmail is an extremely lightweight, open-source geocoder written in Rust.
-                  Airmail is currently able to parse English queries like "1600 Pennsylvania Ave NW" and POI queries like
-                  "Seattle Starbucks".
+                  Airmail is an extremely lightweight, open-source geocoder written in Rust. A search engine for the
+                  planet. Airmail is currently able to parse English queries like "1600 Pennsylvania Ave NW" and POI
+                  queries like "Seattle Starbucks". Result quality is fair for English queries in North America, and
+                  support for more regions and languages is next on the roadmap.
                 </p>
               </div>
               <p data-aos="fade-up" data-aos-delay="200">
-                <a href="#features-section" class="btn btn-primary smoothscroll" style="margin-right: 5px" :style="[
-                  { background: themeColor },
-                  { borderColor: themeColor },
-                ]">{{ buttonSeeFeatures }}</a>
-                <a href="#roadmap-section" class="btn btn-outline-primary smoothscroll roadmap" style="margin-right: 5px"
+                <a href="#features-section" class="btn btn-primary smoothscroll"
+                  style="margin-right: 10px; margin-bottom: 10px;" :style="[
+                    { background: themeColor },
+                    { borderColor: themeColor },
+                  ]">{{ buttonSeeFeatures }}</a>
+                <a href="#roadmap-section" class="btn btn-outline-primary smoothscroll roadmap"
+                  style="margin-right: 10px; margin-bottom: 10px;"
                   :style="[{ color: themeColor }, { borderColor: themeColor }]">{{ buttonRoadmap }}</a>
-                <a href="#demo-section" class="btn btn-outline-primary smoothscroll roadmap" style="margin-right: 5px"
+                <a href="#demo-section" class="btn btn-outline-primary smoothscroll roadmap"
+                  style="margin-right: 5px; margin-bottom: 10px;"
                   :style="[{ color: themeColor }, { borderColor: themeColor }]">Demo</a>
               </p>
             </div>
