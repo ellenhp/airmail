@@ -24,7 +24,7 @@ thread_local! {
     static HTTP_CLIENT: reqwest::Client = reqwest::Client::new();
 }
 
-const CHUNK_SIZE: usize = 1024 * 128;
+const CHUNK_SIZE: usize = 1024 * 32;
 
 static LRU_CACHE: OnceLock<Mutex<LruCache<CacheKey, Vec<u8>>>> = OnceLock::new();
 static LENGTHS: OnceLock<Mutex<HashMap<PathBuf, usize>>> = OnceLock::new();
@@ -46,8 +46,8 @@ impl FileHandle for HttpFileHandle {
     fn read_bytes(&self, range: Range<usize>) -> std::io::Result<OwnedBytes> {
         let chunk_start = range.start / CHUNK_SIZE;
         let chunk_end = range.end / CHUNK_SIZE;
-        let cache =
-            LRU_CACHE.get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(40_000).unwrap())));
+        let cache = LRU_CACHE
+            .get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(128 * 1024).unwrap())));
 
         let mut have_all_chunks = true;
         for chunk in chunk_start..=chunk_end {
