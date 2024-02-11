@@ -12,6 +12,7 @@ use deunicode::deunicode;
 use log::trace;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tokio::task::spawn_blocking;
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -41,7 +42,13 @@ async fn search(
         if all_results.len() > 20 {
             break;
         }
-        let results = index.search(scenario).unwrap();
+        let results = {
+            let scenario = scenario.clone();
+            let index = index.clone();
+            spawn_blocking(move || index.search(&scenario).unwrap())
+                .await
+                .unwrap()
+        };
         if results.is_empty() {
             continue;
         } else {
@@ -89,11 +96,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     let args = Args::parse();
     let index_path = args.index.clone();
-    let index = if index_path.starts_with("http") {
-        Arc::new(AirmailIndex::new_remote(&index_path)?)
-    } else {
-        Arc::new(AirmailIndex::new(&index_path)?)
-    };
+
+    let index = spawn_blocking(move || {
+        if index_path.starts_with("http") {
+            Arc::new(AirmailIndex::new_remote(&index_path).unwrap())
+        } else {
+            Arc::new(AirmailIndex::new(&index_path).unwrap())
+        }
+    })
+    .await
+    .unwrap();
     let app = Router::new().route("/search", get(search).with_state(index));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();

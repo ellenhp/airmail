@@ -5,6 +5,7 @@ use std::{
     ops::Range,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, OnceLock},
+    time::Duration,
 };
 
 use log::{error, info, warn};
@@ -17,7 +18,6 @@ use tantivy::{
     Directory,
 };
 use tantivy_common::{file_slice::FileHandle, AntiCallToken, HasLen, OwnedBytes, TerminatingWrite};
-use tokio::spawn;
 
 thread_local! {
     static BLOCKING_HTTP_CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
@@ -89,6 +89,9 @@ impl FileHandle for HttpFileHandle {
         let response = BLOCKING_HTTP_CLIENT.with(|client| {
             client
                 .get(&self.url)
+                .timeout(Duration::from_millis(
+                    500 + (range.end - range.start) as u64 / 1024,
+                ))
                 .header(
                     "Range",
                     dbg!(format!(
@@ -145,96 +148,6 @@ impl FileHandle for HttpFileHandle {
                 .to_vec(),
         ))
     }
-
-    async fn read_bytes_async(&self, range: Range<usize>) -> io::Result<OwnedBytes> {
-        let chunk_start = range.start / CHUNK_SIZE;
-        let chunk_end = range.end / CHUNK_SIZE;
-        let cache =
-            LRU_CACHE.get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(40_000).unwrap())));
-        let mut accumulated_chunks = vec![0u8; (chunk_end - chunk_start + 1) * CHUNK_SIZE];
-        info!(
-            "Reading bytes: {:?} in chunks from {} to {}",
-            range, chunk_start, chunk_end
-        );
-        let mut handles = Vec::new();
-        for chunk in chunk_start..=chunk_end {
-            let key = CacheKey {
-                base_url: self.url.clone(),
-                path: self.url.clone(),
-                chunk,
-            };
-            {
-                let mut cache = cache.lock().unwrap();
-                if let Some(data) = cache.get(&key) {
-                    accumulated_chunks[chunk * CHUNK_SIZE..(chunk + 1) * CHUNK_SIZE]
-                        .copy_from_slice(data);
-                    continue;
-                }
-            }
-            let url = self.url.clone();
-            let handle = spawn(async move {
-                let response = HTTP_CLIENT.with(|client| {
-                    client
-                        .get(&url)
-                        .header(
-                            "Range",
-                            format!("{}-{}", chunk * CHUNK_SIZE, (chunk + 1) * CHUNK_SIZE),
-                        )
-                        .send()
-                });
-                let response = match response.await {
-                    Ok(response) => response,
-                    Err(e) => {
-                        error!("Error: {:?}", e);
-                        return Err(std::io::Error::new(
-                            std::io::ErrorKind::Other,
-                            "Error fetching chunk",
-                        ));
-                    }
-                };
-                if response.status() != 200 {
-                    error!("Response: {:?}", response);
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "Error fetching chunk: non-200 status",
-                    ));
-                } else {
-                    let data = response.bytes().await.unwrap();
-                    let data = data.to_vec();
-                    {
-                        let mut cache = cache.lock().unwrap();
-                        cache.put(key, data.to_vec());
-                    }
-                    if data.len() < CHUNK_SIZE && chunk != chunk_end {
-                        warn!("Short chunk: {}", data.len());
-                        return Err(std::io::Error::new(
-                            std::io::ErrorKind::Other,
-                            "Error fetching chunk: short response length",
-                        ));
-                    }
-                    Ok((chunk, data))
-                }
-            });
-            handles.push(handle);
-        }
-        for handle in handles {
-            if let Ok(Ok((chunk, data))) = handle.await {
-                accumulated_chunks[chunk * CHUNK_SIZE..(chunk + 1) * CHUNK_SIZE]
-                    .copy_from_slice(&data);
-            } else {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Error fetching chunk",
-                ));
-            }
-        }
-        info!("Accumulated chunks: {}", accumulated_chunks.len());
-        let chunk_start_offset = range.start % CHUNK_SIZE;
-        let chunk_end_offset = (chunk_end - chunk_start) * CHUNK_SIZE + range.end % CHUNK_SIZE;
-        Ok(OwnedBytes::new(
-            accumulated_chunks[chunk_start_offset..chunk_end_offset].to_vec(),
-        ))
-    }
 }
 
 impl HasLen for HttpFileHandle {
@@ -249,24 +162,25 @@ impl HasLen for HttpFileHandle {
 
         let url = format!("{}", self.url);
         info!("Fetching length from: {}", url);
-        let response = BLOCKING_HTTP_CLIENT.with(|client| client.head(&url).send());
+        let response = BLOCKING_HTTP_CLIENT
+            .with(|client| client.head(&url).timeout(Duration::from_millis(500)).send());
         if let Err(e) = response {
-            error!("Error: {:?}", e);
-            return 0;
+            error!("Error fetching length: {:?}", e);
+            panic!();
         }
         let response = response.unwrap();
         if response.status() != 200 {
             error!("Response: {:?}", response);
-            return 0;
+            panic!();
         } else {
             let length = response
                 .headers()
                 .get("Content-Length")
                 .unwrap()
                 .to_str()
-                .unwrap_or_default()
+                .unwrap()
                 .parse()
-                .unwrap_or_default();
+                .unwrap();
             info!("Length: {}", length);
             let mut lengths = lengths.lock().unwrap();
             lengths.insert(PathBuf::from(&self.url), length);

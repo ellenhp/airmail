@@ -29,7 +29,7 @@ pub trait TriviallyConstructibleComponent: QueryComponent {
     fn new(text: String) -> Self;
 }
 
-pub trait QueryComponent {
+pub trait QueryComponent: Send + Sync {
     fn text(&self) -> &str;
 
     fn penalty_mult(&self) -> f32;
