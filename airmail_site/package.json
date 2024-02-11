@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/maplibre-gl": "^1.14.0",
     "maplibre-gl": "^4.0.0",
+    "p-debounce": "^4.0.0",
     "vue": "^3.3.4",
     "vue-material-design-icons": "^5.3.0",
     "vuetify": "^3.5.3"

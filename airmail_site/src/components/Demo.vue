@@ -1,14 +1,18 @@
 <script setup>
 import Map from "./Map.vue";
 import { ref } from 'vue'
+import pDebounce from 'p-debounce';
 
 const heading = "Demo";
-const totalMembers = "50";
-const totalTeam = "20";
 
 const pins = ref([])
+const latestSearchSeq = ref(0)
+const latestResultSeq = ref(0)
+
+const debouncedSearch = pDebounce(fetchSearchResults, 500);
 
 async function fetchSearchResults(query) {
+  const seq = ++latestSearchSeq.value;
   if (query.length < 3) {
     pins.value = [];
     return;
@@ -25,7 +29,12 @@ async function fetchSearchResults(query) {
       },
     };
   });
-  pins.value = newPins;
+  if (seq > latestResultSeq.value) {
+    latestResultSeq.value = seq;
+    pins.value = newPins;
+  } else {
+    return;
+  }
 }
 
 </script>
@@ -46,12 +55,7 @@ async function fetchSearchResults(query) {
           </p>
         </div>
         <v-text-field class="searchbar" label="Search" @input="async (event) => {
-          console.log(event);
-          const value = event.target.value;
-          if (value.length < 3) {
-            return;
-          }
-          const results = await fetchSearchResults(value);
+          await debouncedSearch(event.target.value);
         }"></v-text-field>
         <Map :pins=pins />
 
