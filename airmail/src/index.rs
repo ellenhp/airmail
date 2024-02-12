@@ -54,7 +54,6 @@ fn query_for_terms(
             )));
         };
     }
-    let queries: Vec<Box<dyn Query>> = vec![Box::new(BooleanQuery::intersection(queries))];
     Ok(queries)
 }
 
