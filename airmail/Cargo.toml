@@ -21,3 +21,6 @@ reqwest = { version = "0.11.24", features = ["blocking"] }
 lru = "0.12.2"
 async-trait = "0.1.77"
 tokio = { version = "1.36.0", features = ["full"] }
+nix = { version = "0.27", features = ["ioctl", "mman"] }
+userfaultfd = { version = "0.8.1", features = ["linux4_14", "linux5_7"] }
+crossbeam = "0.8.4"
