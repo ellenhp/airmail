@@ -8,6 +8,7 @@ use tantivy::{
     tokenizer::{LowerCaser, RawTokenizer, TextAnalyzer},
     Term,
 };
+use tokio::task::spawn_blocking;
 
 use crate::{directory::HttpDirectory, poi::AirmailPoi};
 
@@ -178,9 +179,16 @@ impl AirmailIndex {
         Ok(())
     }
 
-    pub fn num_docs(&self) -> Result<u64, Box<dyn std::error::Error>> {
-        let tantivy_reader = self.tantivy_index.reader()?;
-        Ok(tantivy_reader.searcher().num_docs())
+    pub async fn num_docs(&self) -> Result<u64, Box<dyn std::error::Error>> {
+        let index = self.tantivy_index.clone();
+        let count = spawn_blocking(move || {
+            if let Ok(tantivy_reader) = index.reader() {
+                Some(tantivy_reader.searcher().num_docs())
+            } else {
+                None
+            }
+        });
+        Ok(count.await?.ok_or("Error getting count")?)
     }
 
     pub fn search(

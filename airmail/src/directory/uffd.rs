@@ -1,8 +1,14 @@
-use std::{collections::HashSet, ops::Add, os::raw::c_void, sync::Arc, time::Duration};
+use std::{collections::HashSet, num::NonZeroUsize, os::raw::c_void, sync::Arc, time::Duration};
 
-use crossbeam::channel::{Receiver, Sender};
 use log::{debug, error, info, warn};
-use tokio::spawn;
+use lru::LruCache;
+use tokio::{
+    spawn,
+    sync::{
+        broadcast::{Receiver, Sender},
+        Mutex,
+    },
+};
 use userfaultfd::{Event, Uffd};
 
 use crate::directory::CHUNK_SIZE;
@@ -16,13 +22,15 @@ pub(crate) fn round_up_to_page(size: usize) -> usize {
 }
 
 async fn fetch_and_resume(
-    base_ptr: usize,
+    mmap_base_ptr: usize,
+    dst_ptr: usize,
     chunk_idx: usize,
     artifact_url: String,
     uffd: Arc<Uffd>,
     sender: Sender<usize>,
+    recent_chunks: Arc<Mutex<LruCache<usize, Vec<u8>>>>,
 ) {
-    debug!("Fetching chunk: {} from {}", chunk_idx, artifact_url);
+    info!("Fetching chunk: {} from {}", chunk_idx, artifact_url);
     let start_time = std::time::Instant::now();
     let byte_range = (chunk_idx * CHUNK_SIZE)..((chunk_idx + 1) * CHUNK_SIZE);
     for attempt in 0..5 {
@@ -34,6 +42,7 @@ async fn fetch_and_resume(
                         "Range",
                         format!("bytes={}-{}", byte_range.start, byte_range.end - 1),
                     )
+                    .timeout(Duration::from_millis(1000))
                     .send()
             })
             .await;
@@ -46,7 +55,12 @@ async fn fetch_and_resume(
                     start_time.elapsed(),
                     attempt + 1
                 );
-                let bytes = response.bytes().await.unwrap().to_vec();
+                let bytes = if let Ok(bytes) = response.bytes().await {
+                    bytes.to_vec()
+                } else {
+                    warn!("Failed to read response bytes");
+                    continue;
+                };
                 let expected_len = byte_range.end - byte_range.start;
                 if bytes.len() > expected_len {
                     // This is weird and indicates a bug or malicious server.
@@ -67,11 +81,22 @@ async fn fetch_and_resume(
                 };
                 debug_assert!(bytes.len() == expected_len);
                 debug_assert!(bytes.len() == CHUNK_SIZE);
-                debug!("Copying chunk to memory");
+
+                let offset = (dst_ptr - mmap_base_ptr) % CHUNK_SIZE;
+                dbg!(offset);
+                debug_assert!(offset + 4096 <= bytes.len());
                 unsafe {
-                    let src = bytes.as_ptr() as *const c_void;
-                    let dst = base_ptr.add(chunk_idx * CHUNK_SIZE) as *mut c_void;
-                    uffd.copy(src, dst, CHUNK_SIZE, true).unwrap();
+                    uffd.copy(
+                        bytes.as_ptr().add(offset) as *const c_void,
+                        dst_ptr as *mut c_void,
+                        4096,
+                        true,
+                    )
+                    .unwrap();
+                }
+                {
+                    let mut recent_chunks = recent_chunks.lock().await;
+                    recent_chunks.put(chunk_idx, bytes.try_into().unwrap());
                 }
                 sender.send(chunk_idx).unwrap();
                 return;
@@ -79,6 +104,11 @@ async fn fetch_and_resume(
             warn!(
                 "Failed to fetch chunk: {}-{}",
                 byte_range.start, byte_range.end
+            );
+        } else {
+            warn!(
+                "Failed to fetch chunk: {}-{}: {:?}",
+                byte_range.start, byte_range.end, response
             );
         }
     }
@@ -93,12 +123,15 @@ async fn fetch_and_resume(
 pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_url: String) {
     info!("Starting UFFD handler");
     let uffd = Arc::new(uffd);
-    let mut requested_pages = HashSet::new();
-    let (sender, receiver): (Sender<usize>, Receiver<usize>) = crossbeam::channel::unbounded();
+    let requested_pages = Arc::new(Mutex::new(HashSet::new()));
+    let chunk_cache: Arc<Mutex<LruCache<usize, Vec<u8>>>> =
+        Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(64).unwrap())));
+    let (sender, mut receiver): (Sender<usize>, Receiver<usize>) =
+        tokio::sync::broadcast::channel(100);
     loop {
         {
             if let Ok(chunk) = receiver.try_recv() {
-                requested_pages.remove(&chunk);
+                requested_pages.blocking_lock().remove(&chunk);
             }
         }
         let event = uffd.read_event().unwrap();
@@ -107,7 +140,6 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
         } else {
             continue;
         };
-        info!("UFFD event: {:?}", event);
 
         match event {
             Event::Pagefault {
@@ -116,43 +148,86 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                 addr,
                 thread_id,
             } => {
-                info!("Pagefault: {:?} {:?} {:?} {:?}", kind, rw, addr, thread_id);
+                if rw == userfaultfd::ReadWrite::Write {
+                    unsafe {
+                        uffd.zeropage(addr, 4096, true).unwrap();
+                    }
+                    continue;
+                }
+                debug!("Pagefault: {:?} {:?} {:?} {:?}", kind, rw, addr, thread_id);
                 let offset = addr as usize - mmap_start;
                 let chunk_idx = offset / CHUNK_SIZE;
-                if requested_pages.contains(&chunk_idx) {
+                if let Some(chunk) = chunk_cache.blocking_lock().get(&chunk_idx) {
+                    debug!("Using cached chunk: {}", chunk_idx);
+                    let offset_into_chunk = offset % CHUNK_SIZE;
+                    unsafe {
+                        uffd.copy(
+                            chunk.as_ptr().add(offset_into_chunk) as *const c_void,
+                            addr as *mut c_void,
+                            4096,
+                            true,
+                        )
+                        .unwrap();
+                    }
+                    continue;
+                }
+
+                if requested_pages.blocking_lock().contains(&chunk_idx) {
                     debug!("Already requested chunk: {}", chunk_idx);
-                    let receiver = receiver.clone();
                     let uffd = uffd.clone();
+                    let requested_pages = requested_pages.clone();
+                    let mut receiver = receiver.resubscribe();
+                    let addr = addr as usize;
+                    let chunk_cache = chunk_cache.clone();
                     spawn(async move {
                         let start = std::time::Instant::now();
                         loop {
-                            if start.elapsed() > Duration::from_secs(5) {
-                                error!("Timeout waiting for chunk: {}", chunk_idx);
-                                break;
-                            }
-                            if let Ok(fetched_chunk) = receiver.recv_timeout(Duration::from_secs(1))
-                            {
-                                if fetched_chunk == chunk_idx {
+                            if let Ok(chunk) = receiver.recv().await {
+                                if chunk == chunk_idx {
                                     break;
                                 }
                             }
+                            if start.elapsed() > Duration::from_secs(10) {
+                                error!("Timeout waiting for chunk: {}", chunk_idx);
+                                break;
+                            }
+                            if !requested_pages.lock().await.contains(&chunk_idx) {
+                                warn!("Chunk: {} is no longer requested, but we missed the message that it was found.", chunk_idx);
+                                break;
+                            }
                         }
-                        uffd.wake(offset as *mut c_void, CHUNK_SIZE).unwrap();
+
+                        let chunk = chunk_cache
+                            .lock()
+                            .await
+                            .get(&chunk_idx)
+                            .cloned()
+                            .expect("Chunk should be in cache after waiting for it");
+                        let offset_into_chunk = offset % CHUNK_SIZE;
+                        unsafe {
+                            uffd.copy(
+                                chunk.as_ptr().add(offset_into_chunk) as *const c_void,
+                                addr as *mut c_void,
+                                4096,
+                                true,
+                            )
+                            .unwrap();
+                        }
                     });
                     continue;
-                } else {
-                    debug!("Requesting chunk: {}", chunk_idx);
-                    requested_pages.insert(chunk_idx);
                 }
+                debug!("Requesting chunk: {}", chunk_idx);
+                requested_pages.blocking_lock().insert(chunk_idx);
                 let artifact_url = artifact_url.clone();
                 let uffd = uffd.clone();
-                let sender = sender.clone();
                 spawn(fetch_and_resume(
                     mmap_start,
+                    addr as usize,
                     chunk_idx,
                     artifact_url,
                     uffd,
-                    sender,
+                    sender.clone(),
+                    chunk_cache.clone(),
                 ));
             }
             Event::Fork { uffd } => {

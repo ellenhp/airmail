@@ -29,7 +29,7 @@ thread_local! {
     pub(crate) static BLOCKING_HTTP_CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
 }
 
-const CHUNK_SIZE: usize = 2 * 1024 * 1024;
+const CHUNK_SIZE: usize = 1024 * 1024;
 
 #[derive(Clone)]
 struct MmapArc {
@@ -134,11 +134,7 @@ impl Directory for HttpDirectory {
                 None,
                 len.try_into().unwrap(),
                 ProtFlags::PROT_READ | ProtFlags::PROT_WRITE,
-                MapFlags::MAP_PRIVATE
-                    | MapFlags::MAP_ANONYMOUS
-                    | MapFlags::MAP_HUGETLB
-                    | MapFlags::MAP_HUGE_2MB
-                    | MapFlags::MAP_NORESERVE,
+                MapFlags::MAP_PRIVATE | MapFlags::MAP_ANONYMOUS | MapFlags::MAP_NORESERVE,
                 None::<std::os::fd::BorrowedFd>,
                 0,
             )
