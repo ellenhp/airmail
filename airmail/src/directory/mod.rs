@@ -5,9 +5,10 @@ mod vec_writer;
 use self::uffd::handle_uffd;
 use crate::directory::{uffd::round_up_to_page, vec_writer::VecWriter};
 use log::info;
-use nix::sys::mman::{mmap, MapFlags, ProtFlags};
+use nix::sys::mman::{madvise, mmap, MapFlags, MmapAdvise, ProtFlags};
 use std::{
     collections::HashMap,
+    ffi::c_void,
     ops::{Deref, Range},
     path::Path,
     slice,
@@ -21,8 +22,8 @@ use tantivy::{
     Directory,
 };
 use tantivy_common::{file_slice::FileHandle, HasLen, OwnedBytes, StableDeref};
-use tokio::{spawn, task::JoinHandle};
-use userfaultfd::UffdBuilder;
+use tokio::task::{spawn_blocking, JoinHandle};
+use userfaultfd::{FeatureFlags, UffdBuilder};
 
 thread_local! {
     pub(crate) static BLOCKING_HTTP_CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
@@ -32,8 +33,7 @@ const CHUNK_SIZE: usize = 2 * 1024 * 1024;
 
 #[derive(Clone)]
 struct MmapArc {
-    ptr: usize,
-    len: usize,
+    slice: &'static [u8],
 }
 
 impl Deref for MmapArc {
@@ -41,7 +41,7 @@ impl Deref for MmapArc {
 
     #[inline]
     fn deref(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(self.ptr as *const u8, self.len) }
+        self.slice
     }
 }
 unsafe impl StableDeref for MmapArc {}
@@ -55,20 +55,32 @@ pub struct CacheKey {
 
 #[derive(Debug, Clone)]
 pub struct HttpFileHandle {
+    ptr: usize,
     owned_bytes: Arc<OwnedBytes>,
 }
 
 #[async_trait::async_trait]
 impl FileHandle for HttpFileHandle {
     fn read_bytes(&self, range: Range<usize>) -> std::io::Result<OwnedBytes> {
-        info!("Reading bytes: {:?}", range);
+        // Round down to page size.
+        let start = range.start + self.ptr;
+        let end = range.end + self.ptr;
+        let start: usize = if start != round_up_to_page(start) {
+            round_up_to_page(start) - CHUNK_SIZE
+        } else {
+            start
+        };
+        let end = round_up_to_page(end);
+        unsafe {
+            madvise(start as *mut c_void, end - start, MmapAdvise::MADV_WILLNEED)
+                .expect("madvise failed");
+        }
         Ok(self.owned_bytes.slice(range))
     }
 }
 
 impl HasLen for HttpFileHandle {
     fn len(&self) -> usize {
-        info!("Getting len {}", self.owned_bytes.len());
         self.owned_bytes.len()
     }
 }
@@ -112,12 +124,10 @@ impl Directory for HttpDirectory {
 
         let uffd = UffdBuilder::new()
             .close_on_exec(true)
-            .non_blocking(true)
             .user_mode_only(true)
+            .require_features(FeatureFlags::MISSING_HUGETLBFS)
             .create()
             .unwrap();
-
-        println!("len: {}", len);
 
         let addr = unsafe {
             mmap(
@@ -137,24 +147,22 @@ impl Directory for HttpDirectory {
 
         let mmap_ptr = addr as usize;
 
-        dbg!(mmap_ptr, len, url.clone());
-
         uffd.register(addr, len).unwrap();
 
         let handle = {
             let url = url.clone();
-            spawn(async move {
-                handle_uffd(uffd, mmap_ptr, len, url).await;
+            spawn_blocking(move || {
+                handle_uffd(uffd, mmap_ptr, len, url);
             })
         };
         let owned_bytes = Arc::new(OwnedBytes::new(MmapArc {
-            ptr: mmap_ptr,
-            len: file_len,
+            slice: unsafe { slice::from_raw_parts(mmap_ptr as *const u8, file_len) },
         }));
 
-        dbg!(owned_bytes[0]);
-
-        let file_handle = Arc::new(HttpFileHandle { owned_bytes });
+        let file_handle = Arc::new(HttpFileHandle {
+            ptr: mmap_ptr,
+            owned_bytes,
+        });
         {
             let mut cache = self.file_handle_cache.lock().unwrap();
             cache.insert(url, (handle, file_handle.clone()));

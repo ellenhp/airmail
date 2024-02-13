@@ -178,6 +178,11 @@ impl AirmailIndex {
         Ok(())
     }
 
+    pub fn num_docs(&self) -> Result<u64, Box<dyn std::error::Error>> {
+        let tantivy_reader = self.tantivy_index.reader()?;
+        Ok(tantivy_reader.searcher().num_docs())
+    }
+
     pub fn search(
         &self,
         query: &QueryScenario,

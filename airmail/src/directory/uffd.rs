@@ -1,8 +1,8 @@
 use std::{collections::HashSet, ops::Add, os::raw::c_void, sync::Arc, time::Duration};
 
 use crossbeam::channel::{Receiver, Sender};
-use log::{error, info, warn};
-use tokio::{spawn, time::sleep};
+use log::{debug, error, info, warn};
+use tokio::spawn;
 use userfaultfd::{Event, Uffd};
 
 use crate::directory::CHUNK_SIZE;
@@ -22,9 +22,10 @@ async fn fetch_and_resume(
     uffd: Arc<Uffd>,
     sender: Sender<usize>,
 ) {
-    info!("Fetching chunk: {} from {}", chunk_idx, artifact_url);
+    debug!("Fetching chunk: {} from {}", chunk_idx, artifact_url);
+    let start_time = std::time::Instant::now();
     let byte_range = (chunk_idx * CHUNK_SIZE)..((chunk_idx + 1) * CHUNK_SIZE);
-    for _ in 0..5 {
+    for attempt in 0..5 {
         let response = HTTP_CLIENT
             .with(|client| {
                 client
@@ -38,9 +39,12 @@ async fn fetch_and_resume(
             .await;
         if let Ok(response) = response {
             if response.status().is_success() {
-                info!(
-                    "Success! Fetched chunk: {}-{}",
-                    byte_range.start, byte_range.end
+                debug!(
+                    "Success! Fetched chunk: {}-{} in {:?} and {} attempts",
+                    byte_range.start,
+                    byte_range.end,
+                    start_time.elapsed(),
+                    attempt + 1
                 );
                 let bytes = response.bytes().await.unwrap().to_vec();
                 let expected_len = byte_range.end - byte_range.start;
@@ -63,7 +67,7 @@ async fn fetch_and_resume(
                 };
                 debug_assert!(bytes.len() == expected_len);
                 debug_assert!(bytes.len() == CHUNK_SIZE);
-                info!("Copying chunk to memory");
+                debug!("Copying chunk to memory");
                 unsafe {
                     let src = bytes.as_ptr() as *const c_void;
                     let dst = base_ptr.add(chunk_idx * CHUNK_SIZE) as *mut c_void;
@@ -82,9 +86,11 @@ async fn fetch_and_resume(
         "Critical: Failed to fetch chunk: {} after 5 attempts",
         chunk_idx,
     );
+    // Find something better to do here maybe?
+    panic!();
 }
 
-pub(crate) async fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_url: String) {
+pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_url: String) {
     info!("Starting UFFD handler");
     let uffd = Arc::new(uffd);
     let mut requested_pages = HashSet::new();
@@ -95,7 +101,6 @@ pub(crate) async fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, arti
                 requested_pages.remove(&chunk);
             }
         }
-        sleep(Duration::from_micros(100)).await;
         let event = uffd.read_event().unwrap();
         let event = if let Some(event) = event {
             event
@@ -115,7 +120,7 @@ pub(crate) async fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, arti
                 let offset = addr as usize - mmap_start;
                 let chunk_idx = offset / CHUNK_SIZE;
                 if requested_pages.contains(&chunk_idx) {
-                    info!("Already requested chunk: {}", chunk_idx);
+                    debug!("Already requested chunk: {}", chunk_idx);
                     let receiver = receiver.clone();
                     let uffd = uffd.clone();
                     spawn(async move {
@@ -136,7 +141,7 @@ pub(crate) async fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, arti
                     });
                     continue;
                 } else {
-                    info!("Requesting chunk: {}", chunk_idx);
+                    debug!("Requesting chunk: {}", chunk_idx);
                     requested_pages.insert(chunk_idx);
                 }
                 let artifact_url = artifact_url.clone();

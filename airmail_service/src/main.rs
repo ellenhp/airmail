@@ -106,6 +106,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     })
     .await
     .unwrap();
+    println!("Have {} docs", index.num_docs()?);
     let app = Router::new().route("/search", get(search).with_state(index));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
