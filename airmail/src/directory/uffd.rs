@@ -86,13 +86,12 @@ async fn fetch_and_resume(
                 dbg!(offset);
                 debug_assert!(offset + 4096 <= bytes.len());
                 unsafe {
-                    uffd.copy(
+                    let _ = uffd.copy(
                         bytes.as_ptr().add(offset) as *const c_void,
                         dst_ptr as *mut c_void,
                         4096,
                         true,
-                    )
-                    .unwrap();
+                    );
                 }
                 {
                     let mut recent_chunks = recent_chunks.lock().await;
@@ -205,13 +204,12 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                             .expect("Chunk should be in cache after waiting for it");
                         let offset_into_chunk = offset % CHUNK_SIZE;
                         unsafe {
-                            uffd.copy(
+                            let _ = uffd.copy(
                                 chunk.as_ptr().add(offset_into_chunk) as *const c_void,
                                 addr as *mut c_void,
                                 4096,
                                 true,
-                            )
-                            .unwrap();
+                            );
                         }
                     });
                     continue;
