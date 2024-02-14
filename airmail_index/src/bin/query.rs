@@ -1,6 +1,8 @@
-use airmail::index::AirmailIndex;
+use airmail::{index::AirmailIndex, poi::AirmailPoi};
 use clap::Parser;
+use futures_util::future::join_all;
 use rustyline::DefaultEditor;
+use tokio::spawn;
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -22,29 +24,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let parsed = airmail_parser::query::Query::parse(&query);
 
         let scenarios = parsed.scenarios();
-        let results: Option<Vec<_>> = scenarios
-            .iter()
-            .take(10)
-            .filter_map(|scenario| {
-                let results = index.search(scenario).unwrap();
-                if results.is_empty() {
-                    None
-                } else {
-                    dbg!(scenario);
-                    Some(results)
-                }
-            })
-            .next();
-
-        println!();
-        if let Some(results) = results {
-            for result in &results {
-                println!("  - {:?}", result);
-            }
-            println!("{} results found in {:?}", results.len(), start.elapsed());
-        } else {
-            println!("No results found in {:?}.", start.elapsed());
+        let mut scaled_results: Vec<tokio::task::JoinHandle<Vec<(AirmailPoi, f32)>>> = Vec::new();
+        for scenario in scenarios.into_iter().take(3) {
+            let index = index.clone();
+            scaled_results.push(spawn(async move {
+                let docs = index.search(&scenario).await.unwrap();
+                let docs = docs
+                    .into_iter()
+                    .map(|(poi, score)| (poi, scenario.penalty_mult() * score))
+                    .collect::<Vec<_>>();
+                docs
+            }));
         }
-        println!();
+        let mut results: Vec<(AirmailPoi, f32)> = join_all(scaled_results)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect::<Vec<_>>();
+
+        results.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
+        for (poi, score) in results.iter().take(10) {
+            println!("{:?} {}", poi, score);
+        }
+        println!("{} results found in {:?}", results.len(), start.elapsed());
     }
 }

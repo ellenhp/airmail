@@ -1,10 +1,15 @@
+use std::sync::Arc;
+
 use airmail_parser::{component::QueryComponentType, query::QueryScenario};
 use serde_json::Value;
 use tantivy::{
     collector::TopDocs,
     directory::MmapDirectory,
-    query::{BooleanQuery, FuzzyTermQuery, Query},
-    schema::{FacetOptions, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED, TEXT},
+    query::{BooleanQuery, Query, TermQuery},
+    schema::{
+        FacetOptions, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED,
+        TEXT,
+    },
     tokenizer::{LowerCaser, RawTokenizer, TextAnalyzer},
     Term,
 };
@@ -25,8 +30,9 @@ pub const FIELD_COUNTRY: &str = "country";
 pub const FIELD_S2CELL: &str = "s2cell";
 pub const FIELD_TAGS: &str = "tags";
 
+#[derive(Clone)]
 pub struct AirmailIndex {
-    tantivy_index: tantivy::Index,
+    tantivy_index: Arc<tantivy::Index>,
 }
 
 fn query_for_terms(
@@ -37,21 +43,16 @@ fn query_for_terms(
     let mut queries: Vec<Box<dyn Query>> = Vec::new();
     let mut phrase = Vec::new();
     for (i, term) in terms.iter().enumerate() {
-        if term.len() < 2 {
-            continue;
-        }
         phrase.push(Term::from_field_text(field, term));
         if i == terms.len() - 1 && is_prefix {
-            queries.push(Box::new(FuzzyTermQuery::new_prefix(
+            queries.push(Box::new(TermQuery::new(
                 Term::from_field_text(field, term),
-                0,
-                true,
+                IndexRecordOption::Basic,
             )));
         } else {
-            queries.push(Box::new(FuzzyTermQuery::new(
+            queries.push(Box::new(TermQuery::new(
                 Term::from_field_text(field, term),
-                0,
-                true,
+                IndexRecordOption::Basic,
             )));
         };
     }
@@ -139,7 +140,9 @@ impl AirmailIndex {
         tantivy_index
             .tokenizers()
             .register("street_tokenizer", street_tokenizer);
-        Ok(Self { tantivy_index })
+        Ok(Self {
+            tantivy_index: Arc::new(tantivy_index),
+        })
     }
 
     pub fn new(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
@@ -150,7 +153,9 @@ impl AirmailIndex {
         tantivy_index
             .tokenizers()
             .register("street_tokenizer", street_tokenizer);
-        Ok(Self { tantivy_index })
+        Ok(Self {
+            tantivy_index: Arc::new(tantivy_index),
+        })
     }
 
     pub fn new_remote(base_url: &str) -> Result<Self, Box<dyn std::error::Error>> {
@@ -161,7 +166,9 @@ impl AirmailIndex {
         tantivy_index
             .tokenizers()
             .register("street_tokenizer", street_tokenizer);
-        Ok(Self { tantivy_index })
+        Ok(Self {
+            tantivy_index: Arc::new(tantivy_index),
+        })
     }
 
     pub fn writer(&mut self) -> Result<AirmailIndexWriter, Box<dyn std::error::Error>> {
@@ -191,7 +198,7 @@ impl AirmailIndex {
         Ok(count.await?.ok_or("Error getting count")?)
     }
 
-    pub fn search(
+    pub async fn search(
         &self,
         query: &QueryScenario,
     ) -> Result<Vec<(AirmailPoi, f32)>, Box<dyn std::error::Error>> {
@@ -224,19 +231,10 @@ impl AirmailIndex {
                 }
 
                 QueryComponentType::RoadComponent => {
-                    if is_prefix {
-                        queries.push(Box::new(FuzzyTermQuery::new_prefix(
-                            Term::from_field_text(self.field_road(), component.text()),
-                            0,
-                            true,
-                        )));
-                    } else {
-                        queries.push(Box::new(FuzzyTermQuery::new(
-                            Term::from_field_text(self.field_road(), component.text()),
-                            0,
-                            true,
-                        )));
-                    }
+                    queries.push(Box::new(TermQuery::new(
+                        Term::from_field_text(self.field_road(), component.text()),
+                        IndexRecordOption::Basic,
+                    )));
                 }
 
                 QueryComponentType::IntersectionComponent => {
@@ -283,12 +281,13 @@ impl AirmailIndex {
                 }
             }
         }
-
         let query = BooleanQuery::intersection(queries);
-        let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+        let (top_docs, searcher) =
+            spawn_blocking(move || (searcher.search(&query, &TopDocs::with_limit(10)), searcher))
+                .await?;
         let mut results = Vec::new();
-        for (score, doc_address) in top_docs {
-            let doc = searcher.doc(doc_address)?;
+        for (score, doc_id) in top_docs? {
+            let doc = searcher.doc(doc_id)?;
             let house_num: Option<&str> = doc
                 .get_first(self.field_house_number())
                 .map(|v| v.as_text())

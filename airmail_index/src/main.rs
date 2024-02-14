@@ -458,10 +458,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         indexing_join_handle.await.unwrap();
     }
 
-    println!("Done. Merging segments.");
-    let index_path = args.index.clone();
-    let mut index = airmail::index::AirmailIndex::new(&index_path)?;
-    index.merge().await?;
-
     Ok(())
 }

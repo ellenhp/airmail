@@ -2,6 +2,7 @@ use std::{collections::HashSet, num::NonZeroUsize, os::raw::c_void, sync::Arc, t
 
 use log::{debug, error, info, warn};
 use lru::LruCache;
+use nix::sys::mman::{madvise, MmapAdvise};
 use tokio::{
     spawn,
     sync::{
@@ -42,7 +43,7 @@ async fn fetch_and_resume(
                         "Range",
                         format!("bytes={}-{}", byte_range.start, byte_range.end - 1),
                     )
-                    .timeout(Duration::from_millis(1000))
+                    .timeout(Duration::from_millis(3000))
                     .send()
             })
             .await;
@@ -83,7 +84,6 @@ async fn fetch_and_resume(
                 debug_assert!(bytes.len() == CHUNK_SIZE);
 
                 let offset = (dst_ptr - mmap_base_ptr) % CHUNK_SIZE;
-                dbg!(offset);
                 debug_assert!(offset + 4096 <= bytes.len());
                 unsafe {
                     let _ = uffd.copy(
@@ -92,10 +92,11 @@ async fn fetch_and_resume(
                         4096,
                         true,
                     );
+                    dont_need(dst_ptr as usize);
                 }
                 {
                     let mut recent_chunks = recent_chunks.lock().await;
-                    recent_chunks.put(chunk_idx, bytes.try_into().unwrap());
+                    recent_chunks.put(chunk_idx, bytes);
                 }
                 sender.send(chunk_idx).unwrap();
                 return;
@@ -117,6 +118,14 @@ async fn fetch_and_resume(
     );
     // Find something better to do here maybe?
     panic!();
+}
+
+fn dont_need(page_start: usize) {
+    // Round down to page size.
+    unsafe {
+        madvise(page_start as *mut c_void, 4096, MmapAdvise::MADV_WILLNEED)
+            .expect("madvise failed");
+    }
 }
 
 pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_url: String) {
@@ -147,12 +156,6 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                 addr,
                 thread_id,
             } => {
-                if rw == userfaultfd::ReadWrite::Write {
-                    unsafe {
-                        uffd.zeropage(addr, 4096, true).unwrap();
-                    }
-                    continue;
-                }
                 debug!("Pagefault: {:?} {:?} {:?} {:?}", kind, rw, addr, thread_id);
                 let offset = addr as usize - mmap_start;
                 let chunk_idx = offset / CHUNK_SIZE;
@@ -160,13 +163,13 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                     debug!("Using cached chunk: {}", chunk_idx);
                     let offset_into_chunk = offset % CHUNK_SIZE;
                     unsafe {
-                        uffd.copy(
+                        let _ = uffd.copy(
                             chunk.as_ptr().add(offset_into_chunk) as *const c_void,
                             addr as *mut c_void,
                             4096,
                             true,
-                        )
-                        .unwrap();
+                        );
+                        dont_need(addr as usize);
                     }
                     continue;
                 }
@@ -177,7 +180,6 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                     let requested_pages = requested_pages.clone();
                     let mut receiver = receiver.resubscribe();
                     let addr = addr as usize;
-                    let chunk_cache = chunk_cache.clone();
                     spawn(async move {
                         let start = std::time::Instant::now();
                         loop {
@@ -196,21 +198,8 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                             }
                         }
 
-                        let chunk = chunk_cache
-                            .lock()
-                            .await
-                            .get(&chunk_idx)
-                            .cloned()
-                            .expect("Chunk should be in cache after waiting for it");
-                        let offset_into_chunk = offset % CHUNK_SIZE;
-                        unsafe {
-                            let _ = uffd.copy(
-                                chunk.as_ptr().add(offset_into_chunk) as *const c_void,
-                                addr as *mut c_void,
-                                4096,
-                                true,
-                            );
-                        }
+                        // Wake the process, and we'll handle the page fault again if need be.
+                        uffd.wake(addr as *mut c_void, 4096).unwrap();
                     });
                     continue;
                 }

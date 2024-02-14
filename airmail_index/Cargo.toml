@@ -35,3 +35,6 @@ lru = "0.12.2"
 
 [[bin]]
 name = "query"
+
+[[bin]]
+name = "merge"

@@ -5,10 +5,9 @@ mod vec_writer;
 use self::uffd::handle_uffd;
 use crate::directory::{uffd::round_up_to_page, vec_writer::VecWriter};
 use log::info;
-use nix::sys::mman::{madvise, mmap, MapFlags, MmapAdvise, ProtFlags};
+use nix::sys::mman::{mmap, MapFlags, ProtFlags};
 use std::{
     collections::HashMap,
-    ffi::c_void,
     ops::{Deref, Range},
     path::Path,
     slice,
@@ -29,7 +28,7 @@ thread_local! {
     pub(crate) static BLOCKING_HTTP_CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
 }
 
-const CHUNK_SIZE: usize = 1024 * 1024;
+const CHUNK_SIZE: usize = 1 * 1024 * 1024;
 
 #[derive(Clone)]
 struct MmapArc {
@@ -55,26 +54,13 @@ pub struct CacheKey {
 
 #[derive(Debug, Clone)]
 pub struct HttpFileHandle {
-    ptr: usize,
+    _ptr: usize,
     owned_bytes: Arc<OwnedBytes>,
 }
 
 #[async_trait::async_trait]
 impl FileHandle for HttpFileHandle {
     fn read_bytes(&self, range: Range<usize>) -> std::io::Result<OwnedBytes> {
-        // Round down to page size.
-        let start = range.start + self.ptr;
-        let end = range.end + self.ptr;
-        let start: usize = if start != round_up_to_page(start) {
-            round_up_to_page(start) - CHUNK_SIZE
-        } else {
-            start
-        };
-        let end = round_up_to_page(end);
-        unsafe {
-            madvise(start as *mut c_void, end - start, MmapAdvise::MADV_WILLNEED)
-                .expect("madvise failed");
-        }
         Ok(self.owned_bytes.slice(range))
     }
 }
@@ -156,7 +142,7 @@ impl Directory for HttpDirectory {
         }));
 
         let file_handle = Arc::new(HttpFileHandle {
-            ptr: mmap_ptr,
+            _ptr: mmap_ptr,
             owned_bytes,
         });
         {

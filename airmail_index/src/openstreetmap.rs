@@ -110,7 +110,7 @@ fn index_way(tags: &HashMap<String, String>, way: &Way) -> Option<AirmailPoi> {
     tags_to_poi(&tags, lat, lng)
 }
 
-fn relation_centroid(
+fn _relation_centroid(
     relation: &Relation,
     level: u32,
     turbosm: &Turbosm,
@@ -132,7 +132,7 @@ fn relation_centroid(
             }
             RelationMember::Relation(_, other_relation) => {
                 let other_relation = turbosm.relation(*other_relation)?;
-                if let Ok(centroid) = relation_centroid(&other_relation, level + 1, turbosm) {
+                if let Ok(centroid) = _relation_centroid(&other_relation, level + 1, turbosm) {
                     points.push(Point::new(centroid.0, centroid.1));
                 } else {
                     debug!("Skipping relation with no centroid: {:?}", relation.id());
@@ -167,17 +167,17 @@ pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Err
             }
         });
     })?;
-    println!("Processing relations");
-    osm.process_all_relations(|relation, turbosm| {
-        let centroid = relation_centroid(&relation, 0, turbosm);
-        if let Ok(centroid) = centroid {
-            if let Some(poi) = tags_to_poi(relation.tags(), centroid.1, centroid.0) {
-                if let Err(err) = callback(poi) {
-                    warn!("Error from callback: {}", err);
-                }
-            }
-        }
-    })?;
+    println!("Skipping relations (FIXME)");
+    // osm.process_all_relations(|relation, turbosm| {
+    //     let centroid = relation_centroid(&relation, 0, turbosm);
+    //     if let Ok(centroid) = centroid {
+    //         if let Some(poi) = tags_to_poi(relation.tags(), centroid.1, centroid.0) {
+    //             if let Err(err) = callback(poi) {
+    //                 warn!("Error from callback: {}", err);
+    //             }
+    //         }
+    //     }
+    // })?;
     println!("Done");
     Ok(())
 }
