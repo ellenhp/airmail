@@ -1,7 +1,6 @@
 use std::{collections::HashMap, error::Error, sync::Arc};
 
 use airmail::{index::AirmailIndex, poi::AirmailPoi};
-use airmail_parser::query::QueryScenario;
 use axum::{
     extract::{Query, State},
     routing::get,
@@ -9,10 +8,10 @@ use axum::{
 };
 use clap::Parser;
 use deunicode::deunicode;
-use log::trace;
+use futures_util::future::join_all;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tokio::task::spawn_blocking;
+use tokio::{spawn, task::spawn_blocking};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -31,56 +30,41 @@ async fn search(
     State(index): State<Arc<AirmailIndex>>,
 ) -> Json<Value> {
     let query = params.get("q").unwrap();
-    trace!("searching for {:?}", query);
     let query = deunicode(query.trim()).to_lowercase();
+
+    let start = std::time::Instant::now();
     let parsed = airmail_parser::query::Query::parse(&query);
 
     let scenarios = parsed.scenarios();
-    let start = std::time::Instant::now();
-    let mut all_results: Vec<(AirmailPoi, f32, QueryScenario)> = vec![];
-    for scenario in scenarios.iter().take(3) {
-        if all_results.len() > 20 {
-            break;
-        }
-        let results = {
-            let scenario = scenario.clone();
-            let index = index.clone();
-            spawn_blocking(move || index.search(&scenario).unwrap())
-                .await
-                .unwrap()
-        };
-        if results.is_empty() {
-            continue;
-        } else {
-            all_results.extend(
-                results
-                    .iter()
-                    .map(|(poi, score)| {
-                        (
-                            poi.clone(),
-                            *score * scenario.penalty_mult(),
-                            scenario.clone(),
-                        )
-                    })
-                    .collect::<Vec<_>>(),
-            );
-        }
+    let mut scaled_results: Vec<tokio::task::JoinHandle<Vec<(AirmailPoi, f32)>>> = Vec::new();
+    for scenario in scenarios.into_iter().take(3) {
+        let index = index.clone();
+        scaled_results.push(spawn(async move {
+            let docs = index.search(&scenario).await.unwrap();
+            let docs = docs
+                .into_iter()
+                .map(|(poi, score)| (poi, scenario.penalty_mult() * score))
+                .collect::<Vec<_>>();
+            docs
+        }));
     }
+    let mut results: Vec<(AirmailPoi, f32)> = join_all(scaled_results)
+        .await
+        .into_iter()
+        .flatten()
+        .flatten()
+        .collect::<Vec<_>>();
 
-    all_results.sort_by(|(_, a, _), (_, b, _)| b.partial_cmp(a).unwrap());
+    results.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
 
-    println!(
-        "{} results found in {:?}",
-        all_results.len(),
-        start.elapsed()
-    );
+    println!("{} results found in {:?}", results.len(), start.elapsed());
 
     let mut response = Response {
         metadata: HashMap::new(),
-        features: all_results
+        features: results
             .clone()
-            .iter()
-            .map(|(results, _, _)| results.clone())
+            .into_iter()
+            .map(|(results, _)| results.clone())
             .collect::<Vec<AirmailPoi>>(),
     };
 
@@ -106,6 +90,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     })
     .await
     .unwrap();
+    println!("Have {} docs", index.num_docs().await?);
     let app = Router::new().route("/search", get(search).with_state(index));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();

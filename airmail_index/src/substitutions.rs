@@ -7,6 +7,9 @@ lazy_static! {
     static ref ASCII_WHITESPACE_RE: Regex = Regex::new(r"[ \t\r\n]+").unwrap();
     static ref STREET_SUFFIXES_SUBS: SubstitutionDict =
         SubstitutionDict::from_str(include_str!("../permute_dicts/en/street_types.txt")).unwrap();
+    static ref STREET_PREFIXES_SUBS: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../permute_dicts/en/street_prefixes.txt"))
+            .unwrap();
 }
 
 pub(super) struct SubstitutionDict {
@@ -77,16 +80,22 @@ pub(super) fn permute_road(road: &str) -> Result<Vec<String>, Box<dyn Error>> {
     let road = sanitize(road);
     let mut permutations = vec![road.clone()];
     // This may be a bad way of handling it, I don't know enough about non-ascii whitespace to be sure.
-    let road_components: Vec<Vec<String>> = road
+    let suffix_components: Vec<Vec<String>> = road
         .split_whitespace()
         .map(|s| STREET_SUFFIXES_SUBS.substitute(s))
         .collect();
+    let prefix_components: Vec<Vec<String>> = road
+        .split_whitespace()
+        .map(|s| STREET_PREFIXES_SUBS.substitute(s))
+        .collect();
+    debug_assert!(suffix_components.len() == prefix_components.len());
+    let components_len = suffix_components.len();
     let mut found_suffix = false;
-    for i in 0..=road_components.len() {
-        let base_substrings = permute("", &road_components[0..i]);
-        let suffix_substrings = permute("", &road_components[i..]);
+    for i in 0..=components_len {
+        let base_suffix_substrings = permute("", &suffix_components[0..i]);
+        let suffix_substrings = permute("", &suffix_components[i..]);
         if !found_suffix {
-            for substring_pair in base_substrings.iter().zip(suffix_substrings.iter()) {
+            for substring_pair in base_suffix_substrings.iter().zip(suffix_substrings.iter()) {
                 let suffix_substring = substring_pair.1.clone();
                 if search_fst(street_suffixes_fst(), suffix_substring.clone(), 0, false) {
                     found_suffix = true;
@@ -95,8 +104,11 @@ pub(super) fn permute_road(road: &str) -> Result<Vec<String>, Box<dyn Error>> {
         }
 
         if found_suffix {
-            permutations.extend(base_substrings.iter().cloned());
+            permutations.extend(base_suffix_substrings);
         }
+        // If we found a way to permute the prefix, we should include it in the permutations.
+        let prefix_substrings = permute("", &prefix_components[0..i]);
+        permutations.extend(prefix_substrings);
     }
     Ok(permutations)
 }

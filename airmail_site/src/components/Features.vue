@@ -16,20 +16,6 @@ const items = [
     icon: "mdi-airplane",
     color: "background-color: #ffc93c",
   },
-  {
-    id: 3,
-    name: "Autocomplete",
-    des: "Supports prefix searching and autocomplete.",
-    icon: "mdi-redo",
-    color: "background-color: #f73859",
-  },
-  {
-    id: 4,
-    name: "Batteries-included",
-    des: "Easy-ish setup, whether you're bringing your own data or using an existing OpenStreetMap index.",
-    icon: "mdi-battery",
-    color: "background-color: #7f26bf",
-  },
 ];
 const total = 4;
 </script>
