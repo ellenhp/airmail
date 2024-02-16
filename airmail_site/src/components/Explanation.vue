@@ -10,7 +10,7 @@
                 <div class="col-lg-9">
                     <p>
                         Airmail has a couple really unique features. It's designed to query against a remote
-                        index and run on inexpensive hardware. The demo server is running on a VPS with 1GB of
+                        index and run on inexpensive hardware. The demo server is running on a VPS with 512MB of
                         RAM. The main search index lives on object storage and is lazy-loaded with range requests. The total
                         cost of the
                         planet demo server is about $10 USD/month, which is fairly low for a planet-scale geocoder.
@@ -22,7 +22,7 @@
                         some compromises. Latency on an Airmail request is pretty high, anywhere from
                         10ms-10s, depending on how hot the cache is. There's some low hanging fruit for optimization, but
                         S3 range queries are always going to be slower than an SSD random read. If you can afford 350GB of
-                        block storage, you can consistently get sub-50ms latency, and still only need about a gigabyte of
+                        block storage, you can consistently get sub-50ms latency, and still only need about 512MB of
                         RAM.
                     </p>
                 </div>
