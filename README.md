@@ -17,7 +17,7 @@ Airmail's killer feature is the ability to query remote indices, e.g. on S3. Thi
 - [x] API server.
 - [x] Address queries.
 - [x] Named POI queries.
-- [x] Prefix queries.
+- [ ] Prefix queries.
 - [x] Query remote indices.
 - [x] Support and test planet-scale indices.
 - [ ] Extend query parser for other locales.
