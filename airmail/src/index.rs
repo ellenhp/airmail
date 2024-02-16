@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use airmail_parser::{component::QueryComponentType, query::QueryScenario};
+use futures_util::future::join_all;
 use serde_json::Value;
 use tantivy::{
     collector::TopDocs,
@@ -8,7 +9,6 @@ use tantivy::{
     query::{BooleanQuery, Query, TermQuery},
     schema::{
         FacetOptions, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED,
-        TEXT,
     },
     tokenizer::{LowerCaser, RawTokenizer, TextAnalyzer},
     Term,
@@ -62,20 +62,25 @@ fn query_for_terms(
 impl AirmailIndex {
     fn schema() -> tantivy::schema::Schema {
         let mut schema_builder = Schema::builder();
-        let street_options = TextOptions::default()
+        let street_options = TextOptions::default().set_stored().set_indexing_options(
+            TextFieldIndexing::default()
+                .set_tokenizer("street_tokenizer")
+                .set_fieldnorms(false),
+        );
+        let text_options = TextOptions::default()
             .set_stored()
-            .set_indexing_options(TextFieldIndexing::default().set_tokenizer("street_tokenizer"));
+            .set_indexing_options(TextFieldIndexing::default().set_fieldnorms(false));
 
-        let _ = schema_builder.add_text_field(FIELD_NAME, TEXT | STORED);
-        let _ = schema_builder.add_text_field(FIELD_SOURCE, TEXT | STORED);
+        let _ = schema_builder.add_text_field(FIELD_NAME, text_options.clone());
+        let _ = schema_builder.add_text_field(FIELD_SOURCE, text_options.clone());
         let _ =
             schema_builder.add_facet_field(FIELD_CATEGORY, FacetOptions::default().set_stored());
-        let _ = schema_builder.add_text_field(FIELD_HOUSE_NUMBER, TEXT | STORED);
+        let _ = schema_builder.add_text_field(FIELD_HOUSE_NUMBER, text_options.clone());
         let _ = schema_builder.add_text_field(FIELD_ROAD, street_options);
-        let _ = schema_builder.add_text_field(FIELD_UNIT, TEXT | STORED);
-        let _ = schema_builder.add_text_field(FIELD_LOCALITY, TEXT | STORED);
-        let _ = schema_builder.add_text_field(FIELD_REGION, TEXT | STORED);
-        let _ = schema_builder.add_text_field(FIELD_COUNTRY, TEXT | STORED);
+        let _ = schema_builder.add_text_field(FIELD_UNIT, text_options.clone());
+        let _ = schema_builder.add_text_field(FIELD_LOCALITY, text_options.clone());
+        let _ = schema_builder.add_text_field(FIELD_REGION, text_options.clone());
+        let _ = schema_builder.add_text_field(FIELD_COUNTRY, text_options.clone());
         let _ = schema_builder.add_u64_field(FIELD_S2CELL, INDEXED | STORED);
         let _ = schema_builder.add_json_field(FIELD_TAGS, STORED);
         schema_builder.build()
@@ -285,9 +290,18 @@ impl AirmailIndex {
         let (top_docs, searcher) =
             spawn_blocking(move || (searcher.search(&query, &TopDocs::with_limit(10)), searcher))
                 .await?;
-        let mut results = Vec::new();
+        let mut scores = Vec::new();
+        let mut futures = Vec::new();
         for (score, doc_id) in top_docs? {
-            let doc = searcher.doc(doc_id)?;
+            let searcher = searcher.clone();
+            let doc = spawn_blocking(move || searcher.doc(doc_id));
+            scores.push(score);
+            futures.push(doc);
+        }
+        let mut results = Vec::new();
+        let top_docs = join_all(futures).await;
+        for (score, doc_future) in scores.iter().zip(top_docs) {
+            let doc = doc_future??;
             let house_num: Option<&str> = doc
                 .get_first(self.field_house_number())
                 .map(|v| v.as_text())
@@ -350,7 +364,7 @@ impl AirmailIndex {
             poi.locality = locality.iter().map(|s| s.to_string()).collect();
             poi.region = region.map(|s| s.to_string()).into_iter().collect();
             poi.country = country.map(|s| s.to_string()).into_iter().collect();
-            results.push((poi, score));
+            results.push((poi, *score));
         }
 
         Ok(results)

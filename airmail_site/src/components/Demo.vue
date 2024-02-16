@@ -9,7 +9,7 @@ const pins = ref([])
 const latestSearchSeq = ref(0)
 const latestResultSeq = ref(0)
 
-const debouncedSearch = pDebounce(fetchSearchResults, 500);
+const debouncedSearch = pDebounce(fetchSearchResults, 200);
 
 async function fetchSearchResults(query) {
   const seq = ++latestSearchSeq.value;

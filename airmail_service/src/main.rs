@@ -15,7 +15,7 @@ use tokio::{spawn, task::spawn_blocking};
 
 #[derive(Debug, Parser)]
 struct Args {
-    #[clap(long, short)]
+    #[arg(short, long, env = "AIRMAIL_INDEX")]
     index: String,
 }
 

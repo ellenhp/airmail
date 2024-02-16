@@ -21,14 +21,13 @@ use tantivy::{
     Directory,
 };
 use tantivy_common::{file_slice::FileHandle, HasLen, OwnedBytes, StableDeref};
-use tokio::task::{spawn_blocking, JoinHandle};
 use userfaultfd::{FeatureFlags, UffdBuilder};
 
 thread_local! {
     pub(crate) static BLOCKING_HTTP_CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
 }
 
-const CHUNK_SIZE: usize = 1 * 1024 * 1024;
+const CHUNK_SIZE: usize = 512 * 1024;
 
 #[derive(Clone)]
 struct MmapArc {
@@ -74,7 +73,7 @@ impl HasLen for HttpFileHandle {
 #[derive(Debug, Clone)]
 pub struct HttpDirectory {
     base_url: String,
-    file_handle_cache: Arc<Mutex<HashMap<String, (JoinHandle<()>, Arc<HttpFileHandle>)>>>,
+    file_handle_cache: Arc<Mutex<HashMap<String, Arc<HttpFileHandle>>>>,
     atomic_read_cache: Arc<Mutex<HashMap<String, Vec<u8>>>>,
 }
 
@@ -101,12 +100,19 @@ impl Directory for HttpDirectory {
         let url = self.format_url(path);
         {
             let cache = self.file_handle_cache.lock().unwrap();
-            if let Some((_, file_handle)) = cache.get(&url) {
+            if let Some(file_handle) = cache.get(&url) {
                 return Ok(file_handle.clone());
             }
         }
         let file_len = query_len::len(&url);
         let len = round_up_to_page(file_len);
+
+        if len == 0 {
+            return Ok(Arc::new(HttpFileHandle {
+                _ptr: 0,
+                owned_bytes: Arc::new(OwnedBytes::new(MmapArc { slice: &[] })),
+            }));
+        }
 
         let uffd = UffdBuilder::new()
             .close_on_exec(true)
@@ -130,13 +136,12 @@ impl Directory for HttpDirectory {
         let mmap_ptr = addr as usize;
 
         uffd.register(addr, len).unwrap();
-
-        let handle = {
+        {
             let url = url.clone();
-            spawn_blocking(move || {
+            std::thread::spawn(move || {
                 handle_uffd(uffd, mmap_ptr, len, url);
-            })
-        };
+            });
+        }
         let owned_bytes = Arc::new(OwnedBytes::new(MmapArc {
             slice: unsafe { slice::from_raw_parts(mmap_ptr as *const u8, file_len) },
         }));
@@ -147,7 +152,7 @@ impl Directory for HttpDirectory {
         });
         {
             let mut cache = self.file_handle_cache.lock().unwrap();
-            cache.insert(url, (handle, file_handle.clone()));
+            cache.insert(url, file_handle.clone());
         }
 
         Ok(file_handle)

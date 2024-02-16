@@ -1,10 +1,10 @@
 use std::{collections::HashSet, num::NonZeroUsize, os::raw::c_void, sync::Arc, time::Duration};
 
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use lru::LruCache;
 use nix::sys::mman::{madvise, MmapAdvise};
 use tokio::{
-    spawn,
+    runtime::Runtime,
     sync::{
         broadcast::{Receiver, Sender},
         Mutex,
@@ -95,8 +95,12 @@ async fn fetch_and_resume(
                     dont_need(dst_ptr as usize);
                 }
                 {
-                    let mut recent_chunks = recent_chunks.lock().await;
-                    recent_chunks.put(chunk_idx, bytes);
+                    trace!("Locking recent chunks to insert new chunk");
+                    if let Ok(mut recent_chunks) = recent_chunks.try_lock() {
+                        recent_chunks.put(chunk_idx, bytes);
+                    } else {
+                        debug!("Could not lock recent chunks");
+                    }
                 }
                 sender.send(chunk_idx).unwrap();
                 return;
@@ -129,6 +133,8 @@ fn dont_need(page_start: usize) {
 }
 
 pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_url: String) {
+    trace!("Creating tokio runtime");
+    let rt = Runtime::new().unwrap();
     info!("Starting UFFD handler");
     let uffd = Arc::new(uffd);
     let requested_pages = Arc::new(Mutex::new(HashSet::new()));
@@ -139,9 +145,11 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
     loop {
         {
             if let Ok(chunk) = receiver.try_recv() {
+                trace!("Locking requested pages to remove chunk");
                 requested_pages.blocking_lock().remove(&chunk);
             }
         }
+        trace!("Waiting for page fault event");
         let event = uffd.read_event().unwrap();
         let event = if let Some(event) = event {
             event
@@ -159,6 +167,7 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                 debug!("Pagefault: {:?} {:?} {:?} {:?}", kind, rw, addr, thread_id);
                 let offset = addr as usize - mmap_start;
                 let chunk_idx = offset / CHUNK_SIZE;
+                trace!("Locking recent chunks to check for cached chunk");
                 if let Some(chunk) = chunk_cache.blocking_lock().get(&chunk_idx) {
                     debug!("Using cached chunk: {}", chunk_idx);
                     let offset_into_chunk = offset % CHUNK_SIZE;
@@ -174,13 +183,14 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                     continue;
                 }
 
+                trace!("Locking requested pages to check if chunk is already requested");
                 if requested_pages.blocking_lock().contains(&chunk_idx) {
                     debug!("Already requested chunk: {}", chunk_idx);
                     let uffd = uffd.clone();
                     let requested_pages = requested_pages.clone();
                     let mut receiver = receiver.resubscribe();
                     let addr = addr as usize;
-                    spawn(async move {
+                    rt.spawn(async move {
                         let start = std::time::Instant::now();
                         loop {
                             if let Ok(chunk) = receiver.recv().await {
@@ -192,6 +202,7 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                                 error!("Timeout waiting for chunk: {}", chunk_idx);
                                 break;
                             }
+                            trace!("Locking requested pages to check if chunk is still requested");
                             if !requested_pages.lock().await.contains(&chunk_idx) {
                                 warn!("Chunk: {} is no longer requested, but we missed the message that it was found.", chunk_idx);
                                 break;
@@ -204,10 +215,16 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                     continue;
                 }
                 debug!("Requesting chunk: {}", chunk_idx);
-                requested_pages.blocking_lock().insert(chunk_idx);
+                trace!("Locking requested pages to insert new chunk");
+                if let Ok(mut lock) = requested_pages.try_lock() {
+                    lock.insert(chunk_idx);
+                } else {
+                    debug!("Could not lock requested pages");
+                }
+                trace!("Spawning fetch_and_resume");
                 let artifact_url = artifact_url.clone();
                 let uffd = uffd.clone();
-                spawn(fetch_and_resume(
+                rt.spawn(fetch_and_resume(
                     mmap_start,
                     addr as usize,
                     chunk_idx,
