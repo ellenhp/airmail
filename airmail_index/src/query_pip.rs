@@ -88,7 +88,6 @@ pub async fn query_pip(lat: f64, lng: f64, port: usize) -> Result<PipResponse, B
             };
             let names = response
                 .iter()
-                .filter(|place_name| !place_name.abbr)
                 .filter(|place_name| place_name.tag == "preferred" || place_name.tag == "default")
                 .map(|place_name| place_name.name.clone())
                 .collect::<HashSet<_>>()

@@ -14,7 +14,6 @@ tantivy-fst = "0.4.0"
 tempfile = "3.9.0"
 airmail_common = { path = "../airmail_common" }
 log = "0.4.20"
-airmail_parser = { path = "../airmail_parser" }
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 reqwest = { version = "0.11.24", features = ["blocking"] }
@@ -25,3 +24,5 @@ nix = { version = "0.27", features = ["ioctl", "mman"] }
 userfaultfd = { version = "0.8.1", features = ["linux4_14", "linux5_7"] }
 crossbeam = "0.8.4"
 futures-util = "0.3.30"
+deunicode = "1.4.3"
+itertools = "0.12.1"

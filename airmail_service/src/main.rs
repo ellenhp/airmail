@@ -8,10 +8,9 @@ use axum::{
 };
 use clap::Parser;
 use deunicode::deunicode;
-use futures_util::future::join_all;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tokio::{spawn, task::spawn_blocking};
+use tokio::task::spawn_blocking;
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -33,29 +32,8 @@ async fn search(
     let query = deunicode(query.trim()).to_lowercase();
 
     let start = std::time::Instant::now();
-    let parsed = airmail_parser::query::Query::parse(&query);
 
-    let scenarios = parsed.scenarios();
-    let mut scaled_results: Vec<tokio::task::JoinHandle<Vec<(AirmailPoi, f32)>>> = Vec::new();
-    for scenario in scenarios.into_iter().take(3) {
-        let index = index.clone();
-        scaled_results.push(spawn(async move {
-            let docs = index.search(&scenario).await.unwrap();
-            let docs = docs
-                .into_iter()
-                .map(|(poi, score)| (poi, scenario.penalty_mult() * score))
-                .collect::<Vec<_>>();
-            docs
-        }));
-    }
-    let mut results: Vec<(AirmailPoi, f32)> = join_all(scaled_results)
-        .await
-        .into_iter()
-        .flatten()
-        .flatten()
-        .collect::<Vec<_>>();
-
-    results.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
+    let results = index.search(&query).await.unwrap();
 
     println!("{} results found in {:?}", results.len(), start.elapsed());
 

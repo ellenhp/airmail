@@ -1,8 +1,6 @@
-use airmail::{index::AirmailIndex, poi::AirmailPoi};
+use airmail::index::AirmailIndex;
 use clap::Parser;
-use futures_util::future::join_all;
 use rustyline::DefaultEditor;
-use tokio::spawn;
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -21,27 +19,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         rl.add_history_entry(query.as_str())?;
         let start = std::time::Instant::now();
         let query = query.trim().to_lowercase();
-        let parsed = airmail_parser::query::Query::parse(&query);
 
-        let scenarios = parsed.scenarios();
-        let mut scaled_results: Vec<tokio::task::JoinHandle<Vec<(AirmailPoi, f32)>>> = Vec::new();
-        for scenario in scenarios.into_iter().take(3) {
-            let index = index.clone();
-            scaled_results.push(spawn(async move {
-                let docs = index.search(&scenario).await.unwrap();
-                let docs = docs
-                    .into_iter()
-                    .map(|(poi, score)| (poi, scenario.penalty_mult() * score))
-                    .collect::<Vec<_>>();
-                docs
-            }));
-        }
-        let mut results: Vec<(AirmailPoi, f32)> = join_all(scaled_results)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<_>>();
+        let mut results = index.search(&query).await.unwrap();
 
         results.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
         for (poi, score) in results.iter().take(10) {

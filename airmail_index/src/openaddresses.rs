@@ -13,7 +13,7 @@ pub fn parse_oa_geojson(
         GeoJson::Feature(feature) => {
             let properties = feature.properties.as_ref().unwrap();
             let name = vec![];
-            let category = vec![PoiCategory::Address];
+            let category = PoiCategory::Address;
             let house_number =
                 if let Some(house_num) = properties.get("number").map(|v| v.as_str()).flatten() {
                     permute_housenum(house_num)?

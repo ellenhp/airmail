@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-  "airmail", "airmail_common", "airmail_index", "airmail_parser", "airmail_service", "turbosm",
+  "airmail", "airmail_common", "airmail_index", "airmail_service",
 ]
 
 

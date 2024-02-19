@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum AmenityPoiCategory {
     /// A public toilet or shower.
     Toilets,
@@ -22,9 +24,33 @@ impl AmenityPoiCategory {
             AmenityPoiCategory::Library => "library".to_string(),
         }
     }
+
+    pub fn labels(&self) -> Vec<String> {
+        match self {
+            AmenityPoiCategory::Toilets => vec![
+                "toilets".to_string(),
+                "restroom".to_string(),
+                "washroom".to_string(),
+                "bathroom".to_string(),
+                "loo".to_string(),
+                "wash closet".to_string(),
+            ],
+            AmenityPoiCategory::Shelter => vec!["shelter".to_string()],
+            AmenityPoiCategory::DrinkingWater => vec![
+                "drinking water".to_string(),
+                "water".to_string(),
+                "fountain".to_string(),
+                "spigot".to_string(),
+            ],
+            AmenityPoiCategory::Telephone => vec!["telephone".to_string()],
+            AmenityPoiCategory::Library => {
+                vec!["library".to_string(), "public library".to_string()]
+            }
+        }
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum NaturalPoiCategory {
     /// A mountain, hill, or other point of elevation.
     Peak,
@@ -47,9 +73,24 @@ impl NaturalPoiCategory {
             }
         }
     }
+
+    pub fn labels(&self) -> Vec<String> {
+        match self {
+            NaturalPoiCategory::Peak => vec!["peak".to_string(), "mountain".to_string()],
+            NaturalPoiCategory::Water => vec![
+                "water".to_string(),
+                "lake".to_string(),
+                "river".to_string(),
+                "stream".to_string(),
+                "pond".to_string(),
+            ],
+            NaturalPoiCategory::Wood => vec!["forest".to_string()],
+            NaturalPoiCategory::Other { raw_tag: _ } => vec![],
+        }
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum TransitPoiCategory {
     /// A bus stop.
     BusStop,
@@ -81,9 +122,37 @@ impl TransitPoiCategory {
             }
         }
     }
+
+    pub fn labels(&self) -> Vec<String> {
+        match self {
+            TransitPoiCategory::BusStop => vec![
+                "bus stop".to_string(),
+                "bus station".to_string(),
+                "bus".to_string(),
+            ],
+            TransitPoiCategory::TrainStation => vec![
+                "train station".to_string(),
+                "train".to_string(),
+                "railway station".to_string(),
+            ],
+            TransitPoiCategory::Airport => vec!["airport".to_string()],
+            TransitPoiCategory::FerryTerminal => {
+                vec!["ferry terminal".to_string(), "ferry".to_string()]
+            }
+            TransitPoiCategory::SubwayStation => {
+                vec!["subway station".to_string(), "subway".to_string()]
+            }
+            TransitPoiCategory::TramStop => vec![
+                "tram stop".to_string(),
+                "tram station".to_string(),
+                "tram".to_string(),
+            ],
+            TransitPoiCategory::Other { raw_tag: _ } => vec![],
+        }
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum CuisineCategory {
     /// African cuisine.
     African,
@@ -91,10 +160,14 @@ pub enum CuisineCategory {
     American,
     /// Asian cuisine.
     Asian,
+    /// Coffee shop or cafe.
+    CoffeeShop,
     /// European cuisine.
     European,
     /// Middle Eastern cuisine.
     MiddleEastern,
+    /// Pizza
+    Pizza,
     /// Other cuisine.
     Other { raw_tag: String },
 }
@@ -105,16 +178,104 @@ impl CuisineCategory {
             CuisineCategory::African => "african".to_string(),
             CuisineCategory::American => "american".to_string(),
             CuisineCategory::Asian => "asian".to_string(),
+            CuisineCategory::CoffeeShop => "coffee".to_string(),
             CuisineCategory::European => "european".to_string(),
             CuisineCategory::MiddleEastern => "middle_eastern".to_string(),
+            CuisineCategory::Pizza => "pizza".to_string(),
             CuisineCategory::Other { raw_tag } => {
                 format!("other/{}", deunicode::deunicode(raw_tag))
             }
         }
     }
+
+    pub fn labels(&self) -> Vec<String> {
+        let mut values = match self {
+            CuisineCategory::African => vec![
+                "african".to_string(),
+                "african food".to_string(),
+                "african restaurant".to_string(),
+                "ethiopian".to_string(),
+                "ethiopian food".to_string(),
+                "ethiopian restaurant".to_string(),
+                "moroccan".to_string(),
+                "moroccan food".to_string(),
+                "moroccan restaurant".to_string(),
+            ],
+            CuisineCategory::American => vec![
+                "american".to_string(),
+                "american food".to_string(),
+                "american restaurant".to_string(),
+                "burger".to_string(),
+                "burger joint".to_string(),
+                "burger restaurant".to_string(),
+                "diner".to_string(),
+                "diner food".to_string(),
+                "diner restaurant".to_string(),
+                "fast food".to_string(),
+                "fast food restaurant".to_string(),
+                "hot dog".to_string(),
+                "hot dog joint".to_string(),
+                "hot dog restaurant".to_string(),
+                "sandwich".to_string(),
+                "sandwich joint".to_string(),
+                "sandwich restaurant".to_string(),
+            ],
+            CuisineCategory::Asian => vec![
+                // This is really culturally insensitive of me but I don't have the energy right now to fix it,
+                // and it's probably better to conflate these categories than to leave them out entirely.
+                // We need something in like a yaml file somewhere translated to a bunch of different languages, long term.
+                "asian".to_string(),
+                "asian food".to_string(),
+                "asian restaurant".to_string(),
+                "chinese".to_string(),
+                "chinese food".to_string(),
+                "chinese restaurant".to_string(),
+                "indian".to_string(),
+                "indian food".to_string(),
+                "indian restaurant".to_string(),
+                "japanese".to_string(),
+                "japanese food".to_string(),
+                "japanese restaurant".to_string(),
+                "korean".to_string(),
+                "korean food".to_string(),
+                "korean restaurant".to_string(),
+                "thai".to_string(),
+                "thai food".to_string(),
+                "thai restaurant".to_string(),
+                "vietnamese".to_string(),
+                "vietnamese food".to_string(),
+                "vietnamese restaurant".to_string(),
+            ],
+            CuisineCategory::CoffeeShop => vec![
+                "coffee".to_string(),
+                "coffee shop".to_string(),
+                "cafe".to_string(),
+            ],
+            CuisineCategory::European => vec![
+                "european".to_string(),
+                "european food".to_string(),
+                "european restaurant".to_string(),
+            ],
+            CuisineCategory::MiddleEastern => {
+                vec![
+                    "middle eastern".to_string(),
+                    "middle eastern food".to_string(),
+                    "middle eastern restaurant".to_string(),
+                    "mediterranean".to_string(),
+                    "mediterranean food".to_string(),
+                    "mediterranean restaurant".to_string(),
+                ]
+            }
+            CuisineCategory::Pizza => vec!["pizza".to_string(), "pizzeria".to_string()],
+            CuisineCategory::Other { raw_tag: _ } => vec![],
+        };
+        values.push("restaurant".to_string());
+        values.push("food".to_string());
+        values
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum EmergencyPoiCategory {
     /// A fire station.
     FireStation,
@@ -132,9 +293,23 @@ impl EmergencyPoiCategory {
             EmergencyPoiCategory::PoliceStation => "police_station".to_string(),
         }
     }
+
+    pub fn labels(&self) -> Vec<String> {
+        match self {
+            EmergencyPoiCategory::FireStation => vec!["fire station".to_string()],
+            EmergencyPoiCategory::Hospital => vec![
+                "hospital".to_string(),
+                "emergency room".to_string(),
+                "er".to_string(),
+            ],
+            EmergencyPoiCategory::PoliceStation => {
+                vec!["police".to_string(), "police station".to_string()]
+            }
+        }
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum FoodPoiCategory {
     /// A place to buy baked goods.
     Bakery,
@@ -163,9 +338,26 @@ impl FoodPoiCategory {
             }
         }
     }
+
+    pub fn labels(&self) -> Vec<String> {
+        match self {
+            FoodPoiCategory::Bakery => vec!["bakery".to_string()],
+            FoodPoiCategory::Beverage => vec!["beverage".to_string()],
+            FoodPoiCategory::Grocery => vec![
+                "grocery".to_string(),
+                "grocery store".to_string(),
+                "supermarket".to_string(),
+                "market".to_string(),
+                "food".to_string(),
+            ],
+            FoodPoiCategory::Restaurant(Some(cuisine)) => cuisine.labels(),
+            FoodPoiCategory::Restaurant(None) => vec!["restaurant".to_string(), "food".to_string()],
+            FoodPoiCategory::Other { raw_tag: _ } => vec![],
+        }
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum ShopPoiCategory {
     /// An adult store, e.g. a sex shop, strip club or bathhouse.
     Adult,
@@ -181,8 +373,12 @@ pub enum ShopPoiCategory {
     Clinic,
     /// A place to buy clothes.
     Clothes,
+    /// A coffee shop.
+    Coffee,
     /// A place to buy convenience goods.
     Convenience,
+    /// A dentist.
+    Dentist,
     /// A place to buy electronics.
     Electronics,
     /// A place to buy flowers.
@@ -219,8 +415,6 @@ pub enum ShopPoiCategory {
     Toys,
     /// A veterinarian's office.
     Veterinary,
-    /// A place to buy video games.
-    VideoGame,
     /// Other shop.
     Other { raw_tag: String },
 }
@@ -235,7 +429,9 @@ impl ShopPoiCategory {
             ShopPoiCategory::Books => "books".to_string(),
             ShopPoiCategory::Clothes => "clothes".to_string(),
             ShopPoiCategory::Clinic => "clinic".to_string(),
+            ShopPoiCategory::Coffee => "coffee".to_string(),
             ShopPoiCategory::Convenience => "convenience".to_string(),
+            ShopPoiCategory::Dentist => "dentist".to_string(),
             ShopPoiCategory::Electronics => "electronics".to_string(),
             ShopPoiCategory::Florist => "florist".to_string(),
             ShopPoiCategory::Food(food) => format!("food/{}", food.to_facet()),
@@ -254,15 +450,128 @@ impl ShopPoiCategory {
             ShopPoiCategory::Tobacco => "tobacco".to_string(),
             ShopPoiCategory::Toys => "toys".to_string(),
             ShopPoiCategory::Veterinary => "veterinary".to_string(),
-            ShopPoiCategory::VideoGame => "video_game".to_string(),
             ShopPoiCategory::Other { raw_tag } => {
                 format!("other/{}", deunicode::deunicode(raw_tag))
             }
         }
     }
+
+    pub fn labels(&self) -> Vec<String> {
+        match self {
+            ShopPoiCategory::Adult => vec![
+                "adult store".to_string(),
+                "sex shop".to_string(),
+                "strip club".to_string(),
+                "bathhouse".to_string(),
+            ],
+            ShopPoiCategory::Art => vec!["art".to_string(), "art store".to_string()],
+            ShopPoiCategory::Bank => vec!["bank".to_string(), "atm".to_string()],
+            ShopPoiCategory::Bar => vec![
+                "bar".to_string(),
+                "pub".to_string(),
+                "tavern".to_string(),
+                "saloon".to_string(),
+                "taproom".to_string(),
+                "beer hall".to_string(),
+                "beer garden".to_string(),
+                "brewery".to_string(),
+            ],
+            ShopPoiCategory::Books => vec![
+                "books".to_string(),
+                "bookstore".to_string(),
+                "book shop".to_string(),
+            ],
+            ShopPoiCategory::Clothes => vec!["clothes".to_string(), "clothing".to_string()],
+            ShopPoiCategory::Clinic => vec![
+                "clinic".to_string(),
+                "doctor".to_string(),
+                "doctor's office".to_string(),
+                "doctors office".to_string(),
+                "doctors".to_string(),
+            ],
+            ShopPoiCategory::Coffee => vec![
+                "coffee".to_string(),
+                "coffee shop".to_string(),
+                "cafe".to_string(),
+                "coffeehouse".to_string(),
+                "coffeeshop".to_string(),
+            ],
+            ShopPoiCategory::Convenience => {
+                vec!["convenience".to_string(), "convenience store".to_string()]
+            }
+            ShopPoiCategory::Dentist => vec![
+                "dentist".to_string(),
+                "dental".to_string(),
+                "dental office".to_string(),
+                "dental clinic".to_string(),
+                "dental care".to_string(),
+            ],
+            ShopPoiCategory::Electronics => vec!["electronics".to_string()],
+            ShopPoiCategory::Florist => vec![
+                "florist".to_string(),
+                "flower shop".to_string(),
+                "flowers".to_string(),
+            ],
+            ShopPoiCategory::Food(food) => food.labels(),
+            ShopPoiCategory::Furniture => vec!["furniture".to_string()],
+            ShopPoiCategory::Gift => vec!["gift".to_string()],
+            ShopPoiCategory::Hardware => vec![
+                "hardware".to_string(),
+                "hardware store".to_string(),
+                "home improvement".to_string(),
+            ],
+            ShopPoiCategory::Health => vec!["health".to_string()],
+            ShopPoiCategory::Jewelry => vec!["jewelry".to_string()],
+            ShopPoiCategory::Liquor => vec!["liquor".to_string()],
+            ShopPoiCategory::Music => vec!["music".to_string()],
+            ShopPoiCategory::Pet => vec![
+                "pet".to_string(),
+                "pet store".to_string(),
+                "pets".to_string(),
+                "pet supplies".to_string(),
+                "cat food".to_string(),
+                "dog food".to_string(),
+                "cat litter".to_string(),
+            ],
+            ShopPoiCategory::Pharmacy => vec!["pharmacy".to_string(), "drugstore".to_string()],
+            ShopPoiCategory::Photo => vec![
+                "photo".to_string(),
+                "photo store".to_string(),
+                "photography".to_string(),
+                "camera".to_string(),
+                "film".to_string(),
+                "photo lab".to_string(),
+            ],
+            ShopPoiCategory::Shoes => vec![
+                "shoes".to_string(),
+                "shoe store".to_string(),
+                "footwear".to_string(),
+            ],
+            ShopPoiCategory::Sports => vec![
+                "sports".to_string(),
+                "sporting goods".to_string(),
+                "sporting goods store".to_string(),
+            ],
+            ShopPoiCategory::Tobacco => vec![
+                "tobacco".to_string(),
+                "tobacco store".to_string(),
+                "smoke shop".to_string(),
+            ],
+            ShopPoiCategory::Toys => vec!["toys".to_string(), "toy store".to_string()],
+            ShopPoiCategory::Veterinary => vec![
+                "veterinary".to_string(),
+                "veterinarian".to_string(),
+                "vet".to_string(),
+                "vet clinic".to_string(),
+                "veterinary hospital".to_string(),
+                "animal hospital".to_string(),
+            ],
+            ShopPoiCategory::Other { raw_tag: _ } => todo!(),
+        }
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum PoiCategory {
     /// An address without additional information, e.g. from OpenAddresses or an untagged OSM node.
     Address,
@@ -305,6 +614,17 @@ impl PoiCategory {
             PoiCategory::Shop(shop) => format!("/shop/{}", shop.to_facet()),
             PoiCategory::Sport => "/sport".to_string(),
             PoiCategory::Tourism => "/tourism".to_string(),
+        }
+    }
+
+    pub fn labels(&self) -> Vec<String> {
+        match self {
+            PoiCategory::Amenity(amenity) => amenity.labels(),
+            PoiCategory::Emergency(emergency) => emergency.labels(),
+            PoiCategory::Natural(natural) => natural.labels(),
+            PoiCategory::Transit(transit) => transit.labels(),
+            PoiCategory::Shop(shop) => shop.labels(),
+            _ => vec![],
         }
     }
 }

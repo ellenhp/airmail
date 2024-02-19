@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct AirmailPoi {
     pub name: Vec<String>,
     pub source: String,
-    pub category: Vec<String>,
+    pub category: PoiCategory,
     pub house_number: Vec<String>,
     pub road: Vec<String>,
     pub unit: Vec<String>,
@@ -24,7 +24,7 @@ impl AirmailPoi {
     pub fn new(
         name: Vec<String>,
         source: String,
-        category: Vec<PoiCategory>,
+        category: PoiCategory,
         house_number: Vec<String>,
         road: Vec<String>,
         unit: Vec<String>,
@@ -37,10 +37,7 @@ impl AirmailPoi {
         Ok(Self {
             name,
             source,
-            category: category
-                .iter()
-                .map(|category| category.to_facet())
-                .collect(), // FIXME.
+            category,
             house_number,
             road,
             unit,

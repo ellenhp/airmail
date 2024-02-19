@@ -78,9 +78,9 @@ struct Args {
     /// Path to an OpenAddresses data file.
     #[clap(long, short)]
     openaddresses: Option<String>,
-    /// Path to an OpenStreetMap file in "turbosm" form. Use turbosm to convert if need be.
+    /// Path to an osmflat file. Refer to `osmflatc` documentation for instructions on how to generate this file.
     #[clap(long, short)]
-    turbosm: Option<String>,
+    osmflat: Option<String>,
     /// Path to flat nodes file for turbosm.
     #[clap(long, short)]
     turbosm_nodes: Option<String>,
@@ -255,7 +255,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .join();
     maybe_start_pip_container(&args.wof_db, args.recreate, &docker).await?;
 
-    if let Some(turbosm_path) = args.turbosm {
+    if let Some(osmflat_path) = args.osmflat {
         let mut nonblocking_join_handles = Vec::new();
         let (no_admin_sender, no_admin_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
             crossbeam::channel::bounded(1024 * 64);
@@ -329,7 +329,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             writer.commit().unwrap();
         });
 
-        openstreetmap::parse_osm(&turbosm_path, &mut |poi| {
+        openstreetmap::parse_osm(&osmflat_path, &mut |poi| {
             no_admin_sender.send(poi).unwrap();
             Ok(())
         })
