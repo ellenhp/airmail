@@ -1,15 +1,35 @@
 use std::{collections::HashMap, error::Error};
 
-use airmail_common::{dicts::street_suffixes_fst, fst::search_fst};
+use lingua::{Language, LanguageDetector, LanguageDetectorBuilder};
 use regex::Regex;
 
 lazy_static! {
     static ref ASCII_WHITESPACE_RE: Regex = Regex::new(r"[ \t\r\n]+").unwrap();
-    static ref STREET_SUFFIXES_SUBS: SubstitutionDict =
-        SubstitutionDict::from_str(include_str!("../permute_dicts/en/street_types.txt")).unwrap();
-    static ref STREET_PREFIXES_SUBS: SubstitutionDict =
-        SubstitutionDict::from_str(include_str!("../permute_dicts/en/street_prefixes.txt"))
-            .unwrap();
+}
+
+lazy_static! {
+    static ref EN_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/en/street_types.txt")).unwrap();
+    static ref CA_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/ca/street_types.txt")).unwrap();
+    static ref ES_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/es/street_types.txt")).unwrap();
+    static ref AR_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/ar/street_types.txt")).unwrap();
+    static ref FR_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/fr/street_types.txt")).unwrap();
+    static ref DE_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/de/street_types.txt")).unwrap();
+    static ref IT_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/it/street_types.txt")).unwrap();
+    static ref PT_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/pt/street_types.txt")).unwrap();
+    static ref RU_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/ru/street_types.txt")).unwrap();
+    static ref ZH_STREET_TYPES: SubstitutionDict =
+        SubstitutionDict::from_str(include_str!("../dictionaries/zh/street_types.txt")).unwrap();
+    static ref LANGUAGE_CLASSIFIER: LanguageDetector =
+        LanguageDetectorBuilder::from_all_languages().build();
 }
 
 pub(super) struct SubstitutionDict {
@@ -54,99 +74,66 @@ fn sanitize(field: &str) -> String {
         .to_string()
 }
 
-fn permute(prefix: &str, candidates: &[Vec<String>]) -> Vec<String> {
-    let candidates_this_round = if let Some(first) = candidates.first() {
-        first
-    } else {
-        return vec![prefix.trim().to_string()];
-    };
-    let mut permutations = Vec::new();
-    for candidate in candidates_this_round {
-        let mut base = prefix.to_string();
-        base.push_str(candidate);
-        base.push(' ');
-        permutations.extend(permute(&base, &candidates[1..]));
+pub(super) fn apply_subs(
+    prefix: &[String],
+    remaining: &[String],
+    dict: &SubstitutionDict,
+) -> Result<Vec<String>, Box<dyn Error>> {
+    if remaining.is_empty() {
+        return Ok(vec![prefix.join(" ")]);
     }
-    permutations
-}
 
-pub(super) fn permute_housenum(housenum: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    let mut permutations = Vec::new();
-    permutations.push(sanitize(housenum));
+    let mut permutations = vec![];
+
+    for sub in dict.substitute(&remaining[0]) {
+        let mut prefix = prefix.to_vec();
+        prefix.push(sub);
+        let mut remaining = remaining.to_vec();
+        remaining.remove(0);
+        permutations.extend(apply_subs(&prefix, &remaining, dict)?);
+    }
+
     Ok(permutations)
 }
 
 pub(super) fn permute_road(road: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    let road = sanitize(road);
-    let mut permutations = vec![road.clone()];
-    // This may be a bad way of handling it, I don't know enough about non-ascii whitespace to be sure.
-    let suffix_components: Vec<Vec<String>> = road
-        .split_whitespace()
-        .map(|s| STREET_SUFFIXES_SUBS.substitute(s))
+    let sub_dict: &SubstitutionDict = match LANGUAGE_CLASSIFIER.detect_language_of(road) {
+        Some(Language::English) => &EN_STREET_TYPES,
+        Some(Language::Arabic) => &AR_STREET_TYPES,
+        Some(Language::Spanish) => &ES_STREET_TYPES,
+        Some(Language::French) => &FR_STREET_TYPES,
+        Some(Language::German) => &DE_STREET_TYPES,
+        Some(Language::Italian) => &IT_STREET_TYPES,
+        Some(Language::Portuguese) => &PT_STREET_TYPES,
+        Some(Language::Russian) => &RU_STREET_TYPES,
+        Some(Language::Chinese) => &ZH_STREET_TYPES,
+        Some(Language::Catalan) => &CA_STREET_TYPES,
+        _ => return Ok(vec![sanitize(road)]),
+    };
+    let road_tokens: Vec<String> = sanitize(road)
+        .split_ascii_whitespace()
+        .map(|s| s.to_string())
         .collect();
-    let prefix_components: Vec<Vec<String>> = road
-        .split_whitespace()
-        .map(|s| STREET_PREFIXES_SUBS.substitute(s))
-        .collect();
-    debug_assert!(suffix_components.len() == prefix_components.len());
-    let components_len = suffix_components.len();
-    let mut found_suffix = false;
-    for i in 0..=components_len {
-        let base_suffix_substrings = permute("", &suffix_components[0..i]);
-        let suffix_substrings = permute("", &suffix_components[i..]);
-        if !found_suffix {
-            for substring_pair in base_suffix_substrings.iter().zip(suffix_substrings.iter()) {
-                let suffix_substring = substring_pair.1.clone();
-                if search_fst(street_suffixes_fst(), suffix_substring.clone(), 0, false) {
-                    found_suffix = true;
-                }
-            }
-        }
-
-        if found_suffix {
-            permutations.extend(base_suffix_substrings);
-        }
-        // If we found a way to permute the prefix, we should include it in the permutations.
-        let prefix_substrings = permute("", &prefix_components[0..i]);
-        permutations.extend(prefix_substrings);
-    }
-    Ok(permutations)
-}
-
-pub(super) fn permute_unit(unit: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    let mut permutations = Vec::new();
-    permutations.push(sanitize(unit));
-    Ok(permutations)
+    apply_subs(&vec![], &road_tokens, sub_dict)
 }
 
 #[cfg(test)]
 mod test {
-    use std::collections::BTreeSet;
-
-    use super::permute_road;
-
-    #[test]
-    fn test_permute() {
-        let candidates = vec![
-            vec!["a".to_string(), "b".to_string()],
-            vec!["c".to_string(), "d".to_string()],
-        ];
-        let permutations = super::permute("", &candidates);
-        assert_eq!(permutations.len(), 4);
-        assert!(permutations.contains(&"a c".to_string()));
-        assert!(permutations.contains(&"a d".to_string()));
-        assert!(permutations.contains(&"b c".to_string()));
-        assert!(permutations.contains(&"b d".to_string()));
-    }
+    use crate::substitutions::permute_road;
 
     #[test]
     fn test_permute_road() {
         let road = "fremont ave n";
-        let permutations: BTreeSet<String> = permute_road(road).unwrap().iter().cloned().collect();
+        let permutations = permute_road(road).unwrap();
         dbg!(permutations.clone());
         assert_eq!(permutations.len(), 3);
-        assert!(permutations.contains("fremont ave n"));
-        assert!(permutations.contains("fremont ave"));
-        assert!(permutations.contains("fremont"));
+    }
+
+    #[test]
+    fn test_permute_road_cat() {
+        let road = "carrer de villarroel";
+        let permutations = permute_road(road).unwrap();
+        dbg!(permutations.clone());
+        assert_eq!(permutations.len(), 3);
     }
 }

@@ -31,6 +31,7 @@ rustyline = "13.0.0"
 num_cpus = "1.16.0"
 lru = "0.12.2"
 osmflat = "0.1.0"
+lingua = { version = "1.6.2", default-features = false, features = ["english", "chinese", "catalan", "arabic", "danish", "dutch", "finnish", "french", "german", "greek", "hungarian", "italian", "portuguese", "romanian", "russian", "spanish", "swedish", "tamil", "turkish"] }
 
 [[bin]]
 name = "query"

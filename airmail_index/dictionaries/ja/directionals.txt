@@ -1,0 +1,16 @@
+北
+kita
+南
+minami
+東
+higashi
+西
+nishi
+北東
+hokutō|hokuto|hokutou
+北西
+hokusei
+南東
+nantō|nanto|nantou
+南西
+nansei

@@ -1,0 +1,10 @@
+блок|бл
+blok|bl
+село|с
+selo|s
+град|гр
+grad|gr
+квартал|кварт|кв|кв-л
+kvartal|kvart|kv|kv-l
+жилищен комплекс|ж.к.|жк|ж к
+zhilishten kompleks|z.k.|zk|z k

@@ -26,3 +26,7 @@ crossbeam = "0.8.4"
 futures-util = "0.3.30"
 deunicode = "1.4.3"
 itertools = "0.12.1"
+lingua = { version = "1.6.2", default-features = false, features = ["english", "chinese", "catalan", "arabic", "danish", "dutch", "finnish", "french", "german", "greek", "hungarian", "italian", "portuguese", "romanian", "russian", "spanish", "swedish", "tamil", "turkish"] }
+unicode-segmentation = "1.11.0"
+tantivy-jieba = "0.10.0"
+cached = "0.48.1"

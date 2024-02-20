@@ -10,7 +10,7 @@ use log::{debug, warn};
 use osmflat::{FileResourceStorage, Osm, Way, COORD_SCALE};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::substitutions::{permute_housenum, permute_road, permute_unit};
+use crate::substitutions::permute_road;
 
 fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<AirmailPoi> {
     if tags.is_empty() {
@@ -65,7 +65,7 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
 
     let house_number = tags
         .get("addr:housenumber")
-        .map(|s| permute_housenum(&s).unwrap())
+        .map(|s| vec![s.to_string()])
         .unwrap_or_default();
     let road = tags
         .get("addr:street")
@@ -73,7 +73,7 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
         .unwrap_or_default();
     let unit = tags
         .get("addr:unit")
-        .map(|s| permute_unit(&s).unwrap())
+        .map(|s| vec![s.to_string()])
         .unwrap_or_default();
 
     let names = {

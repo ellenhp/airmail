@@ -1,0 +1,101 @@
+advogado|advo|adv.o
+alferes|alf
+almirante|alm
+arcebispo|arco|arc.o
+barao|bar
+baronesa
+bispo|bpo|b.po
+brigadeiro|brg|brig
+cacique|cac
+capitão|capitao|cap|capt
+capitão de corveta|capitao de corveta|cap corv
+capitão de fragata|capitao de fragata|cap frag
+capitão de mar e guerra|capitao de mar e guerra|cap m g|cap mg
+capitão tenente|capitao tenente|cap ten|cap tte
+cardeal|card
+comandante|cmdt
+comendador|comend|cmdr|comor|com.or
+conde|cde
+condessa|cdessa
+conselheiro|cons
+coronel|cor|cel
+contra almirante|c alm
+deputado|dep
+desembargador|des
+desembargadora|desa|des.a
+diacono|diac
+diacona|diaca
+dom|d
+dona|dª|da|d.ª|d.a
+doutor|dr
+doutora|drª|dra|d.rª|d.ra
+duque|dq
+duquesa|dqsa|dqa
+embaixador|emb
+eminencia|ema|em.a
+eminentissimo|emmo|em.mo
+enfermeira|enfª|enfa|enf.ª|enf.a
+enfermeiro|enfº|enf°|enfo|enf|enf.º|enf.°|enf.o
+engenheira|engª|enga|eng.ª|eng.a
+engenheiro|engº|eng°|eng.º|eng.°|eng|engo|eng.o
+excelencia|exª|exa|ex.ª|ex.a
+excelentissima|exmª|exma|ex.mª|ex.ma
+excelentissimo|exmº|exm°|exmo|ex.mº|ex.m°|ex.mo
+frei|fr
+general|gen|gal|g.al
+governador|gov|govdor|govd.or|gov.dor
+ilustrissima|ilmª|ilma|il.mª|il.ma
+ilustrissimo|ilmº|ilm°|ilmo|il.mº|il.m°|il.mo
+infante|inf
+irmã|irma|imª|ima|im
+irmão|irmao|imº|im°|imo|im
+juiz|jz
+maestra|mta|mtra|mstra
+maestro|mto|mtro|mstro
+major|maj
+major brigadeiro|maj brig
+marechal|mar|mal|m.al
+marquês|marques|mq|marq
+marquesa|mqsa|marqa
+madre|me|m.e
+medico|med
+mestra|mª|ma|m.ª|m.a
+mestre|me|m.e
+ministério|ministerio|min
+monsenhor|mons
+nossa senhora|nsa|nª sª|nªsª|n srª|nª srª|n sa|n sra|n.s.a.|n.s.a
+nosso senhor|ns|n.s.|n.s|n s
+padre|pe|p.e
+pastor|pr
+prefeito|pref
+presidente|presid|pres
+professor|prof|profº|prof°
+professora|profa|prof.a|profª|prof.ª
+professoras|profas
+professores|profs
+reverenda|revda|rev.da
+reverendo|revdo|rev.do
+reverendissima|revma|rev.ma
+reverendissimo|revmo|rev.mo
+santa|stª|sta|st.ª|st.a
+santo|stº|st°|sto|st|st.º|st.°|st.o
+são|sao|s
+sargento|sarg|sgto|sargto
+sargento ajudante|sarg ajte|sarg aj.te
+secretaria|sec.a|secr.a|secra
+secretario|sec|secr
+senador|sen
+senhor|s|sr|s.r
+senhores|srs|s.rs
+senhora|sª|sa|srª|sra|sr.ª|sr.a|s.ra|s.rª
+senhoras|sras|s.ras
+senhorita|srta|sr.ta
+senhoritas|srtas|sr.tas
+tenente|ten|tte|t.te
+tenente coronel|ten c.el|ten cel|tte cel|t.te c.el
+tesoureiro|tes
+vereador|ver
+vice almirante|v alm
+vigario|vig|vigo|vig.o
+visconde|visc|vde|v.de
+viscondesa|vdessa|v.dessa

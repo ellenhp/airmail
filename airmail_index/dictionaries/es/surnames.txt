@@ -1,0 +1,6 @@
+fernández|fernandez|fdez
+lópez|lopez|lpez
+hernández|hernandez|hdez
+gonzález|gonzalez|glez
+martínez|martinez|mnez
+rodríguez|rodriguez|rguez

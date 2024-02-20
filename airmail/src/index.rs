@@ -2,18 +2,22 @@ use std::sync::Arc;
 
 use airmail_common::categories::PoiCategory;
 use futures_util::future::join_all;
-use itertools::Itertools;
 use serde_json::Value;
 use tantivy::{
     collector::TopDocs,
     directory::MmapDirectory,
     query::{BooleanQuery, BoostQuery, Query, TermQuery},
     schema::{IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED},
-    Term,
+    Document, Term,
 };
 use tokio::task::spawn_blocking;
+use unicode_segmentation::UnicodeSegmentation;
 
-use crate::{directory::HttpDirectory, poi::AirmailPoi, query::all_possible_queries};
+use crate::{
+    directory::HttpDirectory,
+    poi::{AirmailPoi, ToIndexPoi},
+    query::{all_possible_queries, all_subsequences},
+};
 
 // Field name keys.
 pub const FIELD_CONTENT: &str = "content";
@@ -120,29 +124,28 @@ impl AirmailIndex {
         let mut queries: Vec<Box<dyn Query>> = Vec::new();
 
         {
-            let query = deunicode::deunicode(query).to_lowercase();
-            let tokens = query.split_whitespace().collect_vec();
-            let subsequences = all_possible_queries(&tokens);
-            for subsequence in subsequences {
-                let substr = subsequence.join(" ");
-                let non_alphabetic = substr
-                    .chars()
-                    .filter(|c| c.is_numeric() || c.is_whitespace())
-                    .count();
-                let total_chars = substr.chars().count();
-                if total_chars < 3 && non_alphabetic == 0 {
-                    continue;
+            let tokens: Vec<String> = query.split_word_bounds().map(|s| s.to_string()).collect();
+            for subsequence in all_subsequences(&tokens) {
+                for possible_query in all_possible_queries(subsequence.join(" ")) {
+                    let non_alphabetic = possible_query
+                        .chars()
+                        .filter(|c| c.is_numeric() || c.is_whitespace())
+                        .count();
+                    let total_chars = possible_query.chars().count();
+                    if total_chars < 3 && non_alphabetic == 0 {
+                        continue;
+                    }
+                    let term = Term::from_field_text(self.field_content(), &possible_query);
+                    let mut boost = 1.05f32.powf(possible_query.len() as f32);
+                    // Anecdotally, numbers in queries are usually important.
+                    if total_chars - non_alphabetic < 3 && non_alphabetic > 0 {
+                        boost *= 3.0;
+                    }
+                    queries.push(Box::new(BoostQuery::new(
+                        Box::new(TermQuery::new(term, IndexRecordOption::Basic)),
+                        boost,
+                    )));
                 }
-                let term = Term::from_field_text(self.field_content(), &substr);
-                let mut boost = 2f32.powf(subsequence.len() as f32);
-                // Anecdotally, numbers in queries are usually important.
-                if total_chars - non_alphabetic < 3 && non_alphabetic > 0 {
-                    boost *= 3.0;
-                }
-                queries.push(Box::new(BoostQuery::new(
-                    Box::new(TermQuery::new(term, IndexRecordOption::Basic)),
-                    boost,
-                )));
             }
         }
 
@@ -202,41 +205,17 @@ pub struct AirmailIndexWriter {
 }
 
 impl AirmailIndexWriter {
-    pub fn add_poi(&mut self, poi: AirmailPoi) -> Result<(), Box<dyn std::error::Error>> {
+    fn process_field(&self, doc: &mut Document, value: &str) {
+        doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), value);
+    }
+
+    pub async fn add_poi(&mut self, poi: ToIndexPoi) -> Result<(), Box<dyn std::error::Error>> {
         let mut doc = tantivy::Document::default();
-        for name in poi.name {
-            let name = deunicode::deunicode(&name).to_lowercase();
-            for subname in all_possible_queries(&name.split_whitespace().collect_vec()) {
-                let name = subname.join(" ");
-                doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), name);
-            }
-            doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), name);
+        for content in poi.content {
+            self.process_field(&mut doc, &content);
         }
         doc.add_text(self.schema.get_field(FIELD_SOURCE).unwrap(), poi.source);
-        for category_label in poi.category.labels() {
-            doc.add_text(
-                self.schema.get_field(FIELD_CONTENT).unwrap(),
-                category_label,
-            );
-        }
-        for house_number in poi.house_number {
-            doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), house_number);
-        }
-        for road in poi.road {
-            doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), road);
-        }
-        for unit in poi.unit {
-            doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), unit);
-        }
-        for locality in poi.locality {
-            doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), locality);
-        }
-        for region in poi.region {
-            doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), region);
-        }
-        for country in poi.country {
-            doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), country);
-        }
+
         doc.add_json_object(
             self.schema.get_field(FIELD_TAGS).unwrap(),
             poi.tags
