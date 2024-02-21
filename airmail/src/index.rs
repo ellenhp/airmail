@@ -4,7 +4,7 @@ use airmail_common::categories::PoiCategory;
 use futures_util::future::join_all;
 use serde_json::Value;
 use tantivy::{
-    collector::TopDocs,
+    collector::{Count, TopDocs},
     directory::MmapDirectory,
     query::{BooleanQuery, BoostQuery, PhraseQuery, Query, TermQuery},
     schema::{IndexRecordOption, Schema, TextFieldIndexing, TextOptions, FAST, INDEXED, STORED},
@@ -132,6 +132,10 @@ impl AirmailIndex {
                 .filter(|s| !s.is_empty())
                 .collect();
             for subsequence in all_subsequences(&tokens) {
+                // if tokens.len() > 3 && subsequence.len() == 2 {
+                //     continue;
+                // }
+
                 let possible_query = subsequence.join(" ");
                 let non_alphabetic = possible_query
                     .chars()
@@ -148,6 +152,23 @@ impl AirmailIndex {
                     boost *= 3.0;
                 }
                 if subsequence.len() > 1 {
+                    {
+                        let searcher = searcher.clone();
+                        let subsequence = subsequence.clone();
+                        let content_field = self.field_content();
+                        spawn_blocking(move || {
+                            let _ = searcher.search(
+                                &PhraseQuery::new(
+                                    subsequence
+                                        .iter()
+                                        .map(|s| Term::from_field_text(content_field, s))
+                                        .collect(),
+                                ),
+                                &Count,
+                            );
+                        });
+                    }
+
                     queries.push(Box::new(BoostQuery::new(
                         Box::new(PhraseQuery::new(
                             subsequence
@@ -158,6 +179,14 @@ impl AirmailIndex {
                         boost,
                     )));
                 } else {
+                    {
+                        let searcher = searcher.clone();
+                        let term = term.clone();
+                        spawn_blocking(move || {
+                            let _ = searcher
+                                .search(&TermQuery::new(term, IndexRecordOption::Basic), &Count);
+                        });
+                    }
                     queries.push(Box::new(BoostQuery::new(
                         Box::new(TermQuery::new(term, IndexRecordOption::Basic)),
                         boost,
