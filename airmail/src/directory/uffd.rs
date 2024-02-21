@@ -139,7 +139,7 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
     let uffd = Arc::new(uffd);
     let requested_pages = Arc::new(Mutex::new(HashSet::new()));
     let chunk_cache: Arc<Mutex<LruCache<usize, Vec<u8>>>> =
-        Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(64).unwrap())));
+        Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(4).unwrap())));
     let (sender, mut receiver): (Sender<usize>, Receiver<usize>) =
         tokio::sync::broadcast::channel(100);
     loop {

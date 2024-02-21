@@ -31,7 +31,16 @@ async function fetchSearchResults(query) {
   });
   if (seq > latestResultSeq.value) {
     latestResultSeq.value = seq;
-    pins.value = newPins;
+    let pinCluster = [newPins[0]];
+    let max_distance = 0.5;
+    for (let i = 1; i < newPins.length; i++) {
+      if (Math.abs(newPins[i].geometry.coordinates[0] - pinCluster[0].geometry.coordinates[0]) < max_distance &&
+        Math.abs(newPins[i].geometry.coordinates[1] - pinCluster[0].geometry.coordinates[1]) < max_distance) {
+        pinCluster.push(newPins[i]);
+      }
+    }
+
+    pins.value = pinCluster;
   } else {
     return;
   }

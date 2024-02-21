@@ -1,0 +1,203 @@
+abbazia|abbadia|badia|abb.a|abba|b.ia|bia
+abbazie|abbadie|abb.e|abbe
+accademia|accad.a|accada
+accademie|accad.e|accade
+acquario|acq.rio|acqrio|acqrio
+acquari|acq.ri|acqri|acqri
+acquedotti|acq.ti|acqti
+acquedotto|acq.to|acqto
+aeroporto|aerop.to|aeropto
+agenzia
+agenzia immobiliare
+alberghi|alb.i|albi
+albergo|alb.o|albo
+alimentari
+ambasciata
+anfiteatri|anfit.i|anfiti
+anfiteatro|anfit.o|anfito
+area cani
+area comune
+area di svago
+asilo infantile
+asilo nido
+autonoleggio
+autolavaggio
+bagno|bgno|b.gno
+bagni|bgni|b.gni
+banca
+bar
+baraccamento|bmento|b.mento
+baraccamenti|bmenti|b.menti
+baracche|bar.che|barche
+barbiere
+basilica|basca|bas.ca
+basiliche|basche|bas.che
+bettola|bet.a|beta
+bettole|bet.e|bete
+biblioteca
+birreria|birr.a|birra
+birrerie|birr.e|birre
+bordello
+bottega
+boutique
+caffè|caffe
+caffeteria
+calzaturificio|calzat.cio|calzatcio
+calzolaio
+cambiavalute
+cambia valute
+campeggio|camp.gio|campgio
+campeggi|camp.gi|campgi
+campo da golf
+campo sportivo
+cappella|cap.la|capla
+cappelleria
+cappelletta|cap.ta|capta
+carabinieri|carab.ri|carabri
+carcere|carc.e|carce
+carenaggio|car.ggio|carggio
+cartiera
+cartoleria
+casa
+casale|c.ale|cale
+casaletto|c.letto|cletto
+caserma|cas.ma|casma
+casetta|c.ta|cta
+casette|c.te|cte
+casinò|casino
+casolare|c.lare|clare
+casone|c.one|cone
+casotto|cas.to|casto
+cassina|cass.a|cassa
+castello|cast.o|casto
+catacomba|cat.ba|cat ba
+catacombe|cat.be|cat be
+cattedrale|catt.le|cattle
+centro commerciale|centro comm.le|centro comm|centro comm le|cc|c.c.|c.c|c c
+centro sportivo
+chalet|ch.t|cht
+chiesa|ch.sa|chsa
+chiesetta|ch.etta|chetta
+cimitero
+cinema
+cittadella|c.della|cdella
+club
+collegio|coll.io|collio
+conservatorio|cons.rio|consrio
+convento|conv.to|convto
+crematorio
+dentista
+diga
+dipartimento|dipart.o|dpmto
+dissalazione|dissal.ne|dissalne
+distilleria|distill.a|distilla
+dormitorio
+dormitori
+drogheria
+enoteca
+ergastolo|erg.lo|erglo
+fabbrica|fabbr.a|fabbra
+faro|f.ro|fro
+farmacia
+fattoria|fatt.a|fatta
+ferramenta
+ferriera|ferr.ra|ferrra
+ferrovia|ferr.a|fv|f.v.|f.v|f v
+ferroviaria|ferr.ria|ferrria
+ferroviario|ferr.rio|ferrrio
+fiera
+fioraio
+fonderia|fond.a
+fontana|font.na|fontna
+forni|f.ni|fni
+forno|f.no|fno
+foro
+forte
+fortezza|fort.za|fortza
+forti
+fortificazione|fort.one|fortone
+fortilizio|fort.zio|fortzio
+fratelli
+galleria|gal
+gelateria
+gendarmeria|gend.ria|gendria
+giolleria
+giornalaio
+hotel
+impianto|imp.to|impto
+ippodromo|ip.dromo|ipdromo
+istituto|ist
+kebab
+laboratorio|lab.o|labo
+latteria
+lavanderia|lavand.a|lavanda
+lavanderia a gettone
+libreria
+locanda|loc.a
+lunetta|l.etta
+macelleria
+madonnella|mad.la|madla
+madonnetta|mad.ta|madta
+magazzini|magaz.i|magazi
+magazzino|magaz.o|magazo
+masseria|mass.a|mas
+mercato|mec
+ministero|min.ro|minro
+molino
+monastero|monast.o|monasto
+municipio
+monumento|monum.o|monumo
+mulino
+museo
+negozio
+obelisco|ob.sco|obsco
+orologiaio
+ospedale|osp.le|osple
+ostello
+osteria|ost.a|osta
+ottica
+padiglinoe|pad.ne|padne
+panetteria
+panificio
+parcheggio|pach.o
+parco|p.rco|prco|pco
+parco giochi|p.rco giochi|prco giochi
+parco acquatico|p.rco acquatico|prco acquatico
+parrucchiere
+pasticceria
+pelletteria
+pensilina
+pescheria
+piscina|psi
+pista di ghiaccio
+pizzeria
+polizia
+pompieri
+porto|pto
+porto turistico
+prigione
+profumeria
+pub
+rifugio per animali
+ristorante
+salone di bellezza
+sarto
+sauna
+scuola
+scuola guida
+scuola superiore
+stadio
+supermercato|super mercato
+tabaccheria
+tabacchi
+teatro
+terminal traghetto
+tintoria
+torre
+trattoria
+tribunale
+ufficio
+ufficio postale
+università|universita|univ|uni|univers
+veterinario
+vigili del fuoco

@@ -3,17 +3,41 @@ use std::error::Error;
 use airmail_common::categories::PoiCategory;
 use serde::{Deserialize, Serialize};
 
+pub struct ToIndexPoi {
+    pub content: Vec<String>,
+    pub source: String,
+    pub s2cell: u64,
+    pub tags: Vec<(String, String)>,
+}
+
+impl From<AirmailPoi> for ToIndexPoi {
+    fn from(poi: AirmailPoi) -> Self {
+        let mut content = Vec::new();
+        content.extend(poi.name);
+        content.extend(poi.house_number);
+        content.extend(poi.road);
+        content.extend(poi.unit);
+        content.extend(poi.admins);
+        content.extend(poi.category.labels());
+
+        Self {
+            content,
+            source: poi.source,
+            s2cell: poi.s2cell,
+            tags: poi.tags,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AirmailPoi {
     pub name: Vec<String>,
     pub source: String,
-    pub category: Vec<String>,
+    pub category: PoiCategory,
     pub house_number: Vec<String>,
     pub road: Vec<String>,
     pub unit: Vec<String>,
-    pub locality: Vec<String>,
-    pub region: Vec<String>,
-    pub country: Vec<String>,
+    pub admins: Vec<String>,
     pub s2cell: u64,
     pub lat: f64,
     pub lng: f64,
@@ -24,7 +48,7 @@ impl AirmailPoi {
     pub fn new(
         name: Vec<String>,
         source: String,
-        category: Vec<PoiCategory>,
+        category: PoiCategory,
         house_number: Vec<String>,
         road: Vec<String>,
         unit: Vec<String>,
@@ -37,16 +61,11 @@ impl AirmailPoi {
         Ok(Self {
             name,
             source,
-            category: category
-                .iter()
-                .map(|category| category.to_facet())
-                .collect(), // FIXME.
+            category,
             house_number,
             road,
             unit,
-            locality: Vec::new(),
-            region: Vec::new(),
-            country: Vec::new(),
+            admins: Vec::new(),
             s2cell,
             lat,
             lng,

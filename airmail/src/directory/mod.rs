@@ -27,7 +27,7 @@ thread_local! {
     pub(crate) static BLOCKING_HTTP_CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
 }
 
-const CHUNK_SIZE: usize = 512 * 1024;
+const CHUNK_SIZE: usize = 2 * 1024 * 1024;
 
 #[derive(Clone)]
 struct MmapArc {

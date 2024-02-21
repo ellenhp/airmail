@@ -1,0 +1,8 @@
+блок|бл
+blok|bl
+квартал|кварт|кв|кв-л
+kvartal|kvart|kv|kv-l
+область|обл
+oblast|obl
+район|р-н
+raion|r-n

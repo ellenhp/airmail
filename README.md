@@ -1,6 +1,6 @@
 # 📫 Airmail 📫
 
-Airmail is an extremely lightweight geocoder[^1] written in pure Rust. Built on top of [tantivy](https://github.com/quickwit-oss/tantivy), it offers a low memory footprint and fast indexing (~8k POIs per second on my machine). Airmail currently supports English queries based on place names and addresses in North American address formats. Other languages and address formats work, but have not been systematically tested.
+Airmail is an extremely lightweight geocoder[^1] written in pure Rust. Built on top of [tantivy](https://github.com/quickwit-oss/tantivy), it offers a low memory footprint and fast indexing (the planet takes under 3 hours on my hardware). Airmail currently supports English queries based on place names and addresses in North American address formats. Other languages and address formats work, but have not been systematically tested.
 
 [^1]: A geocoder is a search engine for places. When you type in "vegan donut shop" into your maps app of choice, a geocoder is what shows you nearby places that fit your query.
 
@@ -20,7 +20,7 @@ Airmail's killer feature is the ability to query remote indices, e.g. on S3. Thi
 - [ ] Prefix queries.
 - [x] Query remote indices.
 - [x] Support and test planet-scale indices.
-- [ ] Extend query parser for other locales.
+- [x] International address queries.
 - [ ] Categorical search, e.g. "coffee shops near me".
 - [ ] Bounding box biasing and restriction.
 - [ ] Minutely updates?

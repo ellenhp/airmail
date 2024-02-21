@@ -1,0 +1,31 @@
+akademia|akad
+bank
+bazylika
+biblioteka|bibl|b-ka|bka
+biblioteka narodowa|bn
+biblioteczka|bczka|b-czka
+departament|dep
+farmacja|farm
+fabryka|f-ka
+gimnazjum|gim
+gospodarka|gosp
+hotel
+instytut|inst
+katedra
+kolejowy|kol
+kościół|kosciol
+liceum|lic
+muzeum
+muzeum narodowe|mn
+oddział|oddz
+opat|op
+organizacja|organ
+ośrodek|ośr
+parkowa
+politechnika
+stacja|st
+stacja kolejowa|st kol
+szkoła
+technikum|techn
+uniwersytet|u|un|uniw
+zakład|zaklad|zakł|zakl

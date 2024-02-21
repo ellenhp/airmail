@@ -1,32 +1,27 @@
 use std::sync::Arc;
 
-use airmail_parser::{component::QueryComponentType, query::QueryScenario};
+use airmail_common::categories::PoiCategory;
 use futures_util::future::join_all;
 use serde_json::Value;
 use tantivy::{
-    collector::TopDocs,
+    collector::{Count, TopDocs},
     directory::MmapDirectory,
-    query::{BooleanQuery, Query, TermQuery},
-    schema::{
-        FacetOptions, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED,
-    },
-    tokenizer::{LowerCaser, RawTokenizer, TextAnalyzer},
-    Term,
+    query::{BooleanQuery, BoostQuery, PhraseQuery, Query, TermQuery},
+    schema::{IndexRecordOption, Schema, TextFieldIndexing, TextOptions, FAST, INDEXED, STORED},
+    Document, Term,
 };
 use tokio::task::spawn_blocking;
+use unicode_segmentation::UnicodeSegmentation;
 
-use crate::{directory::HttpDirectory, poi::AirmailPoi};
+use crate::{
+    directory::HttpDirectory,
+    poi::{AirmailPoi, ToIndexPoi},
+    query::all_subsequences,
+};
 
 // Field name keys.
-pub const FIELD_NAME: &str = "name";
+pub const FIELD_CONTENT: &str = "content";
 pub const FIELD_SOURCE: &str = "source";
-pub const FIELD_CATEGORY: &str = "category";
-pub const FIELD_HOUSE_NUMBER: &str = "house_number";
-pub const FIELD_ROAD: &str = "road";
-pub const FIELD_UNIT: &str = "unit";
-pub const FIELD_LOCALITY: &str = "locality";
-pub const FIELD_REGION: &str = "region";
-pub const FIELD_COUNTRY: &str = "country";
 pub const FIELD_S2CELL: &str = "s2cell";
 pub const FIELD_TAGS: &str = "tags";
 
@@ -35,96 +30,31 @@ pub struct AirmailIndex {
     tantivy_index: Arc<tantivy::Index>,
 }
 
-fn query_for_terms(
-    field: tantivy::schema::Field,
-    terms: Vec<&str>,
-    is_prefix: bool,
-) -> Result<Vec<Box<dyn Query>>, Box<dyn std::error::Error>> {
-    let mut queries: Vec<Box<dyn Query>> = Vec::new();
-    let mut phrase = Vec::new();
-    for (i, term) in terms.iter().enumerate() {
-        phrase.push(Term::from_field_text(field, term));
-        if i == terms.len() - 1 && is_prefix {
-            queries.push(Box::new(TermQuery::new(
-                Term::from_field_text(field, term),
-                IndexRecordOption::Basic,
-            )));
-        } else {
-            queries.push(Box::new(TermQuery::new(
-                Term::from_field_text(field, term),
-                IndexRecordOption::Basic,
-            )));
-        };
-    }
-    Ok(queries)
-}
-
 impl AirmailIndex {
     fn schema() -> tantivy::schema::Schema {
         let mut schema_builder = Schema::builder();
-        let street_options = TextOptions::default().set_stored().set_indexing_options(
+        let text_options = TextOptions::default().set_indexing_options(
             TextFieldIndexing::default()
-                .set_tokenizer("street_tokenizer")
-                .set_fieldnorms(false),
+                .set_fieldnorms(false)
+                .set_index_option(IndexRecordOption::WithFreqsAndPositions),
         );
-        let text_options = TextOptions::default()
-            .set_stored()
-            .set_indexing_options(TextFieldIndexing::default().set_fieldnorms(false));
 
-        let _ = schema_builder.add_text_field(FIELD_NAME, text_options.clone());
+        let _ = schema_builder.add_text_field(FIELD_CONTENT, text_options.clone());
         let _ = schema_builder.add_text_field(FIELD_SOURCE, text_options.clone());
-        let _ =
-            schema_builder.add_facet_field(FIELD_CATEGORY, FacetOptions::default().set_stored());
-        let _ = schema_builder.add_text_field(FIELD_HOUSE_NUMBER, text_options.clone());
-        let _ = schema_builder.add_text_field(FIELD_ROAD, street_options);
-        let _ = schema_builder.add_text_field(FIELD_UNIT, text_options.clone());
-        let _ = schema_builder.add_text_field(FIELD_LOCALITY, text_options.clone());
-        let _ = schema_builder.add_text_field(FIELD_REGION, text_options.clone());
-        let _ = schema_builder.add_text_field(FIELD_COUNTRY, text_options.clone());
-        let _ = schema_builder.add_u64_field(FIELD_S2CELL, INDEXED | STORED);
+        let _ = schema_builder.add_u64_field(FIELD_S2CELL, INDEXED | STORED | FAST);
         let _ = schema_builder.add_json_field(FIELD_TAGS, STORED);
         schema_builder.build()
     }
 
-    pub fn field_name(&self) -> tantivy::schema::Field {
-        self.tantivy_index.schema().get_field(FIELD_NAME).unwrap()
+    pub fn field_content(&self) -> tantivy::schema::Field {
+        self.tantivy_index
+            .schema()
+            .get_field(FIELD_CONTENT)
+            .unwrap()
     }
 
     pub fn field_source(&self) -> tantivy::schema::Field {
         self.tantivy_index.schema().get_field(FIELD_SOURCE).unwrap()
-    }
-
-    pub fn field_house_number(&self) -> tantivy::schema::Field {
-        self.tantivy_index
-            .schema()
-            .get_field(FIELD_HOUSE_NUMBER)
-            .unwrap()
-    }
-
-    pub fn field_road(&self) -> tantivy::schema::Field {
-        self.tantivy_index.schema().get_field(FIELD_ROAD).unwrap()
-    }
-
-    pub fn field_unit(&self) -> tantivy::schema::Field {
-        self.tantivy_index.schema().get_field(FIELD_UNIT).unwrap()
-    }
-
-    pub fn field_locality(&self) -> tantivy::schema::Field {
-        self.tantivy_index
-            .schema()
-            .get_field(FIELD_LOCALITY)
-            .unwrap()
-    }
-
-    pub fn field_region(&self) -> tantivy::schema::Field {
-        self.tantivy_index.schema().get_field(FIELD_REGION).unwrap()
-    }
-
-    pub fn field_country(&self) -> tantivy::schema::Field {
-        self.tantivy_index
-            .schema()
-            .get_field(FIELD_COUNTRY)
-            .unwrap()
     }
 
     pub fn field_s2cell(&self) -> tantivy::schema::Field {
@@ -137,40 +67,22 @@ impl AirmailIndex {
 
     pub fn create(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let schema = Self::schema();
-        let street_tokenizer = TextAnalyzer::builder(RawTokenizer::default())
-            .filter(LowerCaser)
-            .build();
         let tantivy_index =
             tantivy::Index::open_or_create(MmapDirectory::open(index_dir)?, schema)?;
-        tantivy_index
-            .tokenizers()
-            .register("street_tokenizer", street_tokenizer);
         Ok(Self {
             tantivy_index: Arc::new(tantivy_index),
         })
     }
 
     pub fn new(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let street_tokenizer = TextAnalyzer::builder(RawTokenizer::default())
-            .filter(LowerCaser)
-            .build();
         let tantivy_index = tantivy::Index::open_in_dir(index_dir)?;
-        tantivy_index
-            .tokenizers()
-            .register("street_tokenizer", street_tokenizer);
         Ok(Self {
             tantivy_index: Arc::new(tantivy_index),
         })
     }
 
     pub fn new_remote(base_url: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let street_tokenizer = TextAnalyzer::builder(RawTokenizer::default())
-            .filter(LowerCaser)
-            .build();
         let tantivy_index = tantivy::Index::open(HttpDirectory::new(base_url))?;
-        tantivy_index
-            .tokenizers()
-            .register("street_tokenizer", street_tokenizer);
         Ok(Self {
             tantivy_index: Arc::new(tantivy_index),
         })
@@ -205,88 +117,85 @@ impl AirmailIndex {
 
     pub async fn search(
         &self,
-        query: &QueryScenario,
+        query: &str,
     ) -> Result<Vec<(AirmailPoi, f32)>, Box<dyn std::error::Error>> {
         let tantivy_reader = self.tantivy_index.reader()?;
         let searcher = tantivy_reader.searcher();
         let mut queries: Vec<Box<dyn Query>> = Vec::new();
-        let query_vec = query.as_vec();
-        for (i, component) in query_vec.iter().enumerate() {
-            let is_prefix = i == query_vec.len() - 1;
-            let terms: Vec<String> = component
-                .text()
-                .split_whitespace()
-                .map(|term| term.to_lowercase())
+
+        let query = query.trim().replace("'s", "s");
+
+        {
+            let tokens: Vec<String> = query
+                .split_word_bounds()
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
                 .collect();
-            let term_strs = terms.iter().map(|s| s.as_str()).collect();
-            if terms.is_empty() {
-                continue;
-            }
-            match component.component_type() {
-                QueryComponentType::NearComponent => {
-                    // No-op
-                }
+            for subsequence in all_subsequences(&tokens) {
+                // if tokens.len() > 3 && subsequence.len() == 2 {
+                //     continue;
+                // }
 
-                QueryComponentType::HouseNumberComponent => {
-                    queries.extend(query_for_terms(
-                        self.field_house_number(),
-                        term_strs,
-                        is_prefix,
-                    )?);
+                let possible_query = subsequence.join(" ");
+                let non_alphabetic = possible_query
+                    .chars()
+                    .filter(|c| c.is_numeric() || c.is_whitespace())
+                    .count();
+                let total_chars = possible_query.chars().count();
+                if total_chars < 3 && non_alphabetic == 0 {
+                    continue;
                 }
+                let term = Term::from_field_text(self.field_content(), &possible_query);
+                let mut boost = 1.05f32.powf(possible_query.len() as f32);
+                // Anecdotally, numbers in queries are usually important.
+                if total_chars - non_alphabetic < 3 && non_alphabetic > 0 {
+                    boost *= 3.0;
+                }
+                if subsequence.len() > 1 {
+                    {
+                        let searcher = searcher.clone();
+                        let subsequence = subsequence.clone();
+                        let content_field = self.field_content();
+                        spawn_blocking(move || {
+                            let _ = searcher.search(
+                                &PhraseQuery::new(
+                                    subsequence
+                                        .iter()
+                                        .map(|s| Term::from_field_text(content_field, s))
+                                        .collect(),
+                                ),
+                                &Count,
+                            );
+                        });
+                    }
 
-                QueryComponentType::RoadComponent => {
-                    queries.push(Box::new(TermQuery::new(
-                        Term::from_field_text(self.field_road(), component.text()),
-                        IndexRecordOption::Basic,
+                    queries.push(Box::new(BoostQuery::new(
+                        Box::new(PhraseQuery::new(
+                            subsequence
+                                .iter()
+                                .map(|s| Term::from_field_text(self.field_content(), s))
+                                .collect(),
+                        )),
+                        boost,
                     )));
-                }
-
-                QueryComponentType::IntersectionComponent => {
-                    // No-op
-                }
-
-                QueryComponentType::SublocalityComponent => {
-                    // No-op, and probably always will be. "Downtown" is very subjective, for example.
-                }
-
-                QueryComponentType::LocalityComponent => {
-                    queries.extend(query_for_terms(
-                        self.field_locality(),
-                        term_strs,
-                        is_prefix,
-                    )?);
-                }
-
-                QueryComponentType::RegionComponent => {
-                    queries.extend(query_for_terms(self.field_region(), term_strs, is_prefix)?);
-                }
-
-                QueryComponentType::CountryComponent => {
-                    queries.extend(query_for_terms(self.field_country(), term_strs, is_prefix)?);
-                }
-
-                QueryComponentType::CategoryComponent | QueryComponentType::PlaceNameComponent => {
-                    let mut new_terms = Vec::new();
-                    for term in &terms {
-                        if term.ends_with("'s") {
-                            new_terms.push(term.trim_end_matches("'s"));
-                        }
+                } else {
+                    {
+                        let searcher = searcher.clone();
+                        let term = term.clone();
+                        spawn_blocking(move || {
+                            let _ = searcher
+                                .search(&TermQuery::new(term, IndexRecordOption::Basic), &Count);
+                        });
                     }
-                    let original = query_for_terms(self.field_name(), term_strs, is_prefix)?;
-                    queries.extend(original);
-                    if !new_terms.is_empty() {
-                        let modified = query_for_terms(self.field_name(), new_terms, false)?;
-                        queries.extend(modified);
-                    }
-                }
-
-                QueryComponentType::IntersectionJoinWordComponent => {
-                    // No-op
+                    queries.push(Box::new(BoostQuery::new(
+                        Box::new(TermQuery::new(term, IndexRecordOption::Basic)),
+                        boost,
+                    )));
                 }
             }
         }
-        let query = BooleanQuery::intersection(queries);
+
+        let query = BooleanQuery::union(queries);
         let (top_docs, searcher) =
             spawn_blocking(move || (searcher.search(&query, &TopDocs::with_limit(10)), searcher))
                 .await?;
@@ -302,30 +211,6 @@ impl AirmailIndex {
         let top_docs = join_all(futures).await;
         for (score, doc_future) in scores.iter().zip(top_docs) {
             let doc = doc_future??;
-            let house_num: Option<&str> = doc
-                .get_first(self.field_house_number())
-                .map(|v| v.as_text())
-                .flatten();
-            let road: Option<&str> = doc
-                .get_first(self.field_road())
-                .map(|v| v.as_text())
-                .flatten();
-            let unit: Option<&str> = doc
-                .get_first(self.field_unit())
-                .map(|v| v.as_text())
-                .flatten();
-            let locality: Vec<&str> = doc
-                .get_all(self.field_locality())
-                .filter_map(|v| v.as_text())
-                .collect();
-            let region: Option<&str> = doc
-                .get_first(self.field_region())
-                .map(|v| v.as_text())
-                .flatten();
-            let country: Option<&str> = doc
-                .get_first(self.field_country())
-                .map(|v| v.as_text())
-                .flatten();
             let s2cell = doc
                 .get_first(self.field_s2cell())
                 .unwrap()
@@ -333,10 +218,6 @@ impl AirmailIndex {
                 .unwrap();
             let cellid = s2::cellid::CellID(s2cell);
             let latlng = s2::latlng::LatLng::from(cellid);
-            let names = doc
-                .get_all(self.field_name())
-                .filter_map(|v| v.as_text())
-                .collect::<Vec<&str>>();
             let tags: Vec<(String, String)> = doc
                 .get_first(self.field_tags())
                 .map(|v| v.as_json().unwrap())
@@ -346,24 +227,17 @@ impl AirmailIndex {
                 .map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string()))
                 .collect();
 
-            let mut poi = AirmailPoi::new(
-                names.iter().map(|s| s.to_string()).collect(),
-                doc.get_first(self.field_source())
-                    .unwrap()
-                    .as_text()
-                    .unwrap()
-                    .to_string(),
-                vec![], // FIXME
-                house_num.iter().map(|s| s.to_string()).collect(),
-                road.iter().map(|s| s.to_string()).collect(),
-                unit.iter().map(|s| s.to_string()).collect(),
+            let poi = AirmailPoi::new(
+                vec![],
+                "".to_string(),
+                PoiCategory::Address, // FIXME.
+                vec![],
+                vec![],
+                vec![],
                 latlng.lat.deg(),
                 latlng.lng.deg(),
                 tags,
             )?;
-            poi.locality = locality.iter().map(|s| s.to_string()).collect();
-            poi.region = region.map(|s| s.to_string()).into_iter().collect();
-            poi.country = country.map(|s| s.to_string()).into_iter().collect();
             results.push((poi, *score));
         }
 
@@ -377,36 +251,17 @@ pub struct AirmailIndexWriter {
 }
 
 impl AirmailIndexWriter {
-    pub fn add_poi(&mut self, poi: AirmailPoi) -> Result<(), Box<dyn std::error::Error>> {
+    fn process_field(&self, doc: &mut Document, value: &str) {
+        doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), value);
+    }
+
+    pub async fn add_poi(&mut self, poi: ToIndexPoi) -> Result<(), Box<dyn std::error::Error>> {
         let mut doc = tantivy::Document::default();
-        for name in poi.name {
-            doc.add_text(self.schema.get_field(FIELD_NAME).unwrap(), name);
+        for content in poi.content {
+            self.process_field(&mut doc, &content);
         }
         doc.add_text(self.schema.get_field(FIELD_SOURCE).unwrap(), poi.source);
-        for category in poi.category {
-            doc.add_facet(self.schema.get_field(FIELD_CATEGORY).unwrap(), &category);
-        }
-        for house_number in poi.house_number {
-            doc.add_text(
-                self.schema.get_field(FIELD_HOUSE_NUMBER).unwrap(),
-                house_number,
-            );
-        }
-        for road in poi.road {
-            doc.add_text(self.schema.get_field(FIELD_ROAD).unwrap(), road);
-        }
-        for unit in poi.unit {
-            doc.add_text(self.schema.get_field(FIELD_UNIT).unwrap(), unit);
-        }
-        for locality in poi.locality {
-            doc.add_text(self.schema.get_field(FIELD_LOCALITY).unwrap(), locality);
-        }
-        for region in poi.region {
-            doc.add_text(self.schema.get_field(FIELD_REGION).unwrap(), region);
-        }
-        for country in poi.country {
-            doc.add_text(self.schema.get_field(FIELD_COUNTRY).unwrap(), country);
-        }
+
         doc.add_json_object(
             self.schema.get_field(FIELD_TAGS).unwrap(),
             poi.tags

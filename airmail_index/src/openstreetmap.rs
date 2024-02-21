@@ -1,50 +1,69 @@
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error, ops::Range};
 
-use airmail::poi::AirmailPoi;
+use airmail::{poi::AirmailPoi, substitutions::permute_road};
 use airmail_common::categories::{
-    AmenityPoiCategory, EmergencyPoiCategory, FoodPoiCategory, PoiCategory, ShopPoiCategory,
+    AmenityPoiCategory, CuisineCategory, EmergencyPoiCategory, FoodPoiCategory, PoiCategory,
+    ShopPoiCategory,
 };
-use geo::{Centroid, Coord, LineString, MultiPoint, Point, Polygon};
+use geo::{Centroid, Coord, LineString, Polygon};
 use log::{debug, warn};
-use turbosm::{
-    element::{Relation, RelationMember, Way},
-    Turbosm,
-};
-
-use crate::substitutions::{permute_housenum, permute_road, permute_unit};
+use osmflat::{FileResourceStorage, Osm, Way, COORD_SCALE};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<AirmailPoi> {
     if tags.is_empty() {
         return None;
     }
-    if tags.contains_key("highway") {
+    if tags.contains_key("highway")
+        || tags.contains_key("natural")
+        || tags.contains_key("boundary")
+        || tags.contains_key("admin_level")
+    {
         return None;
     }
 
-    let category = tags.get("amenity").map(|s| match s.as_str() {
-        "fast_food" | "food_court" | "cafe" | "pub" | "restaurant" => {
-            PoiCategory::Shop(ShopPoiCategory::Food(FoodPoiCategory::Restaurant(None)))
-        }
-        "biergarten" | "bar" => {
-            PoiCategory::Shop(ShopPoiCategory::Food(FoodPoiCategory::Restaurant(None)))
-        }
-        "drinking_water" => PoiCategory::Amenity(AmenityPoiCategory::DrinkingWater),
-        "toilets" => PoiCategory::Amenity(AmenityPoiCategory::Toilets),
-        "shelter" => PoiCategory::Amenity(AmenityPoiCategory::Shelter),
-        "telephone" => PoiCategory::Amenity(AmenityPoiCategory::Telephone),
-        "bank" | "atm" => PoiCategory::Shop(ShopPoiCategory::Bank),
-        "pharmacy" => PoiCategory::Shop(ShopPoiCategory::Health),
-        "hospital" => PoiCategory::Emergency(EmergencyPoiCategory::Hospital),
-        "clinic" => PoiCategory::Shop(ShopPoiCategory::Clinic),
-        "dentist" => PoiCategory::Shop(ShopPoiCategory::Clinic), // TODO: subfacet here?
-        "veterinary" => PoiCategory::Shop(ShopPoiCategory::Veterinary),
-        "library" => PoiCategory::Amenity(AmenityPoiCategory::Library),
-        _ => PoiCategory::Address,
-    });
+    let category = tags
+        .get("amenity")
+        .map(|s| match s.as_str() {
+            "fast_food" | "food_court" | "cafe" | "pub" | "restaurant" => {
+                if let Some(cuisine) = tags.get("cuisine") {
+                    let cuisine = match cuisine.as_str() {
+                        "burger" | "hot_dog" | "american" => CuisineCategory::American,
+                        "coffee_shop" => CuisineCategory::CoffeeShop,
+                        "pizza" => CuisineCategory::Pizza,
+                        "chinese" | "indian" | "vietnamese" | "japanese" | "thai" => {
+                            CuisineCategory::Asian
+                        }
+                        _ => CuisineCategory::Other {
+                            raw_tag: cuisine.clone(),
+                        },
+                    };
+                    PoiCategory::Shop(ShopPoiCategory::Food(FoodPoiCategory::Restaurant(Some(
+                        cuisine,
+                    ))))
+                } else {
+                    PoiCategory::Shop(ShopPoiCategory::Food(FoodPoiCategory::Restaurant(None)))
+                }
+            }
+            "biergarten" | "bar" => PoiCategory::Shop(ShopPoiCategory::Bar),
+            "drinking_water" => PoiCategory::Amenity(AmenityPoiCategory::DrinkingWater),
+            "toilets" => PoiCategory::Amenity(AmenityPoiCategory::Toilets),
+            "shelter" => PoiCategory::Amenity(AmenityPoiCategory::Shelter),
+            "telephone" => PoiCategory::Amenity(AmenityPoiCategory::Telephone),
+            "bank" | "atm" => PoiCategory::Shop(ShopPoiCategory::Bank),
+            "pharmacy" => PoiCategory::Shop(ShopPoiCategory::Health),
+            "hospital" => PoiCategory::Emergency(EmergencyPoiCategory::Hospital),
+            "clinic" => PoiCategory::Shop(ShopPoiCategory::Clinic),
+            "dentist" => PoiCategory::Shop(ShopPoiCategory::Dentist), // TODO: subfacet here?
+            "veterinary" => PoiCategory::Shop(ShopPoiCategory::Veterinary),
+            "library" => PoiCategory::Amenity(AmenityPoiCategory::Library),
+            _ => PoiCategory::Address,
+        })
+        .unwrap_or(PoiCategory::Address);
 
     let house_number = tags
         .get("addr:housenumber")
-        .map(|s| permute_housenum(&s).unwrap())
+        .map(|s| vec![s.to_string()])
         .unwrap_or_default();
     let road = tags
         .get("addr:street")
@@ -52,7 +71,7 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
         .unwrap_or_default();
     let unit = tags
         .get("addr:unit")
-        .map(|s| permute_unit(&s).unwrap())
+        .map(|s| vec![s.to_string()])
         .unwrap_or_default();
 
     let names = {
@@ -61,6 +80,10 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
             .filter(|(key, _value)| key.contains("name:") || key.to_string() == "name")
             .for_each(|(_key, value)| {
                 names.push(value.to_string());
+                if value.contains("'s") {
+                    names.push(value.replace("'s", ""));
+                    names.push(value.replace("'s", "s"));
+                }
             });
         names
     };
@@ -73,23 +96,31 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
         AirmailPoi::new(
             names,
             "osm".to_string(),
-            category.into_iter().collect(),
+            category,
             house_number,
             road,
             unit,
             lat,
             lng,
-            vec![],
+            tags.into_iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
         )
         .unwrap(),
     )
 }
 
-fn way_centroid(way: &Way) -> Option<(f64, f64)> {
+fn way_centroid(way: &Way, osm: &Osm) -> Option<(f64, f64)> {
     let node_positions: Vec<Coord> = way
-        .nodes()
-        .iter()
-        .filter_map(|node| Some(Coord::from((node.lng(), node.lat()))))
+        .refs()
+        .filter_map(|node| {
+            let node = &osm.nodes_index()[node as usize];
+            let node = &osm.nodes()[node.value().unwrap() as usize];
+            Some(Coord::from((
+                node.lon() as f64 / COORD_SCALE as f64,
+                node.lat() as f64 / COORD_SCALE as f64,
+            )))
+        })
         .collect();
 
     if node_positions.is_empty() {
@@ -105,68 +136,68 @@ fn way_centroid(way: &Way) -> Option<(f64, f64)> {
     Some((centroid.x(), centroid.y()))
 }
 
-fn index_way(tags: &HashMap<String, String>, way: &Way) -> Option<AirmailPoi> {
-    let (lng, lat) = way_centroid(way)?;
+fn index_way(tags: &HashMap<String, String>, way: &Way, osm: &Osm) -> Option<AirmailPoi> {
+    let (lng, lat) = way_centroid(way, osm)?;
     tags_to_poi(&tags, lat, lng)
 }
 
-fn _relation_centroid(
-    relation: &Relation,
-    level: u32,
-    turbosm: &Turbosm,
-) -> Result<(f64, f64), Box<dyn Error>> {
-    let mut points = Vec::new();
-    if level > 3 {
-        debug!("Skipping relation with level > 10: {:?}", relation.id());
-        return Err("Skipping relation with level > 10".into());
+fn tags(idxs: Range<u64>, osm: &Osm) -> Result<HashMap<String, String>, Box<dyn Error>> {
+    let mut tags = HashMap::new();
+    for tag in idxs {
+        let tag = &osm.tags_index()[tag as usize];
+        let tag = &osm.tags()[tag.value() as usize];
+        let key_idx = tag.key_idx() as usize;
+        // pull out the null-terminated string.
+        let key: Vec<u8> = osm.stringtable()[key_idx..]
+            .iter()
+            .take_while(|&&c| c != 0)
+            .cloned()
+            .collect();
+        let key = String::from_utf8(key)?;
+
+        let value: Vec<u8> = osm.stringtable()[tag.value_idx() as usize..]
+            .iter()
+            .take_while(|&&c| c != 0)
+            .cloned()
+            .collect();
+        let value = String::from_utf8(value)?;
+        tags.insert(key, value);
     }
-    for member in relation.members() {
-        match member {
-            RelationMember::Node(_, node) => {
-                points.push(Point::new(node.lng(), node.lat()));
-            }
-            RelationMember::Way(_, way) => {
-                if let Some(centroid) = way_centroid(&way) {
-                    points.push(Point::new(centroid.0, centroid.1));
-                }
-            }
-            RelationMember::Relation(_, other_relation) => {
-                let other_relation = turbosm.relation(*other_relation)?;
-                if let Ok(centroid) = _relation_centroid(&other_relation, level + 1, turbosm) {
-                    points.push(Point::new(centroid.0, centroid.1));
-                } else {
-                    debug!("Skipping relation with no centroid: {:?}", relation.id());
-                }
-            }
-        }
-    }
-    let multipoint = MultiPoint::from(points);
-    let centroid = multipoint.centroid().ok_or("No centroid")?;
-    Ok((centroid.x(), centroid.y()))
+    Ok(tags)
 }
 
 pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Error>>>(
     db_path: &str,
     callback: &CB,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut osm =
-        Turbosm::open(db_path, &["natural", "highway", "admin_level", "boundary"]).unwrap();
+    let storage = FileResourceStorage::new(db_path);
+    let osm = Osm::open(storage).unwrap();
     println!("Processing nodes");
-    osm.process_all_nodes(|node, _| {
-        if let Some(poi) = tags_to_poi(node.tags(), node.lat(), node.lng()) {
-            if let Err(err) = callback(poi) {
-                warn!("Error from callback: {}", err);
+    osm.nodes().par_iter().for_each(|node| {
+        let tags = tags(node.tags(), &osm);
+        if let Ok(tags) = tags {
+            if let Some(poi) = tags_to_poi(
+                &tags,
+                node.lat() as f64 / COORD_SCALE as f64,
+                node.lon() as f64 / COORD_SCALE as f64,
+            ) {
+                if let Err(err) = callback(poi) {
+                    warn!("Error from callback: {}", err);
+                }
             }
         }
-    })?;
+    });
     println!("Processing ways");
-    osm.process_all_ways(|way, _| {
-        index_way(way.tags(), &way).map(|poi| {
-            if let Err(err) = callback(poi) {
-                warn!("Error from callback: {}", err);
-            }
-        });
-    })?;
+    osm.ways().par_iter().for_each(|way| {
+        let tags = tags(way.tags(), &osm);
+        if let Ok(tags) = tags {
+            index_way(&tags, &way, &osm).map(|poi| {
+                if let Err(err) = callback(poi) {
+                    warn!("Error from callback: {}", err);
+                }
+            });
+        }
+    });
     println!("Skipping relations (FIXME)");
     // osm.process_all_relations(|relation, turbosm| {
     //     let centroid = relation_centroid(&relation, 0, turbosm);
