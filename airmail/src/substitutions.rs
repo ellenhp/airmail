@@ -32,8 +32,9 @@ lazy_static! {
         LanguageDetectorBuilder::from_all_languages().build();
 }
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub(super) struct SubstitutionDict {
-    subs: HashMap<String, Vec<String>>,
+    subs: Vec<(String, Vec<String>)>,
 }
 
 impl SubstitutionDict {
@@ -56,13 +57,17 @@ impl SubstitutionDict {
                 }
             }
         }
-        Ok(Self { subs })
+        Ok(Self {
+            subs: subs.into_iter().collect(),
+        })
     }
 
     pub fn substitute(&self, token: &str) -> Vec<String> {
         let mut substitutions = vec![token.to_string()];
-        if let Some(subs) = self.subs.get(token) {
-            substitutions.extend(subs.clone());
+        for (key, subs) in &self.subs {
+            if key == token {
+                substitutions.extend(subs.clone());
+            }
         }
         substitutions
     }
@@ -96,7 +101,7 @@ pub(super) fn apply_subs(
     Ok(permutations)
 }
 
-pub(super) fn permute_road(road: &str) -> Result<Vec<String>, Box<dyn Error>> {
+pub fn permute_road(road: &str) -> Result<Vec<String>, Box<dyn Error>> {
     let sub_dict: &SubstitutionDict = match LANGUAGE_CLASSIFIER.detect_language_of(road) {
         Some(Language::English) => &EN_STREET_TYPES,
         Some(Language::Arabic) => &AR_STREET_TYPES,

@@ -1,0 +1,16 @@
+allee
+brücke|br.|brucke|bruecke
+burgermeister|bgm.
+damm
+gasse
+hof
+kreuz|kz.
+markt|mkt.
+platz|pl.
+quelle|qu|q.
+rundwanderweg|rww.
+siedlung|sdlg.
+stiege|stg.
+straße|str.|strasse
+weg|w.
+wiese|ws.

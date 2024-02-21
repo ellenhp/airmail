@@ -1,0 +1,8 @@
+dél|del|d
+délnyugat|delnyugat
+délkeleti|delkeleti
+észak|eszak|e
+északnyugat|eszaknyugat
+északkeleti|eszakkeleti
+kelet|k
+nyugat|n

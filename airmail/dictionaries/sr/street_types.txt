@@ -1,0 +1,17 @@
+булевар|бул
+bulevar|bul
+bulevardi
+магистрала
+magistrala
+обилазница
+obilaznica
+магистрала
+magistrala
+прилаз
+prilaz
+пут
+put
+трг
+trg
+улица|ул
+ulica|ul

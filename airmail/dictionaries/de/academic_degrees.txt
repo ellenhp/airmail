@@ -1,0 +1,5 @@
+diplom ingenieur|dipl ing
+diplom kaufmann|dipl kfm
+doktor der medizin|dr med
+doktor der philosophie|dr phil
+magister|mag

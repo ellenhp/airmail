@@ -1,9 +1,5 @@
-#[macro_use]
-extern crate lazy_static;
-
 pub mod openstreetmap;
 pub mod query_pip;
-pub mod substitutions;
 
 use airmail::poi::{AirmailPoi, ToIndexPoi};
 use bollard::{

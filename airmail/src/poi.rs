@@ -3,8 +3,6 @@ use std::error::Error;
 use airmail_common::categories::PoiCategory;
 use serde::{Deserialize, Serialize};
 
-use crate::query::all_possible_queries;
-
 pub struct ToIndexPoi {
     pub content: Vec<String>,
     pub source: String,
@@ -15,24 +13,12 @@ pub struct ToIndexPoi {
 impl From<AirmailPoi> for ToIndexPoi {
     fn from(poi: AirmailPoi) -> Self {
         let mut content = Vec::new();
-        for name in poi.name {
-            content.extend(all_possible_queries(name));
-        }
-        for house_number in poi.house_number {
-            content.extend(all_possible_queries(house_number));
-        }
-        for road in poi.road {
-            content.extend(all_possible_queries(road));
-        }
-        for unit in poi.unit {
-            content.extend(all_possible_queries(unit));
-        }
-        for admin in poi.admins {
-            content.extend(all_possible_queries(admin));
-        }
-        for label in poi.category.labels() {
-            content.extend(all_possible_queries(label));
-        }
+        content.extend(poi.name);
+        content.extend(poi.house_number);
+        content.extend(poi.road);
+        content.extend(poi.unit);
+        content.extend(poi.admins);
+        content.extend(poi.category.labels());
 
         Self {
             content,

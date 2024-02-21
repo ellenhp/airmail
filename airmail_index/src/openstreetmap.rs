@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error, ops::Range};
 
-use airmail::poi::AirmailPoi;
+use airmail::{poi::AirmailPoi, substitutions::permute_road};
 use airmail_common::categories::{
     AmenityPoiCategory, CuisineCategory, EmergencyPoiCategory, FoodPoiCategory, PoiCategory,
     ShopPoiCategory,
@@ -9,8 +9,6 @@ use geo::{Centroid, Coord, LineString, Polygon};
 use log::{debug, warn};
 use osmflat::{FileResourceStorage, Osm, Way, COORD_SCALE};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-
-use crate::substitutions::permute_road;
 
 fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<AirmailPoi> {
     if tags.is_empty() {
@@ -82,6 +80,10 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
             .filter(|(key, _value)| key.contains("name:") || key.to_string() == "name")
             .for_each(|(_key, value)| {
                 names.push(value.to_string());
+                if value.contains("'s") {
+                    names.push(value.replace("'s", ""));
+                    names.push(value.replace("'s", "s"));
+                }
             });
         names
     };

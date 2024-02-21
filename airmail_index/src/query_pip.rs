@@ -36,6 +36,8 @@ thread_local! {
 static LRU_ADMIN_AREAS: OnceLock<Mutex<LruCache<u64, Vec<u64>>>> = OnceLock::new();
 
 async fn query_pip_inner(s2cell: u64, port: usize) -> Result<Vec<u64>, Box<dyn Error>> {
+    let admin_lru_count = 1024 * 1024;
+
     let desired_level = 15;
     let cell = s2::cellid::CellID(s2cell);
     let cell = if cell.level() > desired_level {
@@ -46,7 +48,7 @@ async fn query_pip_inner(s2cell: u64, port: usize) -> Result<Vec<u64>, Box<dyn E
 
     {
         let lru_admin_areas = LRU_ADMIN_AREAS
-            .get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(8 * 1024 * 1024).unwrap())));
+            .get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(admin_lru_count).unwrap())));
         let mut lru_admin_areas = lru_admin_areas.lock().await;
         if let Some(admin_areas) = lru_admin_areas.get(&cell.0) {
             return Ok(admin_areas.clone());
@@ -78,7 +80,7 @@ async fn query_pip_inner(s2cell: u64, port: usize) -> Result<Vec<u64>, Box<dyn E
     }
     {
         let lru_admin_areas = LRU_ADMIN_AREAS
-            .get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(8 * 1024 * 1024).unwrap())));
+            .get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(admin_lru_count).unwrap())));
         let mut lru_admin_areas = lru_admin_areas.lock().await;
         lru_admin_areas.put(cell.0, response_ids.clone());
     }
@@ -87,6 +89,8 @@ async fn query_pip_inner(s2cell: u64, port: usize) -> Result<Vec<u64>, Box<dyn E
 }
 
 pub async fn query_pip(s2cell: u64, port: usize) -> Result<PipResponse, Box<dyn Error>> {
+    let names_lru_count = 1024 * 1024;
+
     let wof_ids = query_pip_inner(s2cell, port).await?;
     let mut handles: Vec<JoinHandle<Option<Vec<String>>>> = Vec::new();
     for admin_id in wof_ids {
@@ -94,7 +98,7 @@ pub async fn query_pip(s2cell: u64, port: usize) -> Result<PipResponse, Box<dyn 
         let handle: JoinHandle<Option<Vec<String>>> = tokio::spawn(async move {
             {
                 let lru_names = LRU_NAMES.get_or_init(|| {
-                    Mutex::new(LruCache::new(NonZeroUsize::new(16 * 1024 * 1024).unwrap()))
+                    Mutex::new(LruCache::new(NonZeroUsize::new(names_lru_count).unwrap()))
                 });
                 let mut lru_names = lru_names.lock().await;
                 if let Some(names) = lru_names.get(&admin_id) {
@@ -156,7 +160,7 @@ pub async fn query_pip(s2cell: u64, port: usize) -> Result<PipResponse, Box<dyn 
                 .collect::<Vec<_>>();
             {
                 let lru_names = LRU_NAMES.get_or_init(|| {
-                    Mutex::new(LruCache::new(NonZeroUsize::new(16 * 1024 * 1024).unwrap()))
+                    Mutex::new(LruCache::new(NonZeroUsize::new(names_lru_count).unwrap()))
                 });
                 let mut lru_names = lru_names.lock().await;
                 lru_names.put(admin_id, names.clone());

@@ -6,8 +6,8 @@ use serde_json::Value;
 use tantivy::{
     collector::TopDocs,
     directory::MmapDirectory,
-    query::{BooleanQuery, BoostQuery, Query, TermQuery},
-    schema::{IndexRecordOption, Schema, TextFieldIndexing, TextOptions, INDEXED, STORED},
+    query::{BooleanQuery, BoostQuery, PhraseQuery, Query, TermQuery},
+    schema::{IndexRecordOption, Schema, TextFieldIndexing, TextOptions, FAST, INDEXED, STORED},
     Document, Term,
 };
 use tokio::task::spawn_blocking;
@@ -16,7 +16,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::{
     directory::HttpDirectory,
     poi::{AirmailPoi, ToIndexPoi},
-    query::{all_possible_queries, all_subsequences},
+    query::all_subsequences,
 };
 
 // Field name keys.
@@ -36,12 +36,12 @@ impl AirmailIndex {
         let text_options = TextOptions::default().set_indexing_options(
             TextFieldIndexing::default()
                 .set_fieldnorms(false)
-                .set_tokenizer("raw"),
+                .set_index_option(IndexRecordOption::WithFreqsAndPositions),
         );
 
         let _ = schema_builder.add_text_field(FIELD_CONTENT, text_options.clone());
         let _ = schema_builder.add_text_field(FIELD_SOURCE, text_options.clone());
-        let _ = schema_builder.add_u64_field(FIELD_S2CELL, INDEXED | STORED);
+        let _ = schema_builder.add_u64_field(FIELD_S2CELL, INDEXED | STORED | FAST);
         let _ = schema_builder.add_json_field(FIELD_TAGS, STORED);
         schema_builder.build()
     }
@@ -123,24 +123,41 @@ impl AirmailIndex {
         let searcher = tantivy_reader.searcher();
         let mut queries: Vec<Box<dyn Query>> = Vec::new();
 
+        let query = query.trim().replace("'s", "s");
+
         {
-            let tokens: Vec<String> = query.split_word_bounds().map(|s| s.to_string()).collect();
+            let tokens: Vec<String> = query
+                .split_word_bounds()
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
             for subsequence in all_subsequences(&tokens) {
-                for possible_query in all_possible_queries(subsequence.join(" ")) {
-                    let non_alphabetic = possible_query
-                        .chars()
-                        .filter(|c| c.is_numeric() || c.is_whitespace())
-                        .count();
-                    let total_chars = possible_query.chars().count();
-                    if total_chars < 3 && non_alphabetic == 0 {
-                        continue;
-                    }
-                    let term = Term::from_field_text(self.field_content(), &possible_query);
-                    let mut boost = 1.05f32.powf(possible_query.len() as f32);
-                    // Anecdotally, numbers in queries are usually important.
-                    if total_chars - non_alphabetic < 3 && non_alphabetic > 0 {
-                        boost *= 3.0;
-                    }
+                let possible_query = subsequence.join(" ");
+                let non_alphabetic = possible_query
+                    .chars()
+                    .filter(|c| c.is_numeric() || c.is_whitespace())
+                    .count();
+                let total_chars = possible_query.chars().count();
+                if total_chars < 3 && non_alphabetic == 0 {
+                    continue;
+                }
+                let term = Term::from_field_text(self.field_content(), &possible_query);
+                let mut boost = 1.05f32.powf(possible_query.len() as f32);
+                // Anecdotally, numbers in queries are usually important.
+                if total_chars - non_alphabetic < 3 && non_alphabetic > 0 {
+                    boost *= 3.0;
+                }
+                if subsequence.len() > 1 {
+                    queries.push(Box::new(BoostQuery::new(
+                        Box::new(PhraseQuery::new(
+                            subsequence
+                                .iter()
+                                .map(|s| Term::from_field_text(self.field_content(), s))
+                                .collect(),
+                        )),
+                        boost,
+                    )));
+                } else {
                     queries.push(Box::new(BoostQuery::new(
                         Box::new(TermQuery::new(term, IndexRecordOption::Basic)),
                         boost,
