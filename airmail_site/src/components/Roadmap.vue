@@ -3,29 +3,15 @@
 const items = [
   {
     id: 1,
-    name: "Localization",
-    des: "Extend parser to work with more locales.",
-    icon: "mdi-translate",
-    color: "background-color: #6fe7dd",
-  },
-  {
-    id: 2,
     name: "Categorical search",
-    des: "Search for \"Food near me\".",
+    des: "Search for \"Food near me\" in multiple languages.",
     icon: "mdi-food",
     color: "background-color: #ffc93c",
   },
   {
-    id: 3,
-    name: "Viewport biasing",
-    des: "Restrict returned POIs with a custom bounding box.",
-    icon: "mdi-crop",
-    color: "background-color: #f73859",
-  },
-  {
-    id: 4,
+    id: 2,
     name: "Return alternates",
-    des: "Return similar POIs with machine learning if the query is ambiguous or local results are sparse.",
+    des: "Return similar POIs if the query is ambiguous or local results are sparse.",
     icon: "mdi-brain",
     color: "background-color: #7f26bf",
   },

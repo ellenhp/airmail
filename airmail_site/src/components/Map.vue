@@ -30,6 +30,10 @@ export default {
                 'features': val,
             });
 
+            if (val.length === 0) {
+                console.log("No pins to load");
+                return;
+            }
             let bounds = [[180, 90], [-180, -90]];
             val.forEach((pin) => {
                 bounds[0][0] = Math.min(bounds[0][0], pin.geometry.coordinates[0]);
@@ -38,7 +42,7 @@ export default {
                 bounds[1][1] = Math.max(bounds[1][1], pin.geometry.coordinates[1]);
             });
             this.mapRef.fitBounds(bounds, {
-                padding: 50,
+                padding: 150,
                 maxZoom: 15,
             });
         },

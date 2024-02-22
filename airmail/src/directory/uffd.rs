@@ -120,8 +120,8 @@ async fn fetch_and_resume(
         "Critical: Failed to fetch chunk: {} after 5 attempts",
         chunk_idx,
     );
-    // Find something better to do here maybe?
-    panic!();
+    // They'll try again I guess?
+    uffd.wake(dst_ptr as *mut c_void, 4096).unwrap();
 }
 
 fn dont_need(page_start: usize) {
@@ -139,7 +139,7 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
     let uffd = Arc::new(uffd);
     let requested_pages = Arc::new(Mutex::new(HashSet::new()));
     let chunk_cache: Arc<Mutex<LruCache<usize, Vec<u8>>>> =
-        Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(4).unwrap())));
+        Arc::new(Mutex::new(LruCache::new(NonZeroUsize::new(8).unwrap())));
     let (sender, mut receiver): (Sender<usize>, Receiver<usize>) =
         tokio::sync::broadcast::channel(100);
     loop {
@@ -164,12 +164,12 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                 addr,
                 thread_id,
             } => {
-                debug!("Pagefault: {:?} {:?} {:?} {:?}", kind, rw, addr, thread_id);
+                trace!("Pagefault: {:?} {:?} {:?} {:?}", kind, rw, addr, thread_id);
                 let offset = addr as usize - mmap_start;
                 let chunk_idx = offset / CHUNK_SIZE;
                 trace!("Locking recent chunks to check for cached chunk");
                 if let Some(chunk) = chunk_cache.blocking_lock().get(&chunk_idx) {
-                    debug!("Using cached chunk: {}", chunk_idx);
+                    trace!("Using cached chunk: {}", chunk_idx);
                     let offset_into_chunk = offset % CHUNK_SIZE;
                     unsafe {
                         let _ = uffd.copy(

@@ -12,7 +12,6 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-    println!("{:?}", args);
     let mut index = AirmailIndex::new(&args.index)?;
     if args.merge {
         index.merge().await?;

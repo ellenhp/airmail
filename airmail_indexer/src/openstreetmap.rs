@@ -1,9 +1,12 @@
 use std::{collections::HashMap, error::Error, ops::Range};
 
-use airmail::{poi::AirmailPoi, substitutions::permute_road};
-use airmail_common::categories::{
-    AmenityPoiCategory, CuisineCategory, EmergencyPoiCategory, FoodPoiCategory, PoiCategory,
-    ShopPoiCategory,
+use airmail::{
+    categories::{
+        AmenityPoiCategory, CuisineCategory, EmergencyPoiCategory, FoodPoiCategory, PoiCategory,
+        ShopPoiCategory,
+    },
+    poi::AirmailPoi,
+    substitutions::permute_road,
 };
 use geo::{Centroid, Coord, LineString, Polygon};
 use log::{debug, warn};

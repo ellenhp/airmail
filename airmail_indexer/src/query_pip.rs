@@ -1,10 +1,11 @@
-use std::{collections::HashSet, error::Error, num::NonZeroUsize, sync::OnceLock};
+use std::{collections::HashSet, error::Error};
 
-use lru::LruCache;
+use crossbeam::channel::Sender;
+use redb::{ReadTransaction, ReadableTable};
 use serde::Deserialize;
-use tokio::{sync::Mutex, task::JoinHandle};
+use tokio::task::JoinHandle;
 
-static LRU_NAMES: OnceLock<Mutex<LruCache<u64, Vec<String>>>> = OnceLock::new();
+use crate::{WofCacheItem, ADMIN_AREAS, ADMIN_NAMES};
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct PipResponse {
@@ -32,12 +33,12 @@ thread_local! {
     static HTTP_CLIENT: reqwest::Client = reqwest::Client::new();
 }
 
-// OnceLock for LRU cache
-static LRU_ADMIN_AREAS: OnceLock<Mutex<LruCache<u64, Vec<u64>>>> = OnceLock::new();
-
-async fn query_pip_inner(s2cell: u64, port: usize) -> Result<Vec<u64>, Box<dyn Error>> {
-    let admin_lru_count = 1024 * 1024;
-
+async fn query_pip_inner(
+    s2cell: u64,
+    read: &'_ ReadTransaction<'_>,
+    to_cache_sender: Sender<WofCacheItem>,
+    port: usize,
+) -> Result<Vec<u64>, Box<dyn Error>> {
     let desired_level = 15;
     let cell = s2::cellid::CellID(s2cell);
     let cell = if cell.level() > desired_level {
@@ -46,13 +47,28 @@ async fn query_pip_inner(s2cell: u64, port: usize) -> Result<Vec<u64>, Box<dyn E
         cell
     };
 
-    {
-        let lru_admin_areas = LRU_ADMIN_AREAS
-            .get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(admin_lru_count).unwrap())));
-        let mut lru_admin_areas = lru_admin_areas.lock().await;
-        if let Some(admin_areas) = lru_admin_areas.get(&cell.0) {
-            return Ok(admin_areas.clone());
+    let ids = {
+        let mut ids: Vec<u64> = Vec::new();
+        let txn = read;
+        let table = txn.open_table(ADMIN_AREAS)?;
+        if let Some(admin_ids) = table.get(&cell.0)? {
+            for admin_id in admin_ids.value().chunks(8) {
+                ids.push(u64::from_le_bytes([
+                    admin_id[0],
+                    admin_id[1],
+                    admin_id[2],
+                    admin_id[3],
+                    admin_id[4],
+                    admin_id[5],
+                    admin_id[6],
+                    admin_id[7],
+                ]));
+            }
         }
+        ids
+    };
+    if !ids.is_empty() {
+        return Ok(ids);
     }
 
     let lat_lng = s2::latlng::LatLng::from(cell);
@@ -73,39 +89,56 @@ async fn query_pip_inner(s2cell: u64, port: usize) -> Result<Vec<u64>, Box<dyn E
     let mut response_ids = Vec::new();
     for concise_response in response {
         let admin_id: u64 = concise_response.id.parse()?;
-        // Mostly here to avoid putting timezones in the index.
-        if concise_response.class == "admin" {
-            response_ids.push(admin_id);
+        if concise_response.r#type == "planet"
+            || concise_response.r#type == "marketarea"
+            || concise_response.r#type == "county"
+            || concise_response.r#type == "timezone"
+        {
+            continue;
         }
+        response_ids.push(admin_id);
     }
+
     {
-        let lru_admin_areas = LRU_ADMIN_AREAS
-            .get_or_init(|| Mutex::new(LruCache::new(NonZeroUsize::new(admin_lru_count).unwrap())));
-        let mut lru_admin_areas = lru_admin_areas.lock().await;
-        lru_admin_areas.put(cell.0, response_ids.clone());
+        to_cache_sender
+            .send(WofCacheItem::Admins(cell.0, response_ids.clone()))
+            .unwrap();
     }
 
     Ok(response_ids)
 }
 
-pub async fn query_pip(s2cell: u64, port: usize) -> Result<PipResponse, Box<dyn Error>> {
-    let names_lru_count = 1024 * 1024;
+fn query_names(read: &'_ ReadTransaction<'_>, admin: &u64) -> Result<Vec<String>, Box<dyn Error>> {
+    let txn = read;
+    let table = txn.open_table(ADMIN_NAMES)?;
+    if let Some(names_ref) = table.get(admin)? {
+        let names = names_ref.value().to_string();
+        let names = names
+            .split('\0')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+        return Ok(names);
+    }
+    Err("No names found".into())
+}
 
-    let wof_ids = query_pip_inner(s2cell, port).await?;
-    let mut handles: Vec<JoinHandle<Option<Vec<String>>>> = Vec::new();
+pub(crate) async fn query_pip(
+    read: &'_ ReadTransaction<'_>,
+    to_cache_sender: Sender<WofCacheItem>,
+    s2cell: u64,
+    port: usize,
+) -> Result<PipResponse, Box<dyn Error>> {
+    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), port).await?;
+    let mut handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
+    let mut cached_names = Vec::new();
     for admin_id in wof_ids {
         let url = format!("http://localhost:{}/place/wof/{}/name", port, &admin_id);
-        let handle: JoinHandle<Option<Vec<String>>> = tokio::spawn(async move {
-            {
-                let lru_names = LRU_NAMES.get_or_init(|| {
-                    Mutex::new(LruCache::new(NonZeroUsize::new(names_lru_count).unwrap()))
-                });
-                let mut lru_names = lru_names.lock().await;
-                if let Some(names) = lru_names.get(&admin_id) {
-                    return Some(names.clone());
-                }
-            }
 
+        if let Ok(names) = query_names(read, &admin_id) {
+            cached_names.extend(names);
+            continue;
+        }
+        let handle: JoinHandle<Option<Vec<String>>> = tokio::spawn(async move {
             let response = if let Ok(response) = HTTP_CLIENT
                 .with(|client: &reqwest::Client| client.get(&url).send())
                 .await
@@ -158,21 +191,18 @@ pub async fn query_pip(s2cell: u64, port: usize) -> Result<PipResponse, Box<dyn 
                 .iter()
                 .cloned()
                 .collect::<Vec<_>>();
-            {
-                let lru_names = LRU_NAMES.get_or_init(|| {
-                    Mutex::new(LruCache::new(NonZeroUsize::new(names_lru_count).unwrap()))
-                });
-                let mut lru_names = lru_names.lock().await;
-                lru_names.put(admin_id, names.clone());
-            }
             Some(names)
         });
-        handles.push(handle);
+        handles.push((admin_id, handle));
     }
 
     let mut response = PipResponse::default();
-    for handle in handles {
+    response.admins.extend(cached_names);
+    for (admin_id, handle) in handles {
         if let Ok(Some(names)) = handle.await {
+            to_cache_sender
+                .send(WofCacheItem::Names(admin_id, names.clone()))
+                .unwrap();
             response.admins.extend(names);
         }
     }

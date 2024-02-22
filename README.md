@@ -1,12 +1,12 @@
 # 📫 Airmail 📫
 
-Airmail is an extremely lightweight geocoder[^1] written in pure Rust. Built on top of [tantivy](https://github.com/quickwit-oss/tantivy), it offers a low memory footprint and fast indexing (the planet takes under 3 hours on my hardware). Airmail currently supports English queries based on place names and addresses in North American address formats. Other languages and address formats work, but have not been systematically tested.
+Airmail is an extremely lightweight geocoder[^1] written in pure Rust. Built on top of [tantivy](https://github.com/quickwit-oss/tantivy), it offers a low memory footprint and fast indexing (index the planet in under 3 hours!). Airmail aims to support international queries in several languages, but in practice it's still very early days and there are definitely bugs preventing correct behavior.
 
 [^1]: A geocoder is a search engine for places. When you type in "vegan donut shop" into your maps app of choice, a geocoder is what shows you nearby places that fit your query.
 
 ### Features
 
-Airmail's killer feature is the ability to query remote indices, e.g. on S3. This lets you keep your index hosting costs fixed while you scale horizontally, and lowers the baseline costs associated with hosting a planet instance by around 2x-10x compared to other geocoders.
+Airmail's killer feature is the ability to query remote indices, e.g. on S3. This lets you keep your index hosting costs fixed while you scale horizontally. The baseline cost of a global Airmail deployment is about $5 per month.
 
 ### Roadmap
 
@@ -21,13 +21,10 @@ Airmail's killer feature is the ability to query remote indices, e.g. on S3. Thi
 - [x] Query remote indices.
 - [x] Support and test planet-scale indices.
 - [x] International address queries.
-- [ ] Categorical search, e.g. "coffee shops near me".
-- [ ] Bounding box biasing and restriction.
-- [ ] Minutely updates?
+- [x] Categorical search, e.g. "coffee shop seattle".
+- [x] Typo tolerance (limited to >=8 character input tokens)
+- [x] Bounding box biasing and restriction.
 - [ ] Systematic/automatic quality testing in CI.
-- [ ] Alternate results, e.g. returning Starbucks locations for "Dunkin Donuts" queries on the US west coast.[^2]
-
-[^2]: This will likely need to be done with a vector database and some machine learning, and may have major hosting cost implications. TBD.
 
 ### License
 

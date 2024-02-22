@@ -25,8 +25,8 @@ const buttonGithub = "GitHub";
                 <p>
                   Airmail is an extremely lightweight, open-source geocoder written in Rust. A search engine for the
                   planet. Airmail is currently able to parse English queries like "1600 Pennsylvania Ave NW" and POI
-                  queries like "Seattle Starbucks". Result quality is fair for English queries in North America, and
-                  support for more regions and languages is next on the roadmap.
+                  queries like "Eiffel Tower, Paris, France". Result quality is generally acceptable, but there are still
+                  some edge cases.
                 </p>
               </div>
               <p data-aos="fade-up" data-aos-delay="200">

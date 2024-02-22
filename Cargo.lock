@@ -44,12 +44,12 @@ dependencies = [
 name = "airmail"
 version = "0.1.0"
 dependencies = [
- "airmail_common",
  "async-trait",
  "cached",
  "crossbeam",
  "deunicode",
  "futures-util",
+ "geo",
  "itertools 0.12.1",
  "lazy_static",
  "levenshtein_automata",
@@ -73,22 +73,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "airmail_common"
-version = "0.1.0"
-dependencies = [
- "cached",
- "deunicode",
- "fst",
- "lazy_static",
- "serde",
-]
-
-[[package]]
 name = "airmail_index"
 version = "0.1.0"
 dependencies = [
  "airmail",
- "airmail_common",
  "bollard",
  "clap",
  "crossbeam",
@@ -105,6 +93,7 @@ dependencies = [
  "osmflat",
  "rand",
  "rayon",
+ "redb",
  "regex",
  "reqwest",
  "rustyline",
@@ -125,10 +114,12 @@ dependencies = [
  "deunicode",
  "env_logger",
  "futures-util",
+ "geo",
  "log",
  "serde",
  "serde_json",
  "tokio",
+ "tower-http",
 ]
 
 [[package]]
@@ -997,15 +988,6 @@ checksum = "2eeb4ed9e12f43b7fa0baae3f9cdda28352770132ef2e09a23760c29cae8bd47"
 dependencies = [
  "rustix",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "fst"
-version = "0.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ab85b9b05e3978cc9a9cf8fea7f01b494e1a09ed3037e16ba39edc7a29eb61a"
-dependencies = [
- "utf8-ranges",
 ]
 
 [[package]]
@@ -2433,6 +2415,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "redb"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72623e6275cd430215b741f41ebda34db93a13ebde253f908b70871c46afc5ba"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3292,6 +3283,22 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "tower-http"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0da193277a4e2c33e59e09b5861580c33dd0a637c3883d0fa74ba40c0374af2e"
+dependencies = [
+ "bitflags 2.4.2",
+ "bytes",
+ "http 1.0.0",
+ "http-body 1.0.0",
+ "http-body-util",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
 ]
 
 [[package]]

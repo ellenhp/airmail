@@ -12,9 +12,23 @@ const items = [
   {
     id: 2,
     name: "Lightweight",
-    des: "Lightweight enough for client-side use, enabling offline operation. In theory.",
+    des: "Capable of querying a remote index.",
     icon: "mdi-airplane",
     color: "background-color: #ffc93c",
+  },
+  {
+    id: 3,
+    name: "International",
+    des: "Reasonable support for queries in English, Spanish, Catalan, and likely others. Open an issue on GitHub if you have problems!",
+    icon: "mdi-translate",
+    color: "background-color: #7f26bf",
+  },
+  {
+    id: 3,
+    name: "Typo-tolerant",
+    des: "Limited support for typo tolerance.",
+    icon: "mdi-undo",
+    color: "background-color: #f73859",
   },
 ];
 const total = 4;

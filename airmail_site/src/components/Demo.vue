@@ -8,16 +8,16 @@ const heading = "Demo";
 const pins = ref([])
 const latestSearchSeq = ref(0)
 const latestResultSeq = ref(0)
+const isSearching = ref(false);
 
-const debouncedSearch = pDebounce(fetchSearchResults, 200);
+const debouncedPreload = pDebounce(fetchSearchResults, 100);
+const debouncedSearch = pDebounce(fetchSearchResults, 500);
 
-async function fetchSearchResults(query) {
+async function fetchSearchResults(query, updatePins) {
   const seq = ++latestSearchSeq.value;
-  if (query.length < 3) {
-    pins.value = [];
-    return;
-  }
-  const url = `https://api2.airmail.rs/search?q=${query}`;
+  isSearching.value = true;
+
+  const url = `https://api2.airmail.rs/search?q=${query}&lenient=${updatePins ? "true" : "false"}`;
   const response = await fetch(url);
   const data = await response.json();
   var newPins = data.features.map((poi) => {
@@ -29,18 +29,12 @@ async function fetchSearchResults(query) {
       },
     };
   });
-  if (seq > latestResultSeq.value) {
+  if (seq > latestResultSeq.value && updatePins) {
     latestResultSeq.value = seq;
-    let pinCluster = [newPins[0]];
-    let max_distance = 0.5;
-    for (let i = 1; i < newPins.length; i++) {
-      if (Math.abs(newPins[i].geometry.coordinates[0] - pinCluster[0].geometry.coordinates[0]) < max_distance &&
-        Math.abs(newPins[i].geometry.coordinates[1] - pinCluster[0].geometry.coordinates[1]) < max_distance) {
-        pinCluster.push(newPins[i]);
-      }
+    pins.value = newPins;
+    if (seq == latestSearchSeq.value) {
+      isSearching.value = false;
     }
-
-    pins.value = pinCluster;
   } else {
     return;
   }
@@ -56,16 +50,21 @@ async function fetchSearchResults(query) {
           <h2 class="heading">{{ heading }}</h2>
           <p>
             Airmail is pre-alpha quality software. Data is incomplete and search results may be
-            incorrect, missing, or very far away. Airmail currently only indexes addresses and businesses, so queries must
-            be specific. Administrative areas like cities, states, and countries are not currently indexed.
+            incorrect, missing, or very far away. Airmail currently only indexes addresses and venues, so queries must
+            be specific. Administrative areas like cities, states, and countries are not currently indexed. Some road
+            types may not have their abbreviations indexed properly.
           </p>
           <p>
-            Try searching for "425 Harvard Ave" or "Seattle Starbucks".
+            Try searching for "1600 Pennsylvania Ave NW", "Central Park, NYC", or "University District pizza, Seattle".
           </p>
         </div>
         <v-text-field class="searchbar" label="Search" @input="async (event) => {
-          await debouncedSearch(event.target.value);
+          debouncedPreload(event.target.value, false);
+          debouncedSearch(event.target.value, true);
         }"></v-text-field>
+        <div v-if="isSearching">
+          <v-progress-circular indeterminate color="primary" style="margin: 10px;"></v-progress-circular>
+        </div>
         <Map :pins=pins />
 
       </div>

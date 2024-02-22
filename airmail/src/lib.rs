@@ -1,8 +1,10 @@
 #[macro_use]
 extern crate lazy_static;
 
+pub mod categories;
 pub mod directory;
 pub mod index;
 pub mod poi;
-mod query;
+pub mod query;
+pub mod spatial_query;
 pub mod substitutions;

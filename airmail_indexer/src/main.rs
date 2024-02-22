@@ -12,11 +12,25 @@ use bollard::{
 };
 use clap::Parser;
 use crossbeam::channel::{Receiver, Sender};
-use std::{collections::HashMap, error::Error};
+use redb::{Database, ReadTransaction, TableDefinition};
+use std::{collections::HashMap, error::Error, sync::Arc};
 use tokio::spawn;
 
-pub async fn populate_admin_areas(poi: &mut AirmailPoi, port: usize) -> Result<(), Box<dyn Error>> {
-    let pip_response = query_pip::query_pip(poi.s2cell, port).await?;
+pub(crate) const ADMIN_AREAS: TableDefinition<u64, &[u8]> = TableDefinition::new("admin_areas");
+pub(crate) const ADMIN_NAMES: TableDefinition<u64, &str> = TableDefinition::new("admin_names");
+
+pub(crate) enum WofCacheItem {
+    Names(u64, Vec<String>),
+    Admins(u64, Vec<u64>),
+}
+
+pub(crate) async fn populate_admin_areas<'a>(
+    read: &'_ ReadTransaction<'_>,
+    to_cache_sender: Sender<WofCacheItem>,
+    poi: &mut AirmailPoi,
+    port: usize,
+) -> Result<(), Box<dyn Error>> {
+    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, port).await?;
     for admin in pip_response.admins {
         poi.admins.push(admin);
     }
@@ -47,6 +61,9 @@ struct Args {
     /// Path to the Airmail index.
     #[clap(long, short)]
     index: String,
+    /// Path to a administrative area cache db.
+    #[clap(long, short)]
+    admin_cache: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -215,23 +232,75 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .join();
     maybe_start_pip_container(&args.wof_db, args.recreate, &docker).await?;
 
+    let db = Arc::new(Database::create(&args.admin_cache)?);
+    {
+        let txn = db.begin_write()?;
+        {
+            txn.open_table(ADMIN_AREAS)?;
+            txn.open_table(ADMIN_NAMES)?;
+        }
+        txn.commit()?;
+    }
+
     if let Some(osmflat_path) = args.osmflat {
         let mut nonblocking_join_handles = Vec::new();
+        let (to_cache_sender, to_cache_receiver): (Sender<WofCacheItem>, Receiver<WofCacheItem>) =
+            crossbeam::channel::bounded(1024 * 64);
         let (no_admin_sender, no_admin_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
             crossbeam::channel::bounded(1024 * 64);
         let (to_index_sender, to_index_receiver): (Sender<ToIndexPoi>, Receiver<ToIndexPoi>) =
             crossbeam::channel::bounded(1024 * 64);
+        {
+            let db = db.clone();
+            std::thread::spawn(move || {
+                let mut write = db.begin_write().unwrap();
+                let mut count = 0;
+                loop {
+                    count += 1;
+                    if count % 5000 == 0 {
+                        write.commit().unwrap();
+                        write = db.begin_write().unwrap();
+                    }
+                    match to_cache_receiver.recv() {
+                        Ok(WofCacheItem::Names(admin, names)) => {
+                            let mut table = write.open_table(ADMIN_NAMES).unwrap();
+                            let packed = names.join("\0");
+                            table.insert(admin, packed.as_str()).unwrap();
+                        }
+                        Ok(WofCacheItem::Admins(s2cell, admins)) => {
+                            let mut table = write.open_table(ADMIN_AREAS).unwrap();
+                            let packed = admins
+                                .iter()
+                                .map(|id| id.to_le_bytes())
+                                .flatten()
+                                .collect::<Vec<_>>();
+                            table.insert(s2cell, packed.as_slice()).unwrap();
+                        }
+                        Err(_) => break,
+                    }
+                }
+            });
+        }
 
-        for _ in 0..1.max(num_cpus::get() / 2) {
+        for _ in 1..num_cpus::get_physical() {
+            println!("Spawning worker");
             let no_admin_receiver = no_admin_receiver.clone();
             let to_index_sender = to_index_sender.clone();
+            let to_cache_sender = to_cache_sender.clone();
+            let db = db.clone();
             nonblocking_join_handles.push(spawn(async move {
+                let mut read = db.begin_read().unwrap();
+                let mut counter = 0;
                 loop {
                     let mut poi = if let Ok(poi) = no_admin_receiver.recv() {
                         poi
                     } else {
                         break;
                     };
+                    counter += 1;
+                    if counter % 1000 == 0 {
+                        read = db.begin_read().unwrap();
+                    }
                     let mut sent = false;
                     for attempt in 0..5 {
                         if attempt > 0 {
@@ -239,7 +308,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             tokio::time::sleep(std::time::Duration::from_millis(10)).await;
                         }
                         let port = 3102;
-                        if let Err(err) = populate_admin_areas(&mut poi, port).await {
+                        if let Err(err) =
+                            populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, port)
+                                .await
+                        {
                             println!("Failed to populate admin areas. {}", err);
                         } else {
                             let poi = ToIndexPoi::from(poi);
@@ -267,7 +339,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             loop {
                 {
                     count += 1;
-                    if count % 1000 == 0 {
+                    if count % 10000 == 0 {
                         println!(
                             "{} POIs parsed in {} seconds, {} per second.",
                             count,

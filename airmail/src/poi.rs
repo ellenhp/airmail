@@ -1,12 +1,14 @@
 use std::error::Error;
 
-use airmail_common::categories::PoiCategory;
 use serde::{Deserialize, Serialize};
+
+use crate::categories::PoiCategory;
 
 pub struct ToIndexPoi {
     pub content: Vec<String>,
     pub source: String,
     pub s2cell: u64,
+    pub s2cell_parents: Vec<u64>,
     pub tags: Vec<(String, String)>,
 }
 
@@ -20,10 +22,18 @@ impl From<AirmailPoi> for ToIndexPoi {
         content.extend(poi.admins);
         content.extend(poi.category.labels());
 
+        let mut s2cell_parents = Vec::new();
+        let cell = s2::cellid::CellID(poi.s2cell);
+        for level in 0..cell.level() {
+            let cell = cell.parent(level);
+            s2cell_parents.push(cell.0);
+        }
+
         Self {
             content,
             source: poi.source,
             s2cell: poi.s2cell,
+            s2cell_parents,
             tags: poi.tags,
         }
     }

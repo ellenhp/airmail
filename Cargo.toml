@@ -1,9 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-  "airmail", "airmail_common", "airmail_index", "airmail_service",
+  "airmail", "airmail_indexer", "airmail_service",
 ]
-
 
 [profile.release]
 debug = 1
