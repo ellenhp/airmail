@@ -234,7 +234,7 @@ impl AirmailIndex {
                     }
                     mandatory_queries.push(Box::new(BoostQuery::new(Box::new(query), boost)));
                 } else {
-                    let query: Box<dyn Query> = if self.is_remote {
+                    let query: Box<dyn Query> = if self.is_remote || !lenient {
                         Box::new(TermQuery::new(term, IndexRecordOption::Basic))
                     } else {
                         Box::new(FuzzyTermQuery::new_prefix(term, 0, false))
@@ -306,6 +306,11 @@ impl AirmailIndex {
                     request_leniency,
                 )
                 .await;
+
+            #[cfg(feature = "invasive_logging")]
+            {
+                dbg!(&query);
+            }
 
             let (top_docs, searcher) = spawn_blocking(move || {
                 (searcher.search(&query, &TopDocs::with_limit(10)), searcher)

@@ -2,9 +2,10 @@ use std::{collections::HashSet, num::NonZeroUsize, os::raw::c_void, sync::Arc, t
 
 use log::{debug, error, info, trace, warn};
 use lru::LruCache;
-use nix::sys::mman::{madvise, MmapAdvise};
+use nix::libc::{madvise, MADV_COLD, MADV_DONTNEED, MADV_FREE};
 use tokio::{
     runtime::Runtime,
+    spawn,
     sync::{
         broadcast::{Receiver, Sender},
         Mutex,
@@ -92,7 +93,10 @@ async fn fetch_and_resume(
                         4096,
                         true,
                     );
-                    dont_need(dst_ptr as usize);
+                    spawn(async move {
+                        tokio::time::sleep(Duration::from_millis(1000)).await;
+                        dont_need(dst_ptr as usize);
+                    });
                 }
                 {
                     trace!("Locking recent chunks to insert new chunk");
@@ -127,8 +131,7 @@ async fn fetch_and_resume(
 fn dont_need(page_start: usize) {
     // Round down to page size.
     unsafe {
-        madvise(page_start as *mut c_void, 4096, MmapAdvise::MADV_WILLNEED)
-            .expect("madvise failed");
+        madvise(page_start as *mut c_void, 4096, MADV_FREE);
     }
 }
 
@@ -178,7 +181,11 @@ pub(crate) fn handle_uffd(uffd: Uffd, mmap_start: usize, _len: usize, artifact_u
                             4096,
                             true,
                         );
-                        dont_need(addr as usize);
+                        let addr = addr as usize;
+                        rt.spawn(async move {
+                            tokio::time::sleep(Duration::from_millis(1000)).await;
+                            dont_need(addr);
+                        });
                     }
                     continue;
                 }
