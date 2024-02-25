@@ -1,4 +1,0 @@
-arrière|arriere
-avant
-gauche|g
-droit|dr

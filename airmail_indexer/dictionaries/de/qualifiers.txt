@@ -1,3 +1,0 @@
-bezirk|bez
-gemeinde|gde
-hauptstadt|hptst

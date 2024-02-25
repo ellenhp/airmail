@@ -1,3 +1,0 @@
-appartement|app|apt|ap
-bus|b
-kamer

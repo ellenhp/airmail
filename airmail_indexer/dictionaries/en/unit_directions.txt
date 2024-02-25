@@ -1,4 +1,0 @@
-front|f|frnt
-left|l
-right|r
-rear|r

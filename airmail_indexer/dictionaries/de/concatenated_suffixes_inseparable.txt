@@ -1,5 +1,0 @@
-berg|bg.
-burg|bg.
-dorf|df.
-kogel|kg.
-universität|uni.|universitat|universitaet

@@ -1,4 +1,0 @@
-est|e
-nord|n
-sud|s
-vest|v

@@ -1,4 +1,0 @@
-noordekant
-oostekant
-westekant
-suidekant

@@ -1,5 +1,0 @@
-gyvenvietė|gyvenv|gyvenviete
-kaimas|k
-miestas|m
-miestelis|mstl
-rajonas|r

@@ -1,9 +1,0 @@
-blok|bl
-dzielnica|dziel
-gmina|gm
-kwartał|kwartal|kw
-okręg|ok
-osiedle|os
-wieś
-wyspa
-województwo|wojewodztwo|woj

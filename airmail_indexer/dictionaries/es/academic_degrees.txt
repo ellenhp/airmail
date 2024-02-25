@@ -1,2 +1,0 @@
-licenciada|lcda|lda
-licenciado|lic|lcdo|ldo
