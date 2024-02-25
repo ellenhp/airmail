@@ -19,12 +19,12 @@ use tantivy::{
     },
     Document, Searcher, Term,
 };
+use tantivy_uffd::RemoteDirectory;
 use tokio::task::spawn_blocking;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     categories::PoiCategory,
-    directory::HttpDirectory,
     poi::{AirmailPoi, ToIndexPoi},
     query::all_subsequences,
     spatial_query::SpatialQuery,
@@ -106,7 +106,8 @@ impl AirmailIndex {
     }
 
     pub fn new_remote(base_url: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let tantivy_index = tantivy::Index::open(HttpDirectory::new(base_url))?;
+        let tantivy_index =
+            tantivy::Index::open(RemoteDirectory::<{ 2 * 1024 * 1024 }>::new(base_url))?;
         Ok(Self {
             tantivy_index: Arc::new(tantivy_index),
             is_remote: true,

@@ -11,4 +11,4 @@ target/
 
 **.geojson
 
-data/*
+perf.data*

@@ -32,6 +32,7 @@ cached = "0.48.1"
 lazy_static = "1.4.0"
 regex = "1.10.3"
 geo = "0.27.0"
+tantivy-uffd = "0.1.0"
 
 [features]
 invasive_logging = []

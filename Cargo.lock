@@ -66,6 +66,7 @@ dependencies = [
  "tantivy-common",
  "tantivy-fst",
  "tantivy-jieba",
+ "tantivy-uffd",
  "tempfile",
  "tokio",
  "unicode-segmentation",
@@ -785,6 +786,19 @@ dependencies = [
  "darling_core",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "dashmap"
+version = "5.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856"
+dependencies = [
+ "cfg-if",
+ "hashbrown 0.14.3",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -3117,6 +3131,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "347b6fb212b26d3505d224f438e3c4b827ab8bd847fe9953ad5ac6b8f9443b66"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "tantivy-uffd"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a14cad5e8c51aba0b1864d5f72b30a713fce20c834ee93d9a580a90b2b4d27e"
+dependencies = [
+ "dashmap",
+ "log",
+ "lru 0.12.2",
+ "nix",
+ "reqwest",
+ "tantivy",
+ "tantivy-common",
+ "tokio",
+ "userfaultfd",
 ]
 
 [[package]]
