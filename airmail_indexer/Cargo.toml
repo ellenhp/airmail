@@ -38,3 +38,7 @@ name = "query"
 
 [[bin]]
 name = "merge"
+
+[features]
+default = ["remote_index"]
+remote_index = ["airmail/remote_index"]

@@ -13,10 +13,7 @@ use tantivy::{
         BooleanQuery, BoostQuery, FuzzyTermQuery, Occur, PhrasePrefixQuery, PhraseQuery, Query,
         TermQuery,
     },
-    schema::{
-        IndexRecordOption, NumericOptions, Schema, TextFieldIndexing, TextOptions, FAST, INDEXED,
-        STORED,
-    },
+    schema::{IndexRecordOption, NumericOptions, Schema, TextFieldIndexing, TextOptions, STORED},
     Document, Searcher, Term,
 };
 use tantivy_uffd::RemoteDirectory;
@@ -27,7 +24,6 @@ use crate::{
     categories::PoiCategory,
     poi::{AirmailPoi, ToIndexPoi},
     query::all_subsequences,
-    spatial_query::SpatialQuery,
 };
 
 // Field name keys.
@@ -51,12 +47,18 @@ impl AirmailIndex {
                 .set_fieldnorms(false)
                 .set_index_option(IndexRecordOption::WithFreqsAndPositions),
         );
-        let spatial_index_options = NumericOptions::default().set_indexed();
+        let s2cell_parent_index_options = NumericOptions::default().set_indexed();
+        let s2cell_index_options = NumericOptions::default()
+            .set_indexed()
+            .set_stored()
+            .set_fast();
+        assert_eq!(s2cell_parent_index_options.fieldnorms(), false);
+        assert_eq!(s2cell_index_options.fieldnorms(), false);
 
         let _ = schema_builder.add_text_field(FIELD_CONTENT, text_options.clone());
         let _ = schema_builder.add_text_field(FIELD_SOURCE, text_options.clone());
-        let _ = schema_builder.add_u64_field(FIELD_S2CELL, INDEXED | STORED | FAST);
-        let _ = schema_builder.add_u64_field(FIELD_S2CELL_PARENTS, spatial_index_options);
+        let _ = schema_builder.add_u64_field(FIELD_S2CELL, s2cell_index_options);
+        let _ = schema_builder.add_u64_field(FIELD_S2CELL_PARENTS, s2cell_parent_index_options);
         let _ = schema_builder.add_json_field(FIELD_TAGS, STORED);
         schema_builder.build()
     }
@@ -267,20 +269,31 @@ impl AirmailIndex {
                 bbox.max().y,
                 bbox.max().x,
             );
-            let coverer = RegionCoverer {
-                min_level: 0,
-                max_level: 31, // It is critical that this is not 32 because of complicated reasons in spatial_query.rs.
-                level_mod: 1,
-                max_cells: 32,
+            let covering_cells = {
+                let coverer = RegionCoverer {
+                    min_level: 0,
+                    max_level: 16,
+                    level_mod: 1,
+                    max_cells: usize::MAX,
+                };
+                let mut cellunion = coverer.covering(&region);
+                cellunion.normalize();
+                cellunion.0.iter().map(|c| c.0).collect_vec()
             };
-            let mut cellunion = coverer.covering(&region);
-            cellunion.normalize();
-            let cells = cellunion.0.iter().map(|c| c.0).collect_vec();
-            return Box::new(SpatialQuery::new(
+            let covering_disjunction_clauses = covering_cells
+                .iter()
+                .map(|c| {
+                    let term = Term::from_field_u64(self.field_s2cell_parents(), *c);
+                    let query: Box<dyn Query> =
+                        Box::new(TermQuery::new(term, IndexRecordOption::Basic));
+                    query
+                })
+                .collect_vec();
+            let covering_query = BooleanQuery::union(covering_disjunction_clauses);
+            return Box::new(BooleanQuery::intersection(vec![
+                Box::new(covering_query),
                 Box::new(final_query),
-                cells,
-                FIELD_S2CELL.to_string(),
-            ));
+            ]));
         }
 
         return Box::new(final_query);
