@@ -220,7 +220,7 @@ impl AirmailIndex {
                     )));
                 }
             } else {
-                if possible_query.len() >= 8 && lenient && !self.is_remote {
+                if possible_query.len() >= 8 && lenient {
                     let query = if tokens.ends_with(&[possible_query]) {
                         FuzzyTermQuery::new_prefix(term, 1, true)
                     } else {
@@ -235,11 +235,12 @@ impl AirmailIndex {
                     }
                     mandatory_queries.push(Box::new(BoostQuery::new(Box::new(query), boost)));
                 } else {
-                    let query: Box<dyn Query> = if self.is_remote || !lenient {
-                        Box::new(TermQuery::new(term, IndexRecordOption::Basic))
-                    } else {
-                        Box::new(FuzzyTermQuery::new_prefix(term, 0, false))
-                    };
+                    let query: Box<dyn Query> =
+                        if self.is_remote || !lenient || !tokens.ends_with(&[possible_query]) {
+                            Box::new(TermQuery::new(term, IndexRecordOption::Basic))
+                        } else {
+                            Box::new(FuzzyTermQuery::new_prefix(term, 0, false))
+                        };
                     if self.is_remote {
                         let searcher = searcher.clone();
                         let query = query.box_clone();
