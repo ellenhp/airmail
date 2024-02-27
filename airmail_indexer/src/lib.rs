@@ -1,7 +1,9 @@
-pub mod openstreetmap;
-pub mod query_pip;
+mod query_pip;
 
-use airmail::poi::{AirmailPoi, ToIndexPoi};
+use airmail::{
+    index::AirmailIndex,
+    poi::{SchemafiedPoi, ToIndexPoi},
+};
 use bollard::{
     container::{
         CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
@@ -10,7 +12,6 @@ use bollard::{
     service::{HostConfig, MountTypeEnum},
     Docker, API_DEFAULT_VERSION,
 };
-use clap::Parser;
 use crossbeam::channel::{Receiver, Sender};
 use redb::{Database, ReadTransaction, TableDefinition};
 use std::{collections::HashMap, error::Error, sync::Arc};
@@ -27,7 +28,7 @@ pub(crate) enum WofCacheItem {
 pub(crate) async fn populate_admin_areas<'a>(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
-    poi: &mut AirmailPoi,
+    poi: &mut ToIndexPoi,
     port: usize,
 ) -> Result<(), Box<dyn Error>> {
     let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, port).await?;
@@ -36,34 +37,6 @@ pub(crate) async fn populate_admin_areas<'a>(
     }
 
     Ok(())
-}
-
-#[derive(Debug, Parser)]
-struct Args {
-    /// Path to the Docker socket.
-    #[clap(long, short)]
-    docker_socket: Option<String>,
-    /// Path to the Who's On First Spatialite database.
-    #[clap(long, short)]
-    wof_db: String,
-    /// Whether to forcefully recreate the container. Default false.
-    #[clap(long, short, default_value = "false")]
-    recreate: bool,
-    /// Path to an OpenAddresses data file.
-    #[clap(long, short)]
-    openaddresses: Option<String>,
-    /// Path to an osmflat file. Refer to `osmflatc` documentation for instructions on how to generate this file.
-    #[clap(long, short)]
-    osmflat: Option<String>,
-    /// Path to flat nodes file for turbosm.
-    #[clap(long, short)]
-    turbosm_nodes: Option<String>,
-    /// Path to the Airmail index.
-    #[clap(long, short)]
-    index: String,
-    /// Path to a administrative area cache db.
-    #[clap(long, short)]
-    admin_cache: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -76,8 +49,8 @@ enum ContainerStatus {
 const PIP_SERVICE_IMAGE: &str = "spatial_custom";
 // const PIP_SERVICE_IMAGE: &str = "docker.io/pelias/spatial:latest";
 
-async fn docker_connect() -> Result<Docker, Box<dyn std::error::Error>> {
-    let docker = if let Some(docker_socket) = &Args::parse().docker_socket {
+async fn docker_connect(socket: &Option<String>) -> Result<Docker, Box<dyn std::error::Error>> {
+    let docker = if let Some(docker_socket) = socket {
         Docker::connect_with_socket(docker_socket, 20, API_DEFAULT_VERSION)?
     } else {
         Docker::connect_with_local_defaults()?
@@ -125,8 +98,6 @@ async fn maybe_start_pip_container(
         );
         return Ok(());
     }
-
-    let docker = docker_connect().await?;
 
     let pip_config = bollard::container::Config {
         image: Some(PIP_SERVICE_IMAGE),
@@ -220,46 +191,96 @@ async fn maybe_start_pip_container(
     Ok(())
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    env_logger::init();
-    let args = Args::parse();
-    let docker = docker_connect().await?;
-    let _ = subprocess::Exec::cmd("chcon")
-        .arg("-t")
-        .arg("container_file_t")
-        .arg(&args.wof_db)
-        .join();
-    maybe_start_pip_container(&args.wof_db, args.recreate, &docker).await?;
+pub struct ImporterBuilder {
+    admin_cache: String,
+    wof_db: String,
+    recreate: bool,
+    docker_socket: Option<String>,
+}
 
-    let db = Arc::new(Database::create(&args.admin_cache)?);
-    {
-        let txn = db.begin_write()?;
-        {
-            txn.open_table(ADMIN_AREAS)?;
-            txn.open_table(ADMIN_NAMES)?;
+impl ImporterBuilder {
+    pub fn new(whosonfirst_spatialite_path: &str) -> Self {
+        let tmp_dir = std::env::temp_dir();
+        let admin_cache = tmp_dir.join("admin_cache.db").to_string_lossy().to_string();
+        Self {
+            admin_cache,
+            wof_db: whosonfirst_spatialite_path.to_string(),
+            recreate: false,
+            docker_socket: None,
         }
-        txn.commit()?;
     }
 
-    if let Some(osmflat_path) = args.osmflat {
+    pub fn admin_cache(mut self, admin_cache: &str) -> Self {
+        self.admin_cache = admin_cache.to_string();
+        self
+    }
+
+    pub fn recreate_containers(mut self, recreate: bool) -> Self {
+        self.recreate = recreate;
+        self
+    }
+
+    pub fn docker_socket(mut self, docker_socket: &str) -> Self {
+        self.docker_socket = Some(docker_socket.to_string());
+        self
+    }
+
+    pub async fn build(self) -> Importer {
+        let db = Database::create(&self.admin_cache)
+            .expect("Failed to open or create administrative area cache database.");
+        {
+            let txn = db.begin_write().unwrap();
+            {
+                txn.open_table(ADMIN_AREAS).unwrap();
+                txn.open_table(ADMIN_NAMES).unwrap();
+            }
+            txn.commit().unwrap();
+        }
+        let docker_socket = docker_connect(&self.docker_socket)
+                .await
+                .expect("Failed to connect to the Docker daemon at socket path. Try specifiying the correct path or verifying it exists, and verifying permissions.");
+        {
+            let _ = subprocess::Exec::cmd("chcon")
+                .arg("-t")
+                .arg("container_file_t")
+                .arg(&self.wof_db)
+                .join();
+            maybe_start_pip_container(&self.wof_db, self.recreate, &docker_socket)
+                .await
+                .expect("Failed to start spatial server container.");
+        }
+        Importer {
+            admin_cache: Arc::new(db),
+        }
+    }
+}
+
+pub struct Importer {
+    admin_cache: Arc<Database>,
+}
+
+impl Importer {
+    pub async fn run_import(
+        &self,
+        index: &mut AirmailIndex,
+        source: &str,
+        receiver: Receiver<ToIndexPoi>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut nonblocking_join_handles = Vec::new();
         let (to_cache_sender, to_cache_receiver): (Sender<WofCacheItem>, Receiver<WofCacheItem>) =
             crossbeam::channel::bounded(1024 * 64);
-        let (no_admin_sender, no_admin_receiver): (Sender<AirmailPoi>, Receiver<AirmailPoi>) =
-            crossbeam::channel::bounded(1024 * 64);
-        let (to_index_sender, to_index_receiver): (Sender<ToIndexPoi>, Receiver<ToIndexPoi>) =
+        let (to_index_sender, to_index_receiver): (Sender<SchemafiedPoi>, Receiver<SchemafiedPoi>) =
             crossbeam::channel::bounded(1024 * 64);
         {
-            let db = db.clone();
+            let admin_cache = self.admin_cache.clone();
             std::thread::spawn(move || {
-                let mut write = db.begin_write().unwrap();
+                let mut write = admin_cache.begin_write().unwrap();
                 let mut count = 0;
                 loop {
                     count += 1;
                     if count % 5000 == 0 {
                         write.commit().unwrap();
-                        write = db.begin_write().unwrap();
+                        write = admin_cache.begin_write().unwrap();
                     }
                     match to_cache_receiver.recv() {
                         Ok(WofCacheItem::Names(admin, names)) => {
@@ -284,12 +305,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         for _ in 1..num_cpus::get_physical() {
             println!("Spawning worker");
-            let no_admin_receiver = no_admin_receiver.clone();
+            let no_admin_receiver = receiver.clone();
             let to_index_sender = to_index_sender.clone();
             let to_cache_sender = to_cache_sender.clone();
-            let db = db.clone();
+            let admin_cache = self.admin_cache.clone();
             nonblocking_join_handles.push(spawn(async move {
-                let mut read = db.begin_read().unwrap();
+                let mut read = admin_cache.begin_read().unwrap();
                 let mut counter = 0;
                 loop {
                     let mut poi = if let Ok(poi) = no_admin_receiver.recv() {
@@ -299,7 +320,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     };
                     counter += 1;
                     if counter % 1000 == 0 {
-                        read = db.begin_read().unwrap();
+                        read = admin_cache.begin_read().unwrap();
                     }
                     let mut sent = false;
                     for attempt in 0..5 {
@@ -314,7 +335,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         {
                             println!("Failed to populate admin areas. {}", err);
                         } else {
-                            let poi = ToIndexPoi::from(poi);
+                            let poi = SchemafiedPoi::from(poi);
                             to_index_sender.send(poi).unwrap();
                             sent = true;
                             break;
@@ -326,53 +347,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }));
         }
-        let index_path = args.index.clone();
+        drop(to_index_sender);
         let start = std::time::Instant::now();
 
-        let indexing_join_handle = spawn(async move {
-            if !std::path::Path::new(&index_path).exists() {
-                std::fs::create_dir(&index_path).unwrap();
-            }
-            let mut index = airmail::index::AirmailIndex::create(&index_path).unwrap();
-            let mut writer = index.writer().unwrap();
-            let mut count = 0;
-            loop {
-                {
-                    count += 1;
-                    if count % 10000 == 0 {
-                        println!(
-                            "{} POIs parsed in {} seconds, {} per second.",
-                            count,
-                            start.elapsed().as_secs(),
-                            count as f64 / start.elapsed().as_secs_f64(),
-                        );
-                    }
-                }
-
-                if let Ok(poi) = to_index_receiver.recv() {
-                    if let Err(err) = writer.add_poi(poi).await {
-                        println!("Failed to add POI to index. {}", err);
-                    }
-                } else {
-                    break;
+        let mut writer = index.writer().unwrap();
+        let mut count = 0;
+        loop {
+            {
+                count += 1;
+                if count % 10000 == 0 {
+                    println!(
+                        "{} POIs parsed in {} seconds, {} per second.",
+                        count,
+                        start.elapsed().as_secs(),
+                        count as f64 / start.elapsed().as_secs_f64(),
+                    );
                 }
             }
-            writer.commit().unwrap();
-        });
 
-        openstreetmap::parse_osm(&osmflat_path, &mut |poi| {
-            no_admin_sender.send(poi).unwrap();
-            Ok(())
-        })
-        .unwrap();
-        drop(no_admin_sender);
+            if let Ok(poi) = to_index_receiver.recv() {
+                if let Err(err) = writer.add_poi(poi, &source).await {
+                    println!("Failed to add POI to index. {}", err);
+                }
+            } else {
+                break;
+            }
+        }
+        writer.commit().unwrap();
+
         println!("Waiting for tasks to finish.");
         for handle in nonblocking_join_handles {
             handle.await.unwrap();
         }
-        drop(to_index_sender);
-        indexing_join_handle.await.unwrap();
-    }
 
-    Ok(())
+        Ok(())
+    }
 }

@@ -5,15 +5,14 @@ use airmail::{
         AmenityPoiCategory, CuisineCategory, EmergencyPoiCategory, FoodPoiCategory, PoiCategory,
         ShopPoiCategory,
     },
-    poi::AirmailPoi,
-    substitutions::permute_road,
+    poi::ToIndexPoi,
 };
 use geo::{Centroid, Coord, LineString, Polygon};
 use log::{debug, warn};
 use osmflat::{FileResourceStorage, Osm, Way, COORD_SCALE};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<AirmailPoi> {
+fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<ToIndexPoi> {
     if tags.is_empty() {
         return None;
     }
@@ -64,18 +63,9 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
         })
         .unwrap_or(PoiCategory::Address);
 
-    let house_number = tags
-        .get("addr:housenumber")
-        .map(|s| vec![s.to_string()])
-        .unwrap_or_default();
-    let road = tags
-        .get("addr:street")
-        .map(|s| permute_road(&s).unwrap())
-        .unwrap_or_default();
-    let unit = tags
-        .get("addr:unit")
-        .map(|s| vec![s.to_string()])
-        .unwrap_or_default();
+    let house_number = tags.get("addr:housenumber").map(|s| s.to_string());
+    let road = tags.get("addr:street").map(|s| s.to_string());
+    let unit = tags.get("addr:unit").map(|s| s.to_string());
 
     let names = {
         let mut names = Vec::new();
@@ -83,6 +73,7 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
             .filter(|(key, _value)| key.contains("name:") || key.to_string() == "name")
             .for_each(|(_key, value)| {
                 names.push(value.to_string());
+                // TODO: Remove once we get stemmers again.
                 if value.contains("'s") {
                     names.push(value.replace("'s", ""));
                     names.push(value.replace("'s", "s"));
@@ -91,14 +82,13 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<Air
         names
     };
 
-    if (house_number.is_empty() || road.is_empty()) && names.is_empty() {
+    if (house_number.is_none() || road.is_none()) && names.is_empty() {
         return None;
     }
 
     Some(
-        AirmailPoi::new(
+        ToIndexPoi::new(
             names,
-            "osm".to_string(),
             category,
             house_number,
             road,
@@ -139,7 +129,7 @@ fn way_centroid(way: &Way, osm: &Osm) -> Option<(f64, f64)> {
     Some((centroid.x(), centroid.y()))
 }
 
-fn index_way(tags: &HashMap<String, String>, way: &Way, osm: &Osm) -> Option<AirmailPoi> {
+fn index_way(tags: &HashMap<String, String>, way: &Way, osm: &Osm) -> Option<ToIndexPoi> {
     let (lng, lat) = way_centroid(way, osm)?;
     tags_to_poi(&tags, lat, lng)
 }
@@ -169,11 +159,11 @@ fn tags(idxs: Range<u64>, osm: &Osm) -> Result<HashMap<String, String>, Box<dyn 
     Ok(tags)
 }
 
-pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Error>>>(
-    db_path: &str,
+pub(crate) fn parse_osm<CB: Sync + Fn(ToIndexPoi) -> Result<(), Box<dyn std::error::Error>>>(
+    osmflat_path: &str,
     callback: &CB,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let storage = FileResourceStorage::new(db_path);
+    let storage = FileResourceStorage::new(osmflat_path);
     let osm = Osm::open(storage).unwrap();
     println!("Processing nodes");
     osm.nodes().par_iter().for_each(|node| {
@@ -202,16 +192,6 @@ pub fn parse_osm<CB: Sync + Fn(AirmailPoi) -> Result<(), Box<dyn std::error::Err
         }
     });
     println!("Skipping relations (FIXME)");
-    // osm.process_all_relations(|relation, turbosm| {
-    //     let centroid = relation_centroid(&relation, 0, turbosm);
-    //     if let Ok(centroid) = centroid {
-    //         if let Some(poi) = tags_to_poi(relation.tags(), centroid.1, centroid.0) {
-    //             if let Err(err) = callback(poi) {
-    //                 warn!("Error from callback: {}", err);
-    //             }
-    //         }
-    //     }
-    // })?;
     println!("Done");
     Ok(())
 }

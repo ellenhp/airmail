@@ -3,7 +3,7 @@ use std::sync::Arc;
 use futures_util::future::join_all;
 use geo::Rect;
 use itertools::Itertools;
-use log::debug;
+use log::{debug, warn};
 use s2::region::RegionCoverer;
 use serde_json::Value;
 use tantivy::{
@@ -22,7 +22,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     categories::PoiCategory,
-    poi::{AirmailPoi, ToIndexPoi},
+    poi::{AirmailPoi, SchemafiedPoi},
     query::all_subsequences,
 };
 
@@ -31,6 +31,7 @@ pub const FIELD_CONTENT: &str = "content";
 pub const FIELD_SOURCE: &str = "source";
 pub const FIELD_S2CELL: &str = "s2cell";
 pub const FIELD_S2CELL_PARENTS: &str = "s2cell_parents";
+pub const FIELD_CATEGORY_JSON: &str = "category";
 pub const FIELD_TAGS: &str = "tags";
 
 #[derive(Clone)]
@@ -60,32 +61,40 @@ impl AirmailIndex {
         let _ = schema_builder.add_u64_field(FIELD_S2CELL, s2cell_index_options);
         let _ = schema_builder.add_u64_field(FIELD_S2CELL_PARENTS, s2cell_parent_index_options);
         let _ = schema_builder.add_json_field(FIELD_TAGS, STORED);
+        let _ = schema_builder.add_text_field(FIELD_CATEGORY_JSON, STORED);
         schema_builder.build()
     }
 
-    pub fn field_content(&self) -> tantivy::schema::Field {
+    fn field_content(&self) -> tantivy::schema::Field {
         self.tantivy_index
             .schema()
             .get_field(FIELD_CONTENT)
             .unwrap()
     }
 
-    pub fn field_source(&self) -> tantivy::schema::Field {
+    fn field_source(&self) -> tantivy::schema::Field {
         self.tantivy_index.schema().get_field(FIELD_SOURCE).unwrap()
     }
 
-    pub fn field_s2cell(&self) -> tantivy::schema::Field {
+    fn field_s2cell(&self) -> tantivy::schema::Field {
         self.tantivy_index.schema().get_field(FIELD_S2CELL).unwrap()
     }
 
-    pub fn field_s2cell_parents(&self) -> tantivy::schema::Field {
+    fn field_s2cell_parents(&self) -> tantivy::schema::Field {
         self.tantivy_index
             .schema()
             .get_field(FIELD_S2CELL_PARENTS)
             .unwrap()
     }
 
-    pub fn field_tags(&self) -> tantivy::schema::Field {
+    fn field_category_json(&self) -> tantivy::schema::Field {
+        self.tantivy_index
+            .schema()
+            .get_field(FIELD_CATEGORY_JSON)
+            .unwrap()
+    }
+
+    fn field_tags(&self) -> tantivy::schema::Field {
         self.tantivy_index.schema().get_field(FIELD_TAGS).unwrap()
     }
 
@@ -274,7 +283,7 @@ impl AirmailIndex {
                     min_level: 0,
                     max_level: 16,
                     level_mod: 1,
-                    max_cells: usize::MAX,
+                    max_cells: 64,
                 };
                 let mut cellunion = coverer.covering(&region);
                 cellunion.normalize();
@@ -352,6 +361,10 @@ impl AirmailIndex {
         let top_docs = join_all(futures).await;
         for (score, doc_future) in scores.iter().zip(top_docs) {
             let doc = doc_future??;
+            let source = doc
+                .get_first(self.field_source())
+                .map(|value| value.as_text().unwrap().to_string())
+                .unwrap_or_default();
             let s2cell = doc
                 .get_first(self.field_s2cell())
                 .unwrap()
@@ -368,14 +381,15 @@ impl AirmailIndex {
                 .map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string()))
                 .collect();
 
+            let category = &doc
+                .get_first(self.field_category_json())
+                .map(|v| serde_json::from_str::<PoiCategory>(v.as_text().unwrap()).unwrap())
+                .unwrap_or(PoiCategory::Address);
+
             // The whole result schema needs to be redone honestly.
             let poi = AirmailPoi::new(
-                vec![],
-                "".to_string(),
-                PoiCategory::Address, // FIXME.
-                vec![],
-                vec![],
-                vec![],
+                source,
+                category.clone(),
                 latlng.lat.deg(),
                 latlng.lng.deg(),
                 tags,
@@ -397,12 +411,16 @@ impl AirmailIndexWriter {
         doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), value);
     }
 
-    pub async fn add_poi(&mut self, poi: ToIndexPoi) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn add_poi(
+        &mut self,
+        poi: SchemafiedPoi,
+        source: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut doc = tantivy::Document::default();
         for content in poi.content {
             self.process_field(&mut doc, &content);
         }
-        doc.add_text(self.schema.get_field(FIELD_SOURCE).unwrap(), poi.source);
+        doc.add_text(self.schema.get_field(FIELD_SOURCE).unwrap(), source);
 
         doc.add_json_object(
             self.schema.get_field(FIELD_TAGS).unwrap(),
@@ -411,6 +429,12 @@ impl AirmailIndexWriter {
                 .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.to_string())))
                 .collect::<serde_json::Map<String, Value>>(),
         );
+        if let Ok(json) = serde_json::to_string(&poi.category) {
+            doc.add_text(self.schema.get_field(FIELD_CATEGORY_JSON).unwrap(), json);
+        } else {
+            warn!("Failed to serialize category: {:?}", poi.category);
+        }
+
         doc.add_u64(self.schema.get_field(FIELD_S2CELL).unwrap(), poi.s2cell);
         for parent in poi.s2cell_parents {
             doc.add_u64(self.schema.get_field(FIELD_S2CELL_PARENTS).unwrap(), parent);
