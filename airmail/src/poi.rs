@@ -1,13 +1,13 @@
 use std::error::Error;
 
+use lingua::Language;
 use serde::{Deserialize, Serialize};
 
-use crate::{categories::PoiCategory, substitutions::permute_road};
+use crate::substitutions::permute_road;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AirmailPoi {
     pub source: String,
-    pub category: PoiCategory,
     pub admins: Vec<String>,
     pub s2cell: u64,
     pub lat: f64,
@@ -18,7 +18,6 @@ pub struct AirmailPoi {
 impl AirmailPoi {
     pub fn new(
         source: String,
-        category: PoiCategory,
         lat: f64,
         lng: f64,
         tags: Vec<(String, String)>,
@@ -27,7 +26,6 @@ impl AirmailPoi {
 
         Ok(Self {
             source,
-            category,
             admins: Vec::new(),
             s2cell,
             lat,
@@ -40,19 +38,18 @@ impl AirmailPoi {
 #[derive(Debug, Clone)]
 pub struct ToIndexPoi {
     pub names: Vec<String>,
-    pub category: PoiCategory,
     pub house_number: Option<String>,
     pub road: Option<String>,
     pub unit: Option<String>,
     pub admins: Vec<String>,
     pub s2cell: u64,
     pub tags: Vec<(String, String)>,
+    pub languages: Vec<Language>,
 }
 
 impl ToIndexPoi {
     pub fn new(
         names: Vec<String>,
-        category: PoiCategory,
         house_number: Option<String>,
         road: Option<String>,
         unit: Option<String>,
@@ -64,13 +61,13 @@ impl ToIndexPoi {
 
         Ok(Self {
             names,
-            category,
             house_number,
             road,
             unit,
             admins: Vec::new(),
             s2cell,
             tags,
+            languages: Vec::new(),
         })
     }
 }
@@ -79,7 +76,6 @@ pub struct SchemafiedPoi {
     pub content: Vec<String>,
     pub s2cell: u64,
     pub s2cell_parents: Vec<u64>,
-    pub category: PoiCategory,
     pub tags: Vec<(String, String)>,
 }
 
@@ -89,11 +85,12 @@ impl From<ToIndexPoi> for SchemafiedPoi {
         content.extend(poi.names);
         content.extend(poi.house_number);
         if let Some(road) = poi.road {
-            content.extend(permute_road(&road).expect("Failed to permute road"));
+            for lang in poi.languages {
+                content.extend(permute_road(&road, &lang).expect("Failed to permute road"));
+            }
         }
         content.extend(poi.unit);
         content.extend(poi.admins);
-        content.extend(poi.category.labels());
 
         let mut s2cell_parents = Vec::new();
         let cell = s2::cellid::CellID(poi.s2cell);
@@ -106,7 +103,6 @@ impl From<ToIndexPoi> for SchemafiedPoi {
             content,
             s2cell: poi.s2cell,
             s2cell_parents,
-            category: poi.category,
             tags: poi.tags,
         }
     }

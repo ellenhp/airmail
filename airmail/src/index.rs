@@ -3,7 +3,7 @@ use std::sync::Arc;
 use futures_util::future::join_all;
 use geo::Rect;
 use itertools::Itertools;
-use log::{debug, warn};
+use log::debug;
 use s2::region::RegionCoverer;
 use serde_json::Value;
 use tantivy::{
@@ -21,13 +21,13 @@ use tokio::task::spawn_blocking;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    categories::PoiCategory,
     poi::{AirmailPoi, SchemafiedPoi},
     query::all_subsequences,
 };
 
 // Field name keys.
 pub const FIELD_CONTENT: &str = "content";
+pub const FIELD_INDEXED_TAG: &str = "indexed_tag";
 pub const FIELD_SOURCE: &str = "source";
 pub const FIELD_S2CELL: &str = "s2cell";
 pub const FIELD_S2CELL_PARENTS: &str = "s2cell_parents";
@@ -48,6 +48,12 @@ impl AirmailIndex {
                 .set_fieldnorms(false)
                 .set_index_option(IndexRecordOption::WithFreqsAndPositions),
         );
+        let tag_options = TextOptions::default().set_indexing_options(
+            TextFieldIndexing::default()
+                .set_fieldnorms(false)
+                .set_tokenizer("raw")
+                .set_index_option(IndexRecordOption::Basic),
+        );
         let s2cell_parent_index_options = NumericOptions::default().set_indexed();
         let s2cell_index_options = NumericOptions::default()
             .set_indexed()
@@ -57,6 +63,7 @@ impl AirmailIndex {
         assert_eq!(s2cell_index_options.fieldnorms(), false);
 
         let _ = schema_builder.add_text_field(FIELD_CONTENT, text_options.clone());
+        let _ = schema_builder.add_text_field(FIELD_INDEXED_TAG, tag_options);
         let _ = schema_builder.add_text_field(FIELD_SOURCE, text_options.clone());
         let _ = schema_builder.add_u64_field(FIELD_S2CELL, s2cell_index_options);
         let _ = schema_builder.add_u64_field(FIELD_S2CELL_PARENTS, s2cell_parent_index_options);
@@ -72,6 +79,13 @@ impl AirmailIndex {
             .unwrap()
     }
 
+    fn field_indexed_tag(&self) -> tantivy::schema::Field {
+        self.tantivy_index
+            .schema()
+            .get_field(FIELD_INDEXED_TAG)
+            .unwrap()
+    }
+
     fn field_source(&self) -> tantivy::schema::Field {
         self.tantivy_index.schema().get_field(FIELD_SOURCE).unwrap()
     }
@@ -84,13 +98,6 @@ impl AirmailIndex {
         self.tantivy_index
             .schema()
             .get_field(FIELD_S2CELL_PARENTS)
-            .unwrap()
-    }
-
-    fn field_category_json(&self) -> tantivy::schema::Field {
-        self.tantivy_index
-            .schema()
-            .get_field(FIELD_CATEGORY_JSON)
             .unwrap()
     }
 
@@ -159,6 +166,7 @@ impl AirmailIndex {
         &self,
         searcher: &Searcher,
         query: &str,
+        tags: Option<Vec<String>>,
         bbox: Option<Rect<f64>>,
         _boost_regions: &[(f32, Rect<f64>)],
         lenient: bool,
@@ -264,6 +272,15 @@ impl AirmailIndex {
             }
         }
 
+        if let Some(tags) = tags {
+            for tag in &tags {
+                let term = Term::from_field_text(self.field_indexed_tag(), tag);
+                let query: Box<dyn Query> =
+                    Box::new(TermQuery::new(term, IndexRecordOption::Basic));
+                mandatory_queries.push(query);
+            }
+        }
+
         let optional = BooleanQuery::union(queries);
         let required = BooleanQuery::intersection(mandatory_queries);
         let final_query = BooleanQuery::new(vec![
@@ -308,10 +325,12 @@ impl AirmailIndex {
         return Box::new(final_query);
     }
 
+    /// This is public because I don't want one big mega-crate but its API should not be considered even remotely stable.
     pub async fn search(
         &self,
         query: &str,
         request_leniency: bool,
+        tags: Option<Vec<String>>,
         bbox: Option<Rect<f64>>,
         boost_regions: &[(f32, Rect<f64>)],
     ) -> Result<Vec<(AirmailPoi, f32)>, Box<dyn std::error::Error>> {
@@ -325,6 +344,7 @@ impl AirmailIndex {
                 .construct_query(
                     &searcher,
                     &query_string,
+                    tags,
                     bbox,
                     &boost_regions,
                     request_leniency,
@@ -381,19 +401,7 @@ impl AirmailIndex {
                 .map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string()))
                 .collect();
 
-            let category = &doc
-                .get_first(self.field_category_json())
-                .map(|v| serde_json::from_str::<PoiCategory>(v.as_text().unwrap()).unwrap())
-                .unwrap_or(PoiCategory::Address);
-
-            // The whole result schema needs to be redone honestly.
-            let poi = AirmailPoi::new(
-                source,
-                category.clone(),
-                latlng.lat.deg(),
-                latlng.lng.deg(),
-                tags,
-            )?;
+            let poi = AirmailPoi::new(source, latlng.lat.deg(), latlng.lng.deg(), tags)?;
             results.push((poi, *score));
         }
 
@@ -422,6 +430,22 @@ impl AirmailIndexWriter {
         }
         doc.add_text(self.schema.get_field(FIELD_SOURCE).unwrap(), source);
 
+        let indexed_keys = [
+            "natural", "amenity", "shop", "leisure", "tourism", "historic", "cuisine",
+        ];
+        let indexed_key_prefixes = ["diet:"];
+        for (key, value) in &poi.tags {
+            if indexed_keys.contains(&key.as_str())
+                || indexed_key_prefixes
+                    .iter()
+                    .any(|prefix| key.starts_with(prefix))
+            {
+                doc.add_text(
+                    self.schema.get_field(FIELD_INDEXED_TAG).unwrap(),
+                    format!("{}={}", key, value).as_str(),
+                );
+            }
+        }
         doc.add_json_object(
             self.schema.get_field(FIELD_TAGS).unwrap(),
             poi.tags
@@ -429,11 +453,6 @@ impl AirmailIndexWriter {
                 .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.to_string())))
                 .collect::<serde_json::Map<String, Value>>(),
         );
-        if let Ok(json) = serde_json::to_string(&poi.category) {
-            doc.add_text(self.schema.get_field(FIELD_CATEGORY_JSON).unwrap(), json);
-        } else {
-            warn!("Failed to serialize category: {:?}", poi.category);
-        }
 
         doc.add_u64(self.schema.get_field(FIELD_S2CELL).unwrap(), poi.s2cell);
         for parent in poi.s2cell_parents {

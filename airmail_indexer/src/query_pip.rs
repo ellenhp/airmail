@@ -5,11 +5,12 @@ use redb::{ReadTransaction, ReadableTable};
 use serde::Deserialize;
 use tokio::task::JoinHandle;
 
-use crate::{WofCacheItem, ADMIN_AREAS, ADMIN_NAMES};
+use crate::{WofCacheItem, COUNTRIES, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES};
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct PipResponse {
-    pub admins: Vec<String>,
+    pub admin_names: Vec<String>,
+    pub admin_langs: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -29,8 +30,19 @@ pub struct PipPlaceName {
     pub name: String,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct PipPropertyResponse {
+    #[serde(rename = "wof:lang_x_spoken")]
+    pub langs: Option<String>,
+}
+
 thread_local! {
     static HTTP_CLIENT: reqwest::Client = reqwest::Client::new();
+}
+
+struct AdminIds {
+    all_admin_ids: Vec<u64>,
+    country: Option<u64>,
 }
 
 async fn query_pip_inner(
@@ -38,7 +50,7 @@ async fn query_pip_inner(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     port: usize,
-) -> Result<Vec<u64>, Box<dyn Error>> {
+) -> Result<AdminIds, Box<dyn Error>> {
     let desired_level = 15;
     let cell = s2::cellid::CellID(s2cell);
     let cell = if cell.level() > desired_level {
@@ -50,7 +62,7 @@ async fn query_pip_inner(
     let ids = {
         let mut ids: Vec<u64> = Vec::new();
         let txn = read;
-        let table = txn.open_table(ADMIN_AREAS)?;
+        let table = txn.open_table(TABLE_AREAS)?;
         if let Some(admin_ids) = table.get(&cell.0)? {
             for admin_id in admin_ids.value().chunks(8) {
                 ids.push(u64::from_le_bytes([
@@ -68,7 +80,11 @@ async fn query_pip_inner(
         ids
     };
     if !ids.is_empty() {
-        return Ok(ids);
+        let country = ids.iter().find(|id| COUNTRIES.contains(*id)).cloned();
+        return Ok(AdminIds {
+            all_admin_ids: ids,
+            country,
+        });
     }
 
     let lat_lng = s2::latlng::LatLng::from(cell);
@@ -105,12 +121,21 @@ async fn query_pip_inner(
             .unwrap();
     }
 
-    Ok(response_ids)
+    Ok(AdminIds {
+        country: response_ids
+            .iter()
+            .find(|id| COUNTRIES.contains(id))
+            .cloned(),
+        all_admin_ids: response_ids,
+    })
 }
 
-fn query_names(read: &'_ ReadTransaction<'_>, admin: &u64) -> Result<Vec<String>, Box<dyn Error>> {
+fn query_names_cache(
+    read: &'_ ReadTransaction<'_>,
+    admin: &u64,
+) -> Result<Vec<String>, Box<dyn Error>> {
     let txn = read;
-    let table = txn.open_table(ADMIN_NAMES)?;
+    let table = txn.open_table(TABLE_NAMES)?;
     if let Some(names_ref) = table.get(admin)? {
         let names = names_ref.value().to_string();
         let names = names
@@ -122,6 +147,104 @@ fn query_names(read: &'_ ReadTransaction<'_>, admin: &u64) -> Result<Vec<String>
     Err("No names found".into())
 }
 
+fn query_languages_cache(
+    read: &'_ ReadTransaction<'_>,
+    admin: &u64,
+) -> Result<Vec<String>, Box<dyn Error>> {
+    let txn = read;
+    let table = txn.open_table(TABLE_LANGS)?;
+    if let Some(langs_ref) = table.get(admin)? {
+        let langs = langs_ref.value().to_string();
+        let langs = langs
+            .split('\0')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+        return Ok(langs);
+    }
+    Err("No langs found".into())
+}
+
+async fn query_names(url: &str) -> Option<Vec<String>> {
+    let response = if let Ok(response) = HTTP_CLIENT
+        .with(|client: &reqwest::Client| client.get(url).send())
+        .await
+    {
+        response
+    } else {
+        return None;
+    };
+    if response.status() != 200 {
+        return None;
+    }
+    let response = if let Ok(response) = response.text().await {
+        response
+    } else {
+        return None;
+    };
+    let response: Vec<PipPlaceName> = if let Ok(response) = serde_json::from_str(&response) {
+        response
+    } else {
+        return None;
+    };
+    let names = response
+        .iter()
+        .filter(|place_name| place_name.tag == "preferred" || place_name.tag == "default")
+        .filter(|place_name| match place_name.lang.as_str() {
+            "ara" => true, // Arabic.
+            "dan" => true, // Danish.
+            "deu" => true, // German.
+            "fra" => true, // French.
+            "fin" => true, // Finnish.
+            "hun" => true, // Hungarian.
+            "gre" => true, // Greek.
+            "ita" => true, // Italian.
+            "nld" => true, // Dutch.
+            "por" => true, // Portuguese.
+            "rus" => true, // Russian.
+            "ron" => true, // Romanian.
+            "spa" => true, // Spanish.
+            "eng" => true, // English.
+            "swe" => true, // Swedish.
+            "tam" => true, // Tamil.
+            "tur" => true, // Turkish.
+            "zho" => true, // Chinese.
+            _ => false,
+        })
+        .map(|place_name| deunicode::deunicode(&place_name.name).to_lowercase())
+        .collect::<HashSet<_>>()
+        .iter()
+        .cloned()
+        .collect::<Vec<_>>();
+    Some(names)
+}
+
+async fn query_langs(url: &str) -> Option<Vec<String>> {
+    let response = if let Ok(response) = HTTP_CLIENT
+        .with(|client: &reqwest::Client| client.get(url).send())
+        .await
+    {
+        response
+    } else {
+        return None;
+    };
+    if response.status() != 200 {
+        return None;
+    }
+    let response = if let Ok(response) = response.text().await {
+        response
+    } else {
+        return None;
+    };
+    let response: PipPropertyResponse = if let Ok(response) = serde_json::from_str(&response) {
+        response
+    } else {
+        return None;
+    };
+    response
+        .langs
+        .map(|langs| langs.split(',').map(|s| s.to_string()).collect())
+}
+
 pub(crate) async fn query_pip(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
@@ -129,81 +252,54 @@ pub(crate) async fn query_pip(
     port: usize,
 ) -> Result<PipResponse, Box<dyn Error>> {
     let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), port).await?;
-    let mut handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
+    let mut name_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
+    let mut lang_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
     let mut cached_names = Vec::new();
-    for admin_id in wof_ids {
-        let url = format!("http://localhost:{}/place/wof/{}/name", port, &admin_id);
-
-        if let Ok(names) = query_names(read, &admin_id) {
+    let mut cached_langs = Vec::new();
+    for admin_id in wof_ids.all_admin_ids {
+        if let Ok(names) = query_names_cache(read, &admin_id) {
             cached_names.extend(names);
+        } else {
+            let names_url = format!("http://localhost:{}/place/wof/{}/name", port, &admin_id);
+            let handle: JoinHandle<Option<Vec<String>>> =
+                tokio::spawn(async move { query_names(&names_url).await });
+            name_handles.push((admin_id, handle));
+        }
+        if COUNTRIES.contains(&admin_id) {
             continue;
         }
-        let handle: JoinHandle<Option<Vec<String>>> = tokio::spawn(async move {
-            let response = if let Ok(response) = HTTP_CLIENT
-                .with(|client: &reqwest::Client| client.get(&url).send())
-                .await
-            {
-                response
-            } else {
-                return None;
-            };
-            if response.status() != 200 {
-                return None;
-            }
-            let response = if let Ok(response) = response.text().await {
-                response
-            } else {
-                return None;
-            };
-            let response: Vec<PipPlaceName> = if let Ok(response) = serde_json::from_str(&response)
-            {
-                response
-            } else {
-                return None;
-            };
-
-            let names = response
-                .iter()
-                .filter(|place_name| place_name.tag == "preferred" || place_name.tag == "default")
-                .filter(|place_name| match place_name.lang.as_str() {
-                    "ara" => true, // Arabic.
-                    "dan" => true, // Danish.
-                    "deu" => true, // German.
-                    "fra" => true, // French.
-                    "fin" => true, // Finnish.
-                    "hun" => true, // Hungarian.
-                    "gre" => true, // Greek.
-                    "ita" => true, // Italian.
-                    "nld" => true, // Dutch.
-                    "por" => true, // Portuguese.
-                    "rus" => true, // Russian.
-                    "ron" => true, // Romanian.
-                    "spa" => true, // Spanish.
-                    "eng" => true, // English.
-                    "swe" => true, // Swedish.
-                    "tam" => true, // Tamil.
-                    "tur" => true, // Turkish.
-                    "zho" => true, // Chinese.
-                    _ => false,
-                })
-                .map(|place_name| deunicode::deunicode(&place_name.name).to_lowercase())
-                .collect::<HashSet<_>>()
-                .iter()
-                .cloned()
-                .collect::<Vec<_>>();
-            Some(names)
-        });
-        handles.push((admin_id, handle));
+    }
+    if let Some(country_id) = wof_ids.country {
+        if let Ok(langs) = query_languages_cache(read, &country_id) {
+            cached_langs.extend(langs);
+        } else {
+            let langs_url = format!(
+                "http://localhost:{}/place/wof/{}/property",
+                port, &country_id
+            );
+            let handle: JoinHandle<Option<Vec<String>>> =
+                tokio::spawn(async move { query_langs(&langs_url).await });
+            lang_handles.push((country_id, handle));
+        }
     }
 
     let mut response = PipResponse::default();
-    response.admins.extend(cached_names);
-    for (admin_id, handle) in handles {
+    response.admin_names.extend(cached_names);
+    response.admin_langs.extend(cached_langs);
+    for (admin_id, handle) in name_handles {
         if let Ok(Some(names)) = handle.await {
             to_cache_sender
                 .send(WofCacheItem::Names(admin_id, names.clone()))
                 .unwrap();
-            response.admins.extend(names);
+            response.admin_names.extend(names);
+        }
+    }
+    for (admin_id, handle) in lang_handles {
+        if let Ok(Some(langs)) = handle.await {
+            to_cache_sender
+                .send(WofCacheItem::Langs(admin_id, langs.clone()))
+                .unwrap();
+            response.admin_langs.extend(langs);
         }
     }
 

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error};
 
-use lingua::{Language, LanguageDetector, LanguageDetectorBuilder};
+use lingua::Language;
 use regex::Regex;
 
 lazy_static! {
@@ -28,8 +28,7 @@ lazy_static! {
         SubstitutionDict::from_str(include_str!("../dictionaries/ru/street_types.txt")).unwrap();
     static ref ZH_STREET_TYPES: SubstitutionDict =
         SubstitutionDict::from_str(include_str!("../dictionaries/zh/street_types.txt")).unwrap();
-    static ref LANGUAGE_CLASSIFIER: LanguageDetector =
-        LanguageDetectorBuilder::from_all_languages().build();
+    static ref EMPTY_SUBS: SubstitutionDict = SubstitutionDict::empty();
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
@@ -38,6 +37,10 @@ pub(super) struct SubstitutionDict {
 }
 
 impl SubstitutionDict {
+    fn empty() -> Self {
+        Self { subs: vec![] }
+    }
+
     pub(super) fn from_str(contents: &str) -> Result<Self, Box<dyn Error>> {
         let mut subs: HashMap<String, Vec<String>> = HashMap::new();
         for line in contents.lines() {
@@ -101,19 +104,19 @@ pub(super) fn apply_subs(
     Ok(permutations)
 }
 
-pub fn permute_road(road: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    let sub_dict: &SubstitutionDict = match LANGUAGE_CLASSIFIER.detect_language_of(road) {
-        Some(Language::English) => &EN_STREET_TYPES,
-        Some(Language::Arabic) => &AR_STREET_TYPES,
-        Some(Language::Spanish) => &ES_STREET_TYPES,
-        Some(Language::French) => &FR_STREET_TYPES,
-        Some(Language::German) => &DE_STREET_TYPES,
-        Some(Language::Italian) => &IT_STREET_TYPES,
-        Some(Language::Portuguese) => &PT_STREET_TYPES,
-        Some(Language::Russian) => &RU_STREET_TYPES,
-        Some(Language::Chinese) => &ZH_STREET_TYPES,
-        Some(Language::Catalan) => &CA_STREET_TYPES,
-        _ => return Ok(vec![sanitize(road)]),
+pub fn permute_road(road: &str, language: &Language) -> Result<Vec<String>, Box<dyn Error>> {
+    let sub_dict: &SubstitutionDict = match language {
+        Language::English => &EN_STREET_TYPES,
+        Language::Arabic => &AR_STREET_TYPES,
+        Language::Spanish => &ES_STREET_TYPES,
+        Language::French => &FR_STREET_TYPES,
+        Language::German => &DE_STREET_TYPES,
+        Language::Italian => &IT_STREET_TYPES,
+        Language::Portuguese => &PT_STREET_TYPES,
+        Language::Russian => &RU_STREET_TYPES,
+        Language::Chinese => &ZH_STREET_TYPES,
+        Language::Catalan => &CA_STREET_TYPES,
+        _ => &EMPTY_SUBS,
     };
     let road_tokens: Vec<String> = sanitize(road)
         .split_ascii_whitespace()
@@ -124,12 +127,14 @@ pub fn permute_road(road: &str) -> Result<Vec<String>, Box<dyn Error>> {
 
 #[cfg(test)]
 mod test {
+    use lingua::Language;
+
     use crate::substitutions::permute_road;
 
     #[test]
     fn test_permute_road() {
         let road = "fremont ave n";
-        let permutations = permute_road(road).unwrap();
+        let permutations = permute_road(road, &Language::English).unwrap();
         dbg!(permutations.clone());
         assert_eq!(permutations.len(), 3);
     }
@@ -137,7 +142,7 @@ mod test {
     #[test]
     fn test_permute_road_cat() {
         let road = "carrer de villarroel";
-        let permutations = permute_road(road).unwrap();
+        let permutations = permute_road(road, &Language::Catalan).unwrap();
         dbg!(permutations.clone());
         assert_eq!(permutations.len(), 3);
     }

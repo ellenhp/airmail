@@ -34,14 +34,9 @@ struct Args {
     admin_cache: Option<String>,
 
     // ============================ OSM-specific options ===================================
-    /// Path to an osmflat file to import. Refer to `osmflatc` documentation for
-    /// instructions on how to generate this file. It can use a lot of memory,
-    /// so you may need 128GB or more for the planet, or open an issue on the
-    /// airmail repo to bother Ellen to publish the ones she generates on her
-    /// hetzner box. Eventually it might be nice to work on improving this
-    /// situation.
+    /// Path to an OSMExpress file to import.
     #[clap(long, short)]
-    osmflat: String,
+    osmx: String,
 }
 
 #[tokio::main]
@@ -67,7 +62,7 @@ async fn main() {
     let (poi_sender, poi_receiver) = crossbeam::channel::bounded(1024);
 
     let handle = spawn_blocking(move || {
-        openstreetmap::parse_osm(&args.osmflat, &move |poi| {
+        openstreetmap::parse_osm(&args.osmx, &move |poi| {
             poi_sender.send(poi)?;
             Ok(())
         })

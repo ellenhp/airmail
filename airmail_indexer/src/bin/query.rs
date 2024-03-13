@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let start = std::time::Instant::now();
         let query = query.trim().to_lowercase();
 
-        let mut results = index.search(&query, true, bbox, &[]).await.unwrap();
+        let mut results = index.search(&query, true, None, bbox, &[]).await.unwrap();
 
         results.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
         for (poi, score) in results.iter().take(10) {

@@ -52,6 +52,9 @@ async fn search(
 ) -> Json<Value> {
     let query = params.get("q").unwrap();
     let query = deunicode(query.trim()).to_lowercase();
+    let tags: Option<Vec<String>> = params
+        .get("tags")
+        .map(|s| s.split(',').map(|s| s.to_string()).collect());
     let leniency = params
         .get("lenient")
         .map(|s| s.parse().unwrap())
@@ -61,7 +64,10 @@ async fn search(
 
     let start = std::time::Instant::now();
 
-    let results = index.search(&query, leniency, bbox, &[]).await.unwrap();
+    let results = index
+        .search(&query, leniency, tags, bbox, &[])
+        .await
+        .unwrap();
 
     println!("{} results found in {:?}", results.len(), start.elapsed());
 
