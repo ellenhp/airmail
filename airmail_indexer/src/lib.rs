@@ -150,6 +150,7 @@ async fn maybe_start_pip_container(
                 typ: Some(MountTypeEnum::BIND),
                 ..Default::default()
             }]),
+            privileged: Some(true),
             ..Default::default()
         }),
         cmd: Some(vec![

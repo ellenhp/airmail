@@ -1,0 +1,17 @@
+FROM rust:1.76
+
+RUN apt-get update && apt-get install -y libssl-dev capnproto clang pkg-config libzstd-dev && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/airmail
+COPY ./airmail ./airmail
+COPY ./airmail_indexer ./airmail_indexer
+COPY ./airmail_import_osm ./airmail_import_osm
+COPY ./airmail_service ./airmail_service
+COPY ./Cargo.toml ./Cargo.toml
+COPY ./Cargo.lock ./Cargo.lock
+
+RUN cargo install --path ./airmail_import_osm
+
+RUN apt-get update && apt-get install -y podman
+
+WORKDIR /var/airmail

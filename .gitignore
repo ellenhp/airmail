@@ -12,3 +12,7 @@ target/
 **.geojson
 
 perf.data*
+
+# Suggested paths for data and index
+data/
+index/

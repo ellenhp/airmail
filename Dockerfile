@@ -5,6 +5,7 @@ RUN apt update && apt install -y libssl-dev clang pkg-config
 WORKDIR /usr/src/airmail
 COPY ./airmail ./airmail
 COPY ./airmail_indexer ./airmail_indexer
+COPY ./airmail_import_osm ./airmail_import_osm
 COPY ./airmail_service ./airmail_service
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock

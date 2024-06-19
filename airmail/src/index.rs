@@ -5,7 +5,8 @@ use geo::Rect;
 use itertools::Itertools;
 use log::debug;
 use s2::region::RegionCoverer;
-use serde_json::Value;
+use std::collections::BTreeMap;
+use tantivy::schema::Value;
 use tantivy::{
     collector::{Count, TopDocs},
     directory::MmapDirectory,
@@ -13,8 +14,11 @@ use tantivy::{
         BooleanQuery, BoostQuery, FuzzyTermQuery, Occur, PhrasePrefixQuery, PhraseQuery, Query,
         TermQuery,
     },
-    schema::{IndexRecordOption, NumericOptions, Schema, TextFieldIndexing, TextOptions, STORED},
-    Document, Searcher, Term,
+    schema::{
+        IndexRecordOption, NumericOptions, OwnedValue, Schema, TextFieldIndexing, TextOptions,
+        Value as _, STORED,
+    },
+    Searcher, TantivyDocument, Term,
 };
 use tantivy_uffd::RemoteDirectory;
 use tokio::task::spawn_blocking;
@@ -133,7 +137,9 @@ impl AirmailIndex {
     }
 
     pub fn writer(&mut self) -> Result<AirmailIndexWriter, Box<dyn std::error::Error>> {
-        let tantivy_writer = self.tantivy_index.writer(2_000_000_000)?;
+        let tantivy_writer = self
+            .tantivy_index
+            .writer::<TantivyDocument>(2_000_000_000)?;
         let writer = AirmailIndexWriter {
             tantivy_writer,
             schema: self.tantivy_index.schema(),
@@ -144,7 +150,7 @@ impl AirmailIndex {
     pub async fn merge(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let ids = self.tantivy_index.searchable_segment_ids()?;
         self.tantivy_index
-            .writer(2_000_000_000)?
+            .writer::<TantivyDocument>(2_000_000_000)?
             .merge(&ids)
             .await?;
         Ok(())
@@ -373,7 +379,7 @@ impl AirmailIndex {
         let mut futures = Vec::new();
         for (score, doc_id) in top_docs {
             let searcher = searcher.clone();
-            let doc = spawn_blocking(move || searcher.doc(doc_id));
+            let doc = spawn_blocking(move || searcher.doc::<TantivyDocument>(doc_id));
             scores.push(score);
             futures.push(doc);
         }
@@ -383,7 +389,7 @@ impl AirmailIndex {
             let doc = doc_future??;
             let source = doc
                 .get_first(self.field_source())
-                .map(|value| value.as_text().unwrap().to_string())
+                .map(|value| value.as_str().unwrap().to_string())
                 .unwrap_or_default();
             let s2cell = doc
                 .get_first(self.field_s2cell())
@@ -394,11 +400,10 @@ impl AirmailIndex {
             let latlng = s2::latlng::LatLng::from(cellid);
             let tags: Vec<(String, String)> = doc
                 .get_first(self.field_tags())
-                .map(|v| v.as_json().unwrap())
-                .cloned()
-                .unwrap_or_default()
-                .iter()
-                .map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string()))
+                .unwrap()
+                .as_object()
+                .unwrap()
+                .map(|(k, v)| (k.to_string(), v.as_str().unwrap().to_string()))
                 .collect();
 
             let poi = AirmailPoi::new(source, latlng.lat.deg(), latlng.lng.deg(), tags)?;
@@ -415,7 +420,7 @@ pub struct AirmailIndexWriter {
 }
 
 impl AirmailIndexWriter {
-    fn process_field(&self, doc: &mut Document, value: &str) {
+    fn process_field(&self, doc: &mut TantivyDocument, value: &str) {
         doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), value);
     }
 
@@ -424,7 +429,7 @@ impl AirmailIndexWriter {
         poi: SchemafiedPoi,
         source: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut doc = tantivy::Document::default();
+        let mut doc = TantivyDocument::default();
         for content in poi.content {
             self.process_field(&mut doc, &content);
         }
@@ -446,12 +451,12 @@ impl AirmailIndexWriter {
                 );
             }
         }
-        doc.add_json_object(
+        doc.add_object(
             self.schema.get_field(FIELD_TAGS).unwrap(),
             poi.tags
                 .iter()
-                .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.to_string())))
-                .collect::<serde_json::Map<String, Value>>(),
+                .map(|(k, v)| (k.to_string(), OwnedValue::Str(v.to_string())))
+                .collect::<BTreeMap<String, OwnedValue>>(),
         );
 
         doc.add_u64(self.schema.get_field(FIELD_S2CELL).unwrap(), poi.s2cell);
