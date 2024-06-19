@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 levenshtein_automata = "0.2.1"
 s2 = "0.0.12"
-tantivy = "0.21.1"
-tantivy-common = "0.6.0"
+tantivy = "0.22.0"
+tantivy-common = "0.7.0"
 tantivy-fst = "0.4.0"
 tempfile = "3.9.0"
 log = "0.4.20"
@@ -32,7 +32,7 @@ cached = "0.48.1"
 lazy_static = "1.4.0"
 regex = "1.10.3"
 geo = "0.27.0"
-tantivy-uffd = "0.1.0"
+tantivy-uffd = "0.1.1"
 
 [features]
 invasive_logging = []
