@@ -2,3 +2,5 @@ debug/
 target/
 data/
 Dockerfile
+docker-compose.yaml
+*.md

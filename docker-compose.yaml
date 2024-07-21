@@ -1,0 +1,57 @@
+name: airmail
+
+services:
+  osmx:
+    image: osmx:latest
+    build:
+      context: airmail_indexer
+      dockerfile: ./Dockerfile.osmx
+    profiles:
+      - index
+    stop_signal: KILL
+    restart: no
+    volumes:
+      - ./data:/data
+    command: expand /data/australia-latest.osm.pbf /data/australia-latest.osm.osmx
+
+  pelias-spatial:
+    image: spatial_custom:latest
+    build:
+      context: ./spatial
+      dockerfile: ./Dockerfile
+    profiles:
+      - index
+    stop_signal: KILL
+    restart: no
+    volumes:
+      - ./data:/data
+    ports:
+      - 3000:3000
+    command: server --db /data/whosonfirst-data-admin-latest.spatial.db
+
+  build-index:
+    image: build:latest
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.build
+    profiles:
+      - index
+    stop_signal: KILL
+    restart: no
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: airmail_import_osm --wof-db /data/whosonfirst-data-admin-latest.spatial.db --index /data/index --admin-cache /data/admin-cache --osmx /data/australia-latest.osm.osmx --pelias-url http://host.docker.internal:3000
+
+  airmail:
+    image: airmail:latest
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    stop_signal: KILL
+    restart: no
+    volumes:
+      - ./data:/data
+    ports:
+      - 3000:3000
+    command: --index /data/index
