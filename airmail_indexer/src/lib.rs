@@ -15,6 +15,7 @@ use bollard::{
 use crossbeam::channel::{Receiver, Sender};
 use lingua::{IsoCode639_3, Language};
 use redb::{Database, ReadTransaction, TableDefinition};
+use reqwest::Url;
 use std::{collections::HashMap, error::Error, str::FromStr, sync::Arc};
 use tokio::spawn;
 
@@ -59,9 +60,9 @@ pub(crate) async fn populate_admin_areas<'a>(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     poi: &mut ToIndexPoi,
-    port: usize,
+    pelias_host: &Url,
 ) -> Result<(), Box<dyn Error>> {
-    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, port).await?;
+    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, pelias_host).await?;
     for admin in pip_response.admin_names {
         poi.admins.push(admin);
     }
@@ -106,7 +107,7 @@ async fn get_container_status(
     for container in containers {
         if let Some(names) = &container.names {
             if names.contains(&format!("/airmail-pip-service-{}", idx)) {
-                if &container.state == &Some("running".to_string()) {
+                if container.state == Some("running".to_string()) {
                     return Ok(ContainerStatus::Running);
                 } else {
                     return Ok(ContainerStatus::Stopped);
@@ -204,7 +205,7 @@ async fn maybe_start_pip_container(
             .await?;
     }
 
-    if get_container_status(idx, &docker).await? != ContainerStatus::Running {
+    if get_container_status(idx, docker).await? != ContainerStatus::Running {
         println!("Starting container `airmail-pip-service-{}`", idx);
         let _ = &docker
             .start_container(
@@ -216,7 +217,7 @@ async fn maybe_start_pip_container(
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     }
 
-    if get_container_status(idx, &docker).await? == ContainerStatus::Running {
+    if get_container_status(idx, docker).await? == ContainerStatus::Running {
         println!("Container `airmail-pip-service-{}` is running.", idx);
     } else {
         println!("Container `airmail-pip-service-{}` failed to start.", idx);
@@ -231,10 +232,11 @@ pub struct ImporterBuilder {
     wof_db: String,
     recreate: bool,
     docker_socket: Option<String>,
+    pelias_host: Url,
 }
 
 impl ImporterBuilder {
-    pub fn new(whosonfirst_spatialite_path: &str) -> Self {
+    pub fn new(whosonfirst_spatialite_path: &str, pelias_host: &Url) -> Self {
         let tmp_dir = std::env::temp_dir();
         let admin_cache = tmp_dir.join("admin_cache.db").to_string_lossy().to_string();
         Self {
@@ -242,6 +244,7 @@ impl ImporterBuilder {
             wof_db: whosonfirst_spatialite_path.to_string(),
             recreate: false,
             docker_socket: None,
+            pelias_host: pelias_host.clone(),
         }
     }
 
@@ -271,27 +274,33 @@ impl ImporterBuilder {
             }
             txn.commit().unwrap();
         }
-        let docker_socket = docker_connect(&self.docker_socket)
-                .await
-                .expect("Failed to connect to the Docker daemon at socket path. Try specifiying the correct path or verifying it exists, and verifying permissions.");
-        {
-            let _ = subprocess::Exec::cmd("chcon")
-                .arg("-t")
-                .arg("container_file_t")
-                .arg(&self.wof_db)
-                .join();
-            maybe_start_pip_container(&self.wof_db, self.recreate, &docker_socket)
-                .await
-                .expect("Failed to start spatial server container.");
+
+        // Conditionally start the spatial server container.
+        if self.docker_socket.is_some() {
+            let docker_socket = docker_connect(&self.docker_socket)
+                    .await
+                    .expect("Failed to connect to the Docker daemon at socket path. Try specifiying the correct path or verifying it exists, and verifying permissions.");
+            {
+                let _ = subprocess::Exec::cmd("chcon")
+                    .arg("-t")
+                    .arg("container_file_t")
+                    .arg(&self.wof_db)
+                    .join();
+                maybe_start_pip_container(&self.wof_db, self.recreate, &docker_socket)
+                    .await
+                    .expect("Failed to start spatial server container.");
+            }
         }
         Importer {
             admin_cache: Arc::new(db),
+            pelias_host: self.pelias_host,
         }
     }
 }
 
 pub struct Importer {
     admin_cache: Arc<Database>,
+    pelias_host: Url,
 }
 
 impl Importer {
@@ -332,8 +341,7 @@ impl Importer {
                             let mut table = write.open_table(TABLE_AREAS).unwrap();
                             let packed = admins
                                 .iter()
-                                .map(|id| id.to_le_bytes())
-                                .flatten()
+                                .flat_map(|id| id.to_le_bytes())
                                 .collect::<Vec<_>>();
                             table.insert(s2cell, packed.as_slice()).unwrap();
                         }
@@ -349,15 +357,11 @@ impl Importer {
             let to_index_sender = to_index_sender.clone();
             let to_cache_sender = to_cache_sender.clone();
             let admin_cache = self.admin_cache.clone();
+            let pelias_host = self.pelias_host.clone();
             nonblocking_join_handles.push(spawn(async move {
                 let mut read = admin_cache.begin_read().unwrap();
                 let mut counter = 0;
-                loop {
-                    let mut poi = if let Ok(poi) = no_admin_receiver.recv() {
-                        poi
-                    } else {
-                        break;
-                    };
+                while let Ok(mut poi) = no_admin_receiver.recv() {
                     counter += 1;
                     if counter % 1000 == 0 {
                         read = admin_cache.begin_read().unwrap();
@@ -368,12 +372,19 @@ impl Importer {
                             println!("Retrying to populate admin areas.");
                             tokio::time::sleep(std::time::Duration::from_millis(10)).await;
                         }
-                        let port = 3102;
-                        if let Err(err) =
-                            populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, port)
-                                .await
+
+                        if let Err(err) = populate_admin_areas(
+                            &read,
+                            to_cache_sender.clone(),
+                            &mut poi,
+                            &pelias_host,
+                        )
+                        .await
                         {
-                            println!("Failed to populate admin areas. {}", err);
+                            println!(
+                                "Failed to populate admin areas, {}, attempt: {}",
+                                err, attempt
+                            );
                         } else {
                             let poi = SchemafiedPoi::from(poi);
                             to_index_sender.send(poi).unwrap();
@@ -406,7 +417,7 @@ impl Importer {
             }
 
             if let Ok(poi) = to_index_receiver.recv() {
-                if let Err(err) = writer.add_poi(poi, &source).await {
+                if let Err(err) = writer.add_poi(poi, source).await {
                     println!("Failed to add POI to index. {}", err);
                 }
             } else {

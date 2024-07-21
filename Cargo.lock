@@ -86,6 +86,7 @@ dependencies = [
  "log",
  "osmx",
  "rayon",
+ "reqwest",
  "tokio",
 ]
 

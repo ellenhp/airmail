@@ -2,6 +2,7 @@ use std::{collections::HashSet, error::Error};
 
 use crossbeam::channel::Sender;
 use redb::{ReadTransaction, ReadableTable};
+use reqwest::Url;
 use serde::Deserialize;
 use tokio::task::JoinHandle;
 
@@ -49,7 +50,7 @@ async fn query_pip_inner(
     s2cell: u64,
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
-    port: usize,
+    pelias_host: &Url,
 ) -> Result<AdminIds, Box<dyn Error>> {
     let desired_level = 15;
     let cell = s2::cellid::CellID(s2cell);
@@ -90,10 +91,7 @@ async fn query_pip_inner(
     let lat_lng = s2::latlng::LatLng::from(cell);
     let lat = lat_lng.lat.deg();
     let lng = lat_lng.lng.deg();
-    let url = format!(
-        "http://localhost:{}/query/pip?lon={}&lat={}",
-        port, lng, lat
-    );
+    let url = format!("{}query/pip?lon={}&lat={}", pelias_host.as_str(), lng, lat);
     let response = HTTP_CLIENT
         .with(|client: &reqwest::Client| client.get(&url).send())
         .await?;
@@ -249,9 +247,9 @@ pub(crate) async fn query_pip(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     s2cell: u64,
-    port: usize,
+    pelias_host: &Url,
 ) -> Result<PipResponse, Box<dyn Error>> {
-    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), port).await?;
+    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), pelias_host).await?;
     let mut name_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
     let mut lang_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
     let mut cached_names = Vec::new();
@@ -260,7 +258,7 @@ pub(crate) async fn query_pip(
         if let Ok(names) = query_names_cache(read, &admin_id) {
             cached_names.extend(names);
         } else {
-            let names_url = format!("http://localhost:{}/place/wof/{}/name", port, &admin_id);
+            let names_url = format!("{}place/wof/{}/name", pelias_host.as_str(), &admin_id);
             let handle: JoinHandle<Option<Vec<String>>> =
                 tokio::spawn(async move { query_names(&names_url).await });
             name_handles.push((admin_id, handle));
@@ -274,8 +272,9 @@ pub(crate) async fn query_pip(
             cached_langs.extend(langs);
         } else {
             let langs_url = format!(
-                "http://localhost:{}/place/wof/{}/property",
-                port, &country_id
+                "{}place/wof/{}/property",
+                pelias_host.as_str(),
+                &country_id
             );
             let handle: JoinHandle<Option<Vec<String>>> =
                 tokio::spawn(async move { query_langs(&langs_url).await });
