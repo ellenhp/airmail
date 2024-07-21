@@ -60,9 +60,9 @@ pub(crate) async fn populate_admin_areas<'a>(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     poi: &mut ToIndexPoi,
-    pelias_host: &Url,
+    spatial_url: &Url,
 ) -> Result<(), Box<dyn Error>> {
-    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, pelias_host).await?;
+    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, spatial_url).await?;
     for admin in pip_response.admin_names {
         poi.admins.push(admin);
     }
@@ -232,11 +232,11 @@ pub struct ImporterBuilder {
     wof_db: String,
     recreate: bool,
     docker_socket: Option<String>,
-    pelias_host: Url,
+    spatial_url: Url,
 }
 
 impl ImporterBuilder {
-    pub fn new(whosonfirst_spatialite_path: &str, pelias_host: &Url) -> Self {
+    pub fn new(whosonfirst_spatialite_path: &str, spatial_url: &Url) -> Self {
         let tmp_dir = std::env::temp_dir();
         let admin_cache = tmp_dir.join("admin_cache.db").to_string_lossy().to_string();
         Self {
@@ -244,7 +244,7 @@ impl ImporterBuilder {
             wof_db: whosonfirst_spatialite_path.to_string(),
             recreate: false,
             docker_socket: None,
-            pelias_host: pelias_host.clone(),
+            spatial_url: spatial_url.clone(),
         }
     }
 
@@ -293,14 +293,14 @@ impl ImporterBuilder {
         }
         Importer {
             admin_cache: Arc::new(db),
-            pelias_host: self.pelias_host,
+            spatial_url: self.spatial_url,
         }
     }
 }
 
 pub struct Importer {
     admin_cache: Arc<Database>,
-    pelias_host: Url,
+    spatial_url: Url,
 }
 
 impl Importer {
@@ -357,7 +357,7 @@ impl Importer {
             let to_index_sender = to_index_sender.clone();
             let to_cache_sender = to_cache_sender.clone();
             let admin_cache = self.admin_cache.clone();
-            let pelias_host = self.pelias_host.clone();
+            let spatial_url = self.spatial_url.clone();
             nonblocking_join_handles.push(spawn(async move {
                 let mut read = admin_cache.begin_read().unwrap();
                 let mut counter = 0;
@@ -377,7 +377,7 @@ impl Importer {
                             &read,
                             to_cache_sender.clone(),
                             &mut poi,
-                            &pelias_host,
+                            &spatial_url,
                         )
                         .await
                         {

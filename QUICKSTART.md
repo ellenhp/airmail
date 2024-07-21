@@ -14,17 +14,17 @@ git clone git@github.com:ellenhp/airmail.git
 
 cd airmail
 
-# Pull submodules, required for custom spatial region
+# Pull submodules, required for custom spatial build
 git submodule update --init --recursive
 
 # Create index folder
-mkdir ./data/index
+mkdir -p ./data/index
 ```
 
 ## Fetching Data
 
 1. Download OSM probuf file (.pbf file) for target region. See: <https://download.geofabrik.de> and place into `./data` folder.
-2. Download Who's On First (SpatiaLite format). For global see: <https://geocode.earth/data/whosonfirst/combined/> <https://data.geocode.earth/wof/dist/spatial/whosonfirst-data-admin-latest.spatial.db.bz2>
+2. Download Who's On First (SpatiaLite format). For planet see: <https://geocode.earth/data/whosonfirst/combined/> and <https://data.geocode.earth/wof/dist/spatial/whosonfirst-data-admin-latest.spatial.db.bz2>
 3. Ensure files are present and decompressed in the `./data/` directory.
 
 ## Build Images
@@ -49,14 +49,11 @@ It's likely a good idea to build a smaller region first and then planet if you h
 docker compose run osmx \
 expand /data/australia-latest.osm.pbf /data/australia-latest.osm.osmx
 
-# Extract the whosonfirst-data-admin-latest.db
-pbzip2 -d ./data/whosonfirst-data-admin-latest.spatial.db.bz2 # Or bzip2 -d ./data/whosonfirst-data-admin-latest.spatial.db.bz2
-
 # Check the files we need exist, you should see the two files
 ls -lh ./data/whosonfirst-data-admin-latest.spatial.db ./data/australia-latest.osm.osmx
 
 # Run pelias-spatial (in another window). Make sure it stays up/listening.
-docker compose up pelias-spatial
+docker compose up spatial
 
 # Build the index
 docker compose --profile index run build-index \
@@ -64,7 +61,7 @@ airmail_import_osm --wof-db /data/whosonfirst-data-admin-latest.spatial.db \
 --index /data/index \
 --admin-cache /data/admin-cache \
 --osmx /data/australia-latest.osm.osmx \
---pelias-url http://host.docker.internal:3000
+--spatial-url http://host.docker.internal:3000
 
 # If the index built ok, stop pelias
 ```

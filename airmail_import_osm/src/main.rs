@@ -14,9 +14,9 @@ struct Args {
     #[clap(long, short)]
     docker_socket: Option<String>,
 
-    /// Url to the Pelias spatial server. 
+    /// Url to the spatial server.
     #[clap(long, short, default_value = "http://localhost:3000")]
-    pelias_url: Url,
+    spatial_url: Url,
 
     /// Path to the Who's On First Spatialite database. Used for populating
     /// administrative areas, which are often missing or wrong in OSM.
@@ -55,7 +55,7 @@ async fn main() {
 
     let mut index = AirmailIndex::create(&args.index).expect("Failed to open index");
     let importer = {
-        let mut builder = ImporterBuilder::new(&args.wof_db, &args.pelias_url);
+        let mut builder = ImporterBuilder::new(&args.wof_db, &args.spatial_url);
 
         if let Some(docker_socket) = args.docker_socket {
             builder = builder.docker_socket(&docker_socket);
