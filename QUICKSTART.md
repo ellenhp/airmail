@@ -52,7 +52,7 @@ expand /data/australia-latest.osm.pbf /data/australia-latest.osm.osmx
 # Check the files we need exist, you should see the two files
 ls -lh ./data/whosonfirst-data-admin-latest.spatial.db ./data/australia-latest.osm.osmx
 
-# Run pelias-spatial (in another window). Make sure it stays up/listening.
+# Run spatial (in another window). Make sure it stays up/listening.
 docker compose up spatial
 
 # Build the index
@@ -63,7 +63,7 @@ airmail_import_osm --wof-db /data/whosonfirst-data-admin-latest.spatial.db \
 --osmx /data/australia-latest.osm.osmx \
 --spatial-url http://host.docker.internal:3000
 
-# If the index built ok, stop pelias
+# If the index built ok, stop spatial
 ```
 
 ## Run Airmail
