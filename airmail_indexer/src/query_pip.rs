@@ -2,39 +2,18 @@ use std::{collections::HashSet, error::Error};
 
 use crossbeam::channel::Sender;
 use redb::{ReadTransaction, ReadableTable};
-use reqwest::Url;
 use serde::Deserialize;
 use tokio::task::JoinHandle;
 
-use crate::{WofCacheItem, COUNTRIES, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES};
+use crate::{
+    wof::{PipLangsResponse, WhosOnFirst},
+    WofCacheItem, COUNTRIES, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
+};
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct PipResponse {
     pub admin_names: Vec<String>,
     pub admin_langs: Vec<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ConcisePipResponse {
-    pub source: String,
-    pub id: String,
-    pub class: String,
-    #[serde(rename = "type")]
-    pub r#type: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct PipPlaceName {
-    pub lang: String,
-    pub tag: String,
-    pub abbr: bool,
-    pub name: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct PipPropertyResponse {
-    #[serde(rename = "wof:lang_x_spoken")]
-    pub langs: Option<String>,
 }
 
 thread_local! {
@@ -50,7 +29,7 @@ async fn query_pip_inner(
     s2cell: u64,
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
-    pelias_host: &Url,
+    wof_db: &WhosOnFirst,
 ) -> Result<AdminIds, Box<dyn Error>> {
     let desired_level = 15;
     let cell = s2::cellid::CellID(s2cell);
@@ -91,15 +70,7 @@ async fn query_pip_inner(
     let lat_lng = s2::latlng::LatLng::from(cell);
     let lat = lat_lng.lat.deg();
     let lng = lat_lng.lng.deg();
-    let url = format!("{}query/pip?lon={}&lat={}", pelias_host.as_str(), lng, lat);
-    let response = HTTP_CLIENT
-        .with(|client: &reqwest::Client| client.get(&url).send())
-        .await?;
-    if response.status() != 200 {
-        return Err(format!("HTTP error: {}", response.status()).into());
-    }
-    let response_json = response.text().await?;
-    let response: Vec<ConcisePipResponse> = serde_json::from_str(&response_json)?;
+    let response = wof_db.point_in_polygon(lng, lat)?;
     let mut response_ids = Vec::new();
     for concise_response in response {
         let admin_id: u64 = concise_response.id.parse()?;
@@ -162,28 +133,11 @@ fn query_languages_cache(
     Err("No langs found".into())
 }
 
-async fn query_names(url: &str) -> Option<Vec<String>> {
-    let response = if let Ok(response) = HTTP_CLIENT
-        .with(|client: &reqwest::Client| client.get(url).send())
-        .await
-    {
-        response
-    } else {
-        return None;
-    };
-    if response.status() != 200 {
+async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
+    let response = wof_db.place_name_by_id(admin_id).ok()?;
+    if response.is_empty() {
         return None;
     }
-    let response = if let Ok(response) = response.text().await {
-        response
-    } else {
-        return None;
-    };
-    let response: Vec<PipPlaceName> = if let Ok(response) = serde_json::from_str(&response) {
-        response
-    } else {
-        return None;
-    };
     let names = response
         .iter()
         .filter(|place_name| place_name.tag == "preferred" || place_name.tag == "default")
@@ -216,28 +170,8 @@ async fn query_names(url: &str) -> Option<Vec<String>> {
     Some(names)
 }
 
-async fn query_langs(url: &str) -> Option<Vec<String>> {
-    let response = if let Ok(response) = HTTP_CLIENT
-        .with(|client: &reqwest::Client| client.get(url).send())
-        .await
-    {
-        response
-    } else {
-        return None;
-    };
-    if response.status() != 200 {
-        return None;
-    }
-    let response = if let Ok(response) = response.text().await {
-        response
-    } else {
-        return None;
-    };
-    let response: PipPropertyResponse = if let Ok(response) = serde_json::from_str(&response) {
-        response
-    } else {
-        return None;
-    };
+async fn query_langs(country_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
+    let response: PipLangsResponse = wof_db.properties_for_id(country_id).ok()?.into();
     response
         .langs
         .map(|langs| langs.split(',').map(|s| s.to_string()).collect())
@@ -247,37 +181,33 @@ pub(crate) async fn query_pip(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     s2cell: u64,
-    pelias_host: &Url,
+    wof_db: &WhosOnFirst,
 ) -> Result<PipResponse, Box<dyn Error>> {
-    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), pelias_host).await?;
+    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), wof_db).await?;
     let mut name_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
     let mut lang_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
     let mut cached_names = Vec::new();
     let mut cached_langs = Vec::new();
+
     for admin_id in wof_ids.all_admin_ids {
         if let Ok(names) = query_names_cache(read, &admin_id) {
             cached_names.extend(names);
         } else {
-            let names_url = format!("{}place/wof/{}/name", pelias_host.as_str(), &admin_id);
-            let handle: JoinHandle<Option<Vec<String>>> =
-                tokio::spawn(async move { query_names(&names_url).await });
+            let wof_db = wof_db.clone();
+            let handle = tokio::spawn(async move { query_names(admin_id, &wof_db).await });
             name_handles.push((admin_id, handle));
         }
         if COUNTRIES.contains(&admin_id) {
             continue;
         }
     }
+    
     if let Some(country_id) = wof_ids.country {
         if let Ok(langs) = query_languages_cache(read, &country_id) {
             cached_langs.extend(langs);
         } else {
-            let langs_url = format!(
-                "{}place/wof/{}/property",
-                pelias_host.as_str(),
-                &country_id
-            );
-            let handle: JoinHandle<Option<Vec<String>>> =
-                tokio::spawn(async move { query_langs(&langs_url).await });
+            let wof_db = wof_db.clone();
+            let handle = tokio::spawn(async move { query_langs(country_id, &wof_db).await });
             lang_handles.push((country_id, handle));
         }
     }

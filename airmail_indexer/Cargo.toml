@@ -29,8 +29,32 @@ rustyline = "13.0.0"
 num_cpus = "1.16.0"
 lru = "0.12.2"
 osmflat = "0.1.0"
-lingua = { version = "1.6.2", default-features = false, features = ["english", "chinese", "catalan", "arabic", "danish", "dutch", "finnish", "french", "german", "greek", "hungarian", "italian", "portuguese", "romanian", "russian", "spanish", "swedish", "tamil", "turkish"] }
+lingua = { version = "1.6.2", default-features = false, features = [
+    "english",
+    "chinese",
+    "catalan",
+    "arabic",
+    "danish",
+    "dutch",
+    "finnish",
+    "french",
+    "german",
+    "greek",
+    "hungarian",
+    "italian",
+    "portuguese",
+    "romanian",
+    "russian",
+    "spanish",
+    "swedish",
+    "tamil",
+    "turkish",
+] }
 redb = "1.5.0"
+rusqlite = { version = "0.31.0", features = ["load_extension"] }
+r2d2_sqlite = "0.24.0"
+r2d2 = "0.8.10"
+anyhow = "1.0.86"
 
 [[bin]]
 name = "query"
