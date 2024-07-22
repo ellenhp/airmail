@@ -48,7 +48,8 @@ async fn main() {
         }
 
         builder.build().await
-    };
+    }
+    .expect("Failed to create importer");
 
     let (poi_sender, poi_receiver) = crossbeam::channel::bounded(1024);
 

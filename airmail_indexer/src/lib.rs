@@ -51,13 +51,13 @@ pub(crate) enum WofCacheItem {
     Admins(u64, Vec<u64>),
 }
 
-pub(crate) fn populate_admin_areas(
+pub(crate) async fn populate_admin_areas(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     poi: &mut ToIndexPoi,
     wof_db: &WhosOnFirst,
 ) -> Result<(), Box<dyn Error>> {
-    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, wof_db)?;
+    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, wof_db).await?;
     for admin in pip_response.admin_names {
         poi.admins.push(admin);
     }

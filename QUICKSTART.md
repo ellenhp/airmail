@@ -56,8 +56,7 @@ ls -lh ./data/whosonfirst-data-admin-latest.spatial.db ./data/australia-latest.o
 docker compose --profile index run build-index \
 airmail_import_osm --wof-db /data/whosonfirst-data-admin-latest.spatial.db \
 --index /data/index \
---osmx /data/australia-latest.osm.osmx \
---admin-cache /data/admin-cache
+--osmx /data/australia-latest.osm.osmx
 ```
 
 ## Run Airmail

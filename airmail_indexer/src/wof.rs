@@ -1,50 +1,67 @@
-use log::debug;
-use rusqlite::{Connection, OpenFlags, Result};
+use anyhow::Result;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::OpenFlags;
 use serde::Deserialize;
 use std::path::Path;
 
 /// Performs simple point-in-polygon queries against the WhosOnFirst database.
+///
+/// # Safety
+/// Querying the WhosOnFirst database requires the spatialite extension to be loaded
+/// which requires use of unsafe to load the dylib. After the extension is loaded/fails
+/// it is disabled to prevent other connections from loading extensions.
+///
+#[derive(Clone)]
 pub struct WhosOnFirst {
-    connection: Connection,
+    pool: Pool<SqliteConnectionManager>,
 }
 
 impl WhosOnFirst {
     /// Opens a connection to the WhosOnFirst database.
     /// Requires package: libsqlite3-mod-spatialite on Debian/Ubuntu
     pub fn new(path: &Path) -> Result<Self> {
-        let connection = Connection::open_with_flags(
-            path,
-            OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-        )?;
+        let conn_man = SqliteConnectionManager::file(path)
+            .with_flags(OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX)
+            .with_init(|c| {
 
-        // Safety: As the extension is fully trusted, enable extension loading and then disable.
-        unsafe {
-            connection.load_extension_enable()?;
-            let load_attempt = connection.load_extension("mod_spatialite", None);
-            if let Err(e) = &load_attempt {
-                eprintln!("Failed to load mod_spatialite: {:?}. libsqlite3-mod-spatialite is needed on Debian systems.", e);
-            }
-            connection.load_extension_disable()?;
-            load_attempt
-        }?;
+                // Enable spatialite extension.
+                // Unsafe is used to permit the use of the spatialite extension, per documentation
+                // after the extension is loaded, it is disabled to prevent other connections from using it.
+                unsafe {
+                    c.load_extension_enable()?;
+                    let load_attempt = c.load_extension("mod_spatialite", None);
+                    if let Err(e) = &load_attempt {
+                        eprintln!("Failed to load mod_spatialite: {:?}. libsqlite3-mod-spatialite is needed on Debian systems.", e);
+                    }
+                    c.load_extension_disable()?;
+                    load_attempt
+                }?;
 
-        // Configure pragmas.
-        connection.execute_batch(
-            r"
-                PRAGMA cache_size = 2000;
-                PRAGMA temp_store = MEMORY;
-                PRAGMA mmap_size = 268435456;
-                PRAGMA foreign_keys = OFF;
-            ",
-        )?;
+                c.execute_batch(
+                    r"
+                        PRAGMA cache_size = 2000;
+                        PRAGMA temp_store = MEMORY;
+                        PRAGMA mmap_size = 268435456;
+                        PRAGMA foreign_keys = OFF;
+                    ",
+                )?;
 
-        debug!("Connected to WhosOnFirst database: {:?}", path);
+                Ok(())
+            });
 
-        Ok(Self { connection })
+        let pool = Pool::builder()
+            .max_size(num_cpus::get().try_into()?)
+            .build(conn_man)?;
+
+        Ok(Self { pool })
     }
 
     pub fn point_in_polygon(&self, lon: f64, lat: f64) -> Result<Vec<ConcisePipResponse>> {
-        let mut statement = self.connection.prepare_cached(
+        let connection = self.pool.get()?;
+
+        // Requires the spatialite extension to be loaded.
+        let mut statement = connection.prepare_cached(
             r"
                 SELECT place.source, place.id, place.class, place.type
                 FROM main.point_in_polygon AS pip
@@ -71,7 +88,10 @@ impl WhosOnFirst {
     }
 
     pub fn place_name_by_id(&self, id: u64) -> Result<Vec<PipPlaceName>> {
-        let mut statement = self.connection.prepare_cached(
+        let connection = self.pool.get()?;
+
+        // Index for name is on (source, id)
+        let mut statement = connection.prepare_cached(
             r"
                 SELECT name.lang, name.tag, name.abbr, name.name
                 FROM main.name
@@ -96,7 +116,10 @@ impl WhosOnFirst {
     }
 
     pub fn properties_for_id(&self, id: u64) -> Result<Vec<WofKV>> {
-        let mut statement = self.connection.prepare_cached(
+        let connection = self.pool.get()?;
+
+        // Index for name is on (source, id)
+        let mut statement = connection.prepare_cached(
             r"
                 SELECT property.key, property.value
                 FROM main.property

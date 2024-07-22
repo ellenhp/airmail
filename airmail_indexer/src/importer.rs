@@ -2,6 +2,7 @@ use airmail::{
     index::AirmailIndex,
     poi::{SchemafiedPoi, ToIndexPoi},
 };
+use anyhow::Result;
 use crossbeam::channel::{Receiver, Sender};
 use redb::Database;
 use std::{
@@ -16,16 +17,17 @@ use crate::{
 
 pub struct ImporterBuilder {
     admin_cache: String,
-    wof_db: PathBuf,
+    wof_db_path: PathBuf,
 }
 
 impl ImporterBuilder {
     pub fn new(whosonfirst_spatialite_path: &Path) -> Self {
         let tmp_dir = std::env::temp_dir();
         let admin_cache = tmp_dir.join("admin_cache.db").to_string_lossy().to_string();
+
         Self {
             admin_cache,
-            wof_db: whosonfirst_spatialite_path.to_path_buf(),
+            wof_db_path: whosonfirst_spatialite_path.to_path_buf(),
         }
     }
 
@@ -34,7 +36,7 @@ impl ImporterBuilder {
         self
     }
 
-    pub async fn build(self) -> Importer {
+    pub async fn build(self) -> Result<Importer> {
         let db = Database::create(&self.admin_cache)
             .expect("Failed to open or create administrative area cache database.");
         {
@@ -46,16 +48,19 @@ impl ImporterBuilder {
             txn.commit().unwrap();
         }
 
-        Importer {
+        let wof_db =
+            WhosOnFirst::new(&self.wof_db_path).expect("Failed to open WhosOnFirst database.");
+
+        Ok(Importer {
             admin_cache: Arc::new(db),
-            wof_db_path: self.wof_db,
-        }
+            wof_db,
+        })
     }
 }
 
 pub struct Importer {
     admin_cache: Arc<Database>,
-    wof_db_path: PathBuf,
+    wof_db: WhosOnFirst,
 }
 
 impl Importer {
@@ -114,11 +119,9 @@ impl Importer {
             let to_index_sender = to_index_sender.clone();
             let to_cache_sender = to_cache_sender.clone();
             let admin_cache = self.admin_cache.clone();
-            let wof_db_path = self.wof_db_path.clone();
+            let wof_db = self.wof_db.clone();
 
             nonblocking_join_handles.push(spawn(async move {
-                let wof_db = WhosOnFirst::new(&wof_db_path.clone())
-                    .expect("Failed to open WhosOnFirst database.");
                 let mut read = admin_cache.begin_read().unwrap();
                 let mut counter = 0;
                 while let Ok(mut poi) = no_admin_receiver.recv() {
@@ -135,6 +138,7 @@ impl Importer {
 
                         if let Err(err) =
                             populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, &wof_db)
+                                .await
                         {
                             println!(
                                 "Failed to populate admin areas, {}, attempt: {}",

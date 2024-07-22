@@ -3,6 +3,7 @@ use std::{collections::HashSet, error::Error};
 use crossbeam::channel::Sender;
 use redb::{ReadTransaction, ReadableTable};
 use serde::Deserialize;
+use tokio::task::JoinHandle;
 
 use crate::{
     wof::{PipLangsResponse, WhosOnFirst},
@@ -24,7 +25,7 @@ struct AdminIds {
     country: Option<u64>,
 }
 
-fn query_pip_inner(
+async fn query_pip_inner(
     s2cell: u64,
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
@@ -132,7 +133,7 @@ fn query_languages_cache(
     Err("No langs found".into())
 }
 
-fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
+async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
     let response = wof_db.place_name_by_id(admin_id).ok()?;
     if response.is_empty() {
         return None;
@@ -169,51 +170,67 @@ fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
     Some(names)
 }
 
-fn query_langs(country_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
+async fn query_langs(country_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
     let response: PipLangsResponse = wof_db.properties_for_id(country_id).ok()?.into();
     response
         .langs
         .map(|langs| langs.split(',').map(|s| s.to_string()).collect())
 }
 
-pub(crate) fn query_pip(
+pub(crate) async fn query_pip(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     s2cell: u64,
     wof_db: &WhosOnFirst,
 ) -> Result<PipResponse, Box<dyn Error>> {
-    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), wof_db)?;
+    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), wof_db).await?;
+    let mut name_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
+    let mut lang_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
     let mut cached_names = Vec::new();
     let mut cached_langs = Vec::new();
-    let mut response = PipResponse::default();
 
     for admin_id in wof_ids.all_admin_ids {
+        if let Ok(names) = query_names_cache(read, &admin_id) {
+            cached_names.extend(names);
+        } else {
+            let wof_db = wof_db.clone();
+            let handle = tokio::spawn(async move { query_names(admin_id, &wof_db).await });
+            name_handles.push((admin_id, handle));
+        }
         if COUNTRIES.contains(&admin_id) {
             continue;
         }
+    }
+    
+    if let Some(country_id) = wof_ids.country {
+        if let Ok(langs) = query_languages_cache(read, &country_id) {
+            cached_langs.extend(langs);
+        } else {
+            let wof_db = wof_db.clone();
+            let handle = tokio::spawn(async move { query_langs(country_id, &wof_db).await });
+            lang_handles.push((country_id, handle));
+        }
+    }
 
-        if let Ok(names) = query_names_cache(read, &admin_id) {
-            cached_names.extend(names);
-        } else if let Some(names) = query_names(admin_id, wof_db) {
+    let mut response = PipResponse::default();
+    response.admin_names.extend(cached_names);
+    response.admin_langs.extend(cached_langs);
+    for (admin_id, handle) in name_handles {
+        if let Ok(Some(names)) = handle.await {
             to_cache_sender
                 .send(WofCacheItem::Names(admin_id, names.clone()))
                 .unwrap();
             response.admin_names.extend(names);
         }
     }
-
-    if let Some(country_id) = wof_ids.country {
-        if let Ok(langs) = query_languages_cache(read, &country_id) {
-            cached_langs.extend(langs);
-        } else if let Some(langs) = query_langs(country_id, wof_db) {
+    for (admin_id, handle) in lang_handles {
+        if let Ok(Some(langs)) = handle.await {
             to_cache_sender
-                .send(WofCacheItem::Langs(country_id, langs.clone()))
+                .send(WofCacheItem::Langs(admin_id, langs.clone()))
                 .unwrap();
             response.admin_langs.extend(langs);
         }
     }
 
-    response.admin_names.extend(cached_names);
-    response.admin_langs.extend(cached_langs);
     Ok(response)
 }
