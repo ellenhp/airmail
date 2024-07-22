@@ -51,7 +51,7 @@ impl WhosOnFirst {
             });
 
         let pool = Pool::builder()
-            .max_size(num_cpus::get().try_into()?)
+            .max_size((2 * num_cpus::get()).try_into()?)
             .build(conn_man)?;
 
         Ok(Self { pool })

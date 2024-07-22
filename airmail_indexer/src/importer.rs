@@ -111,8 +111,8 @@ impl Importer {
             });
         }
 
-        // Our tasks aren't CPU-bound, so we can spawn a few more than the number of CPUs
-        // to keep the CPU busy while waiting for IO.
+        // Our processing tasks aren't CPU-bound, so we can spawn a few more than the number of CPUs
+        // to keep the CPU busy while waiting for IO, and work to be fed in.
         for worker in 1..num_cpus::get() * 4 {
             println!("Spawning worker {}", worker);
             let no_admin_receiver = receiver.clone();
