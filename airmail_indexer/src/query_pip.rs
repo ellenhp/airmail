@@ -16,8 +16,10 @@ pub struct PipResponse {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ConcisePipResponse {
+    #[allow(dead_code)]
     pub source: String,
     pub id: String,
+    #[allow(dead_code)]
     pub class: String,
     #[serde(rename = "type")]
     pub r#type: String,
@@ -27,6 +29,7 @@ pub struct ConcisePipResponse {
 pub struct PipPlaceName {
     pub lang: String,
     pub tag: String,
+    #[allow(dead_code)]
     pub abbr: bool,
     pub name: String,
 }
@@ -271,11 +274,7 @@ pub(crate) async fn query_pip(
         if let Ok(langs) = query_languages_cache(read, &country_id) {
             cached_langs.extend(langs);
         } else {
-            let langs_url = format!(
-                "{}place/wof/{}/property",
-                pelias_host.as_str(),
-                &country_id
-            );
+            let langs_url = format!("{}place/wof/{}/property", pelias_host.as_str(), &country_id);
             let handle: JoinHandle<Option<Vec<String>>> =
                 tokio::spawn(async move { query_langs(&langs_url).await });
             lang_handles.push((country_id, handle));
