@@ -1,21 +1,18 @@
+use std::path::PathBuf;
+
 use airmail::index::AirmailIndex;
 use airmail_indexer::ImporterBuilder;
 use clap::Parser;
-use reqwest::Url;
 use tokio::task::spawn_blocking;
 
 mod openstreetmap;
 
 #[derive(Debug, Parser)]
 struct Args {
-    /// Url to the spatial server.
-    #[clap(long, short, default_value = "http://localhost:3000")]
-    spatial_url: Url,
-
     /// Path to the Who's On First Spatialite database. Used for populating
     /// administrative areas, which are often missing or wrong in OSM.
     #[clap(long, short)]
-    wof_db: String,
+    wof_db: PathBuf,
 
     /// Path to the Airmail index to import into. This should be either an empty
     /// directory or a directory containing an existing index created with the
@@ -44,7 +41,7 @@ async fn main() {
 
     let mut index = AirmailIndex::create(&args.index).expect("Failed to open index");
     let importer = {
-        let mut builder = ImporterBuilder::new(&args.wof_db, &args.spatial_url);
+        let mut builder = ImporterBuilder::new(&args.wof_db);
 
         if let Some(admin_cache) = args.admin_cache {
             builder = builder.admin_cache(&admin_cache);

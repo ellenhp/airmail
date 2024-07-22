@@ -16,7 +16,7 @@ use tantivy::{
     },
     schema::{
         IndexRecordOption, NumericOptions, OwnedValue, Schema, TextFieldIndexing, TextOptions,
-        Value as _, STORED,
+        STORED,
     },
     Searcher, TantivyDocument, Term,
 };

@@ -1,13 +1,18 @@
 mod importer;
 mod query_pip;
+mod wof;
+
+#[cfg(test)]
+mod wof_tests;
+
 pub use importer::{Importer, ImporterBuilder};
 
 use airmail::poi::ToIndexPoi;
 use crossbeam::channel::Sender;
 use lingua::{IsoCode639_3, Language};
 use redb::{ReadTransaction, TableDefinition};
-use reqwest::Url;
 use std::{error::Error, str::FromStr};
+use wof::WhosOnFirst;
 
 pub(crate) const TABLE_AREAS: TableDefinition<u64, &[u8]> = TableDefinition::new("admin_areas");
 pub(crate) const TABLE_NAMES: TableDefinition<u64, &str> = TableDefinition::new("admin_names");
@@ -46,13 +51,13 @@ pub(crate) enum WofCacheItem {
     Admins(u64, Vec<u64>),
 }
 
-pub(crate) async fn populate_admin_areas<'a>(
+pub(crate) fn populate_admin_areas(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     poi: &mut ToIndexPoi,
-    spatial_url: &Url,
+    wof_db: &WhosOnFirst,
 ) -> Result<(), Box<dyn Error>> {
-    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, spatial_url).await?;
+    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, wof_db)?;
     for admin in pip_response.admin_names {
         poi.admins.push(admin);
     }

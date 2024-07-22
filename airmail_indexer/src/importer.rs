@@ -4,27 +4,28 @@ use airmail::{
 };
 use crossbeam::channel::{Receiver, Sender};
 use redb::Database;
-use reqwest::Url;
-use std::sync::Arc;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tokio::spawn;
 
-use crate::{populate_admin_areas, WofCacheItem, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES};
+use crate::{
+    populate_admin_areas, wof::WhosOnFirst, WofCacheItem, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
+};
 
 pub struct ImporterBuilder {
     admin_cache: String,
-    // Unused but will likely be needed for native indexing.
-    _wof_db: String,
-    spatial_url: Url,
+    wof_db: PathBuf,
 }
 
 impl ImporterBuilder {
-    pub fn new(whosonfirst_spatialite_path: &str, spatial_url: &Url) -> Self {
+    pub fn new(whosonfirst_spatialite_path: &Path) -> Self {
         let tmp_dir = std::env::temp_dir();
         let admin_cache = tmp_dir.join("admin_cache.db").to_string_lossy().to_string();
         Self {
             admin_cache,
-            _wof_db: whosonfirst_spatialite_path.to_string(),
-            spatial_url: spatial_url.clone(),
+            wof_db: whosonfirst_spatialite_path.to_path_buf(),
         }
     }
 
@@ -47,14 +48,14 @@ impl ImporterBuilder {
 
         Importer {
             admin_cache: Arc::new(db),
-            spatial_url: self.spatial_url,
+            wof_db_path: self.wof_db,
         }
     }
 }
 
 pub struct Importer {
     admin_cache: Arc<Database>,
-    spatial_url: Url,
+    wof_db_path: PathBuf,
 }
 
 impl Importer {
@@ -105,14 +106,19 @@ impl Importer {
             });
         }
 
-        for _ in 1..num_cpus::get_physical() {
-            println!("Spawning worker");
+        // Our tasks aren't CPU-bound, so we can spawn a few more than the number of CPUs
+        // to keep the CPU busy while waiting for IO.
+        for worker in 1..num_cpus::get() * 4 {
+            println!("Spawning worker {}", worker);
             let no_admin_receiver = receiver.clone();
             let to_index_sender = to_index_sender.clone();
             let to_cache_sender = to_cache_sender.clone();
             let admin_cache = self.admin_cache.clone();
-            let spatial_url = self.spatial_url.clone();
+            let wof_db_path = self.wof_db_path.clone();
+
             nonblocking_join_handles.push(spawn(async move {
+                let wof_db = WhosOnFirst::new(&wof_db_path.clone())
+                    .expect("Failed to open WhosOnFirst database.");
                 let mut read = admin_cache.begin_read().unwrap();
                 let mut counter = 0;
                 while let Ok(mut poi) = no_admin_receiver.recv() {
@@ -127,13 +133,8 @@ impl Importer {
                             tokio::time::sleep(std::time::Duration::from_millis(10)).await;
                         }
 
-                        if let Err(err) = populate_admin_areas(
-                            &read,
-                            to_cache_sender.clone(),
-                            &mut poi,
-                            &spatial_url,
-                        )
-                        .await
+                        if let Err(err) =
+                            populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, &wof_db)
                         {
                             println!(
                                 "Failed to populate admin areas, {}, attempt: {}",

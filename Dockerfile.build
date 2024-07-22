@@ -1,6 +1,6 @@
 FROM rust:1.76
 
-RUN apt-get update && apt-get install -y libssl-dev capnproto clang pkg-config libzstd-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libssl-dev capnproto clang pkg-config libzstd-dev libsqlite3-mod-spatialite && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/airmail
 COPY ./airmail ./airmail
