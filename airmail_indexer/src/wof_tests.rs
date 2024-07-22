@@ -10,9 +10,10 @@ fn wof_read() {
 
     // Connect to the WhosOnFirst database.
     // Ensuring the database is present, and the mod_spatialite extension is loaded.
-    let wof = WhosOnFirst::new(Path::new(
-        "../data/whosonfirst-data-admin-latest.spatial.db",
-    ))
+    let wof = WhosOnFirst::new(
+        Path::new("../data/whosonfirst-data-admin-latest.spatial.db"),
+        None,
+    )
     .expect("Failed to open WhosOnFirst database.");
 
     // Test point_in_polygon.

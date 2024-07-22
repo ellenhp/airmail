@@ -32,6 +32,14 @@ struct Args {
     /// Path to an OSMExpress file to import.
     #[clap(long, short)]
     osmx: String,
+
+    /// Path or reference to libspatialite, the SQLite extension that provides
+    /// spatial functions. If not provided, the default system library will be
+    /// used (mod_spatialite) provided by libsqlite3-mod-spatialite on Debian/Ubuntu.
+    /// On Windows, mod_spatialite.dll needs to be within your PATH, or you can specify
+    /// the full path to the DLL.
+    #[clap(long, short)]
+    libspatialite_path: Option<String>,
 }
 
 #[tokio::main]
@@ -45,6 +53,10 @@ async fn main() {
 
         if let Some(admin_cache) = args.admin_cache {
             builder = builder.admin_cache(&admin_cache);
+        }
+
+        if let Some(libspatialite_path) = args.libspatialite_path {
+            builder = builder.libspatialite_path(&libspatialite_path);
         }
 
         builder.build().await

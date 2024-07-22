@@ -18,6 +18,7 @@ use crate::{
 pub struct ImporterBuilder {
     admin_cache: String,
     wof_db_path: PathBuf,
+    libspatialite_path: Option<String>,
 }
 
 impl ImporterBuilder {
@@ -28,11 +29,17 @@ impl ImporterBuilder {
         Self {
             admin_cache,
             wof_db_path: whosonfirst_spatialite_path.to_path_buf(),
+            libspatialite_path: None,
         }
     }
 
     pub fn admin_cache(mut self, admin_cache: &str) -> Self {
         self.admin_cache = admin_cache.to_string();
+        self
+    }
+
+    pub fn libspatialite_path(mut self, libspatialite_path: &str) -> Self {
+        self.libspatialite_path = Some(libspatialite_path.to_string());
         self
     }
 
@@ -48,8 +55,8 @@ impl ImporterBuilder {
             txn.commit().unwrap();
         }
 
-        let wof_db =
-            WhosOnFirst::new(&self.wof_db_path).expect("Failed to open WhosOnFirst database.");
+        let wof_db = WhosOnFirst::new(&self.wof_db_path, self.libspatialite_path)
+            .expect("Failed to open WhosOnFirst database.");
 
         Ok(Importer {
             admin_cache: Arc::new(db),

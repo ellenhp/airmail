@@ -20,17 +20,20 @@ pub struct WhosOnFirst {
 impl WhosOnFirst {
     /// Opens a connection to the WhosOnFirst database.
     /// Requires package: libsqlite3-mod-spatialite on Debian/Ubuntu
-    pub fn new(path: &Path) -> Result<Self> {
+    pub fn new(path: &Path, libspatialite_path: Option<String>) -> Result<Self> {
+        // Default path on Debian/Ubuntu
+        let libspatialite_path = libspatialite_path.unwrap_or("mod_spatialite".to_string());
+
+        // Open the database with read-only and no mutex flags.
         let conn_man = SqliteConnectionManager::file(path)
             .with_flags(OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX)
-            .with_init(|c| {
-
+            .with_init(move |c| {
                 // Enable spatialite extension.
                 // Unsafe is used to permit the use of the spatialite extension, per documentation
                 // after the extension is loaded, it is disabled to prevent other connections from using it.
                 unsafe {
                     c.load_extension_enable()?;
-                    let load_attempt = c.load_extension("mod_spatialite", None);
+                    let load_attempt = c.load_extension(&libspatialite_path, None);
                     if let Err(e) = &load_attempt {
                         eprintln!("Failed to load mod_spatialite: {:?}. libsqlite3-mod-spatialite is needed on Debian systems.", e);
                     }
