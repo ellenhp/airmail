@@ -8,12 +8,6 @@ mod openstreetmap;
 
 #[derive(Debug, Parser)]
 struct Args {
-    /// Path to the Docker socket. This is used to run the Pelias spatial server
-    /// container and perform point-in-polygon queries for administrative area
-    /// population.
-    #[clap(long, short)]
-    docker_socket: Option<String>,
-
     /// Url to the spatial server.
     #[clap(long, short, default_value = "http://localhost:3000")]
     spatial_url: Url,
@@ -22,11 +16,6 @@ struct Args {
     /// administrative areas, which are often missing or wrong in OSM.
     #[clap(long, short)]
     wof_db: String,
-
-    /// Whether to forcefully recreate the WOF spatial server container. Default
-    /// false.
-    #[clap(long, short, default_value = "false")]
-    recreate: bool,
 
     /// Path to the Airmail index to import into. This should be either an empty
     /// directory or a directory containing an existing index created with the
@@ -57,16 +46,8 @@ async fn main() {
     let importer = {
         let mut builder = ImporterBuilder::new(&args.wof_db, &args.spatial_url);
 
-        if let Some(docker_socket) = args.docker_socket {
-            builder = builder.docker_socket(&docker_socket);
-        }
-
         if let Some(admin_cache) = args.admin_cache {
             builder = builder.admin_cache(&admin_cache);
-        }
-
-        if args.recreate {
-            builder = builder.recreate_containers(true);
         }
 
         builder.build().await

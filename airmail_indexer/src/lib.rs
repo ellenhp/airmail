@@ -4,19 +4,11 @@ use airmail::{
     index::AirmailIndex,
     poi::{SchemafiedPoi, ToIndexPoi},
 };
-use bollard::{
-    container::{
-        CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
-        StartContainerOptions, StopContainerOptions,
-    },
-    service::{HostConfig, MountTypeEnum},
-    Docker, API_DEFAULT_VERSION,
-};
 use crossbeam::channel::{Receiver, Sender};
 use lingua::{IsoCode639_3, Language};
 use redb::{Database, ReadTransaction, TableDefinition};
 use reqwest::Url;
-use std::{collections::HashMap, error::Error, str::FromStr, sync::Arc};
+use std::{error::Error, str::FromStr, sync::Arc};
 use tokio::spawn;
 
 pub(crate) const TABLE_AREAS: TableDefinition<u64, &[u8]> = TableDefinition::new("admin_areas");
@@ -74,164 +66,10 @@ pub(crate) async fn populate_admin_areas<'a>(
     Ok(())
 }
 
-#[derive(Debug, Clone, PartialEq)]
-enum ContainerStatus {
-    Running,
-    Stopped,
-    DoesNotExist,
-}
-
-const PIP_SERVICE_IMAGE: &str = "spatial_custom";
-// const PIP_SERVICE_IMAGE: &str = "docker.io/pelias/spatial:latest";
-
-async fn docker_connect(socket: &Option<String>) -> Result<Docker, Box<dyn std::error::Error>> {
-    let docker = if let Some(docker_socket) = socket {
-        Docker::connect_with_socket(docker_socket, 20, API_DEFAULT_VERSION)?
-    } else {
-        Docker::connect_with_local_defaults()?
-    };
-    Ok(docker)
-}
-
-async fn get_container_status(
-    idx: usize,
-    docker: &Docker,
-) -> Result<ContainerStatus, Box<dyn std::error::Error>> {
-    let containers = &docker
-        .list_containers(Some(ListContainersOptions::<String> {
-            all: true,
-            ..Default::default()
-        }))
-        .await?;
-
-    for container in containers {
-        if let Some(names) = &container.names {
-            if names.contains(&format!("/airmail-pip-service-{}", idx)) {
-                if container.state == Some("running".to_string()) {
-                    return Ok(ContainerStatus::Running);
-                } else {
-                    return Ok(ContainerStatus::Stopped);
-                }
-            }
-        }
-    }
-    Ok(ContainerStatus::DoesNotExist)
-}
-
-async fn maybe_start_pip_container(
-    wof_db_path: &str,
-    recreate: bool,
-    docker: &Docker,
-) -> Result<(), Box<dyn std::error::Error>> {
-    // Holdover from when we had multiple containers.
-    let idx = 0;
-    let container_state = get_container_status(idx, docker).await?;
-    if container_state == ContainerStatus::Running && !recreate {
-        println!(
-            "Container `airmail-pip-service-{}` is already running.",
-            idx
-        );
-        return Ok(());
-    }
-
-    let pip_config = bollard::container::Config {
-        image: Some(PIP_SERVICE_IMAGE),
-        env: Some(vec![]),
-        host_config: Some(HostConfig {
-            port_bindings: Some(HashMap::from([(
-                3000.to_string(),
-                Some(vec![bollard::models::PortBinding {
-                    host_ip: None,
-                    host_port: Some(format!("{}", 3102 + idx)),
-                }]),
-            )])),
-            mounts: Some(vec![bollard::models::Mount {
-                source: Some(wof_db_path.to_string()),
-                target: Some("/mnt/whosonfirst/whosonfirst-spatialite.db".to_string()),
-                typ: Some(MountTypeEnum::BIND),
-                ..Default::default()
-            }]),
-            privileged: Some(true),
-            ..Default::default()
-        }),
-        cmd: Some(vec![
-            "server",
-            "--db",
-            "/mnt/whosonfirst/whosonfirst-spatialite.db",
-        ]),
-        exposed_ports: Some(HashMap::from([("3000/tcp", HashMap::new())])),
-        ..Default::default()
-    };
-
-    // println!("Pulling image: {}", PIP_SERVICE_IMAGE);
-    // let _ = &docker
-    //     .create_image(
-    //         Some(CreateImageOptions {
-    //             from_image: PIP_SERVICE_IMAGE,
-    //             ..Default::default()
-    //         }),
-    //         None,
-    //         None,
-    //     )
-    //     .try_collect::<Vec<_>>()
-    //     .await?;
-
-    if recreate {
-        println!("Stopping container `airmail-pip-service-{}`", idx);
-        let _ = &docker
-            .stop_container(
-                &format!("airmail-pip-service-{}", idx),
-                None::<StopContainerOptions>,
-            )
-            .await;
-        let _ = &docker
-            .remove_container(
-                &format!("airmail-pip-service-{}", idx),
-                None::<RemoveContainerOptions>,
-            )
-            .await;
-    }
-
-    if container_state == ContainerStatus::DoesNotExist || recreate {
-        println!("Creating container `airmail-pip-service-{}`", idx);
-        let _ = &docker
-            .create_container(
-                Some(CreateContainerOptions {
-                    name: &format!("airmail-pip-service-{}", idx),
-                    platform: None,
-                }),
-                pip_config,
-            )
-            .await?;
-    }
-
-    if get_container_status(idx, docker).await? != ContainerStatus::Running {
-        println!("Starting container `airmail-pip-service-{}`", idx);
-        let _ = &docker
-            .start_container(
-                &format!("airmail-pip-service-{}", idx),
-                None::<StartContainerOptions<String>>,
-            )
-            .await?;
-        println!("Waiting for container to start.");
-        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-    }
-
-    if get_container_status(idx, docker).await? == ContainerStatus::Running {
-        println!("Container `airmail-pip-service-{}` is running.", idx);
-    } else {
-        println!("Container `airmail-pip-service-{}` failed to start.", idx);
-        return Err(format!("Container `airmail-pip-service-{}` failed to start.", idx).into());
-    }
-
-    Ok(())
-}
-
 pub struct ImporterBuilder {
     admin_cache: String,
-    wof_db: String,
-    recreate: bool,
-    docker_socket: Option<String>,
+    // Unused but will likely be needed for native indexing.
+    _wof_db: String,
     spatial_url: Url,
 }
 
@@ -241,25 +79,13 @@ impl ImporterBuilder {
         let admin_cache = tmp_dir.join("admin_cache.db").to_string_lossy().to_string();
         Self {
             admin_cache,
-            wof_db: whosonfirst_spatialite_path.to_string(),
-            recreate: false,
-            docker_socket: None,
+            _wof_db: whosonfirst_spatialite_path.to_string(),
             spatial_url: spatial_url.clone(),
         }
     }
 
     pub fn admin_cache(mut self, admin_cache: &str) -> Self {
         self.admin_cache = admin_cache.to_string();
-        self
-    }
-
-    pub fn recreate_containers(mut self, recreate: bool) -> Self {
-        self.recreate = recreate;
-        self
-    }
-
-    pub fn docker_socket(mut self, docker_socket: &str) -> Self {
-        self.docker_socket = Some(docker_socket.to_string());
         self
     }
 
@@ -275,22 +101,6 @@ impl ImporterBuilder {
             txn.commit().unwrap();
         }
 
-        // Conditionally start the spatial server container.
-        if self.docker_socket.is_some() {
-            let docker_socket = docker_connect(&self.docker_socket)
-                    .await
-                    .expect("Failed to connect to the Docker daemon at socket path. Try specifiying the correct path or verifying it exists, and verifying permissions.");
-            {
-                let _ = subprocess::Exec::cmd("chcon")
-                    .arg("-t")
-                    .arg("container_file_t")
-                    .arg(&self.wof_db)
-                    .join();
-                maybe_start_pip_container(&self.wof_db, self.recreate, &docker_socket)
-                    .await
-                    .expect("Failed to start spatial server container.");
-            }
-        }
         Importer {
             admin_cache: Arc::new(db),
             spatial_url: self.spatial_url,
