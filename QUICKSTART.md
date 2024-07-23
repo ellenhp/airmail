@@ -23,7 +23,7 @@ mkdir -p ./data/index
 
 ## Fetching Data
 
-1. Download OSM probuf file (.pbf file) for target region. See: <https://download.geofabrik.de> and place into `./data` folder.
+1. Download OSM probuf file (.pbf file) for target region. See: <https://download.geofabrik.de> or <https://download.bbbike.org/osm/planet/> and place into `./data` folder.
 2. Download Who's On First (SpatiaLite format). For planet see: <https://geocode.earth/data/whosonfirst/combined/> and <https://data.geocode.earth/wof/dist/spatial/whosonfirst-data-admin-latest.spatial.db.bz2>
 3. Ensure files are present and decompressed in the `./data/` directory.
 
