@@ -3,7 +3,6 @@ use std::{collections::HashSet, error::Error};
 use crossbeam::channel::Sender;
 use redb::{ReadTransaction, ReadableTable};
 use serde::Deserialize;
-use tokio::task::JoinHandle;
 
 use crate::{
     wof::{PipLangsResponse, WhosOnFirst},
@@ -70,7 +69,7 @@ async fn query_pip_inner(
     let lat_lng = s2::latlng::LatLng::from(cell);
     let lat = lat_lng.lat.deg();
     let lng = lat_lng.lng.deg();
-    let response = wof_db.point_in_polygon(lng, lat)?;
+    let response = wof_db.point_in_polygon(lng, lat).await?;
     let mut response_ids = Vec::new();
     for concise_response in response {
         let admin_id: u64 = concise_response.id.parse()?;
@@ -134,7 +133,7 @@ fn query_languages_cache(
 }
 
 async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
-    let response = wof_db.place_name_by_id(admin_id).ok()?;
+    let response = wof_db.place_name_by_id(admin_id).await.ok()?;
     if response.is_empty() {
         return None;
     }
@@ -171,7 +170,7 @@ async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>>
 }
 
 async fn query_langs(country_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
-    let response: PipLangsResponse = wof_db.properties_for_id(country_id).ok()?.into();
+    let response: PipLangsResponse = wof_db.properties_for_id(country_id).await.ok()?.into();
     response
         .langs
         .map(|langs| langs.split(',').map(|s| s.to_string()).collect())
@@ -184,49 +183,28 @@ pub(crate) async fn query_pip(
     wof_db: &WhosOnFirst,
 ) -> Result<PipResponse, Box<dyn Error>> {
     let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), wof_db).await?;
-    let mut name_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
-    let mut lang_handles: Vec<(u64, JoinHandle<Option<Vec<String>>>)> = Vec::new();
-    let mut cached_names = Vec::new();
-    let mut cached_langs = Vec::new();
+    let mut response = PipResponse::default();
 
     for admin_id in wof_ids.all_admin_ids {
         if let Ok(names) = query_names_cache(read, &admin_id) {
-            cached_names.extend(names);
-        } else {
-            let wof_db = wof_db.clone();
-            let handle = tokio::spawn(async move { query_names(admin_id, &wof_db).await });
-            name_handles.push((admin_id, handle));
-        }
-        if COUNTRIES.contains(&admin_id) {
-            continue;
-        }
-    }
-    
-    if let Some(country_id) = wof_ids.country {
-        if let Ok(langs) = query_languages_cache(read, &country_id) {
-            cached_langs.extend(langs);
-        } else {
-            let wof_db = wof_db.clone();
-            let handle = tokio::spawn(async move { query_langs(country_id, &wof_db).await });
-            lang_handles.push((country_id, handle));
-        }
-    }
-
-    let mut response = PipResponse::default();
-    response.admin_names.extend(cached_names);
-    response.admin_langs.extend(cached_langs);
-    for (admin_id, handle) in name_handles {
-        if let Ok(Some(names)) = handle.await {
+            response.admin_names.extend(names);
+        } else if let Some(names) = query_names(admin_id, wof_db).await {
             to_cache_sender
                 .send(WofCacheItem::Names(admin_id, names.clone()))
                 .unwrap();
             response.admin_names.extend(names);
         }
+        if COUNTRIES.contains(&admin_id) {
+            continue;
+        }
     }
-    for (admin_id, handle) in lang_handles {
-        if let Ok(Some(langs)) = handle.await {
+
+    if let Some(country_id) = wof_ids.country {
+        if let Ok(langs) = query_languages_cache(read, &country_id) {
+            response.admin_langs.extend(langs);
+        } else if let Some(langs) = query_langs(country_id, wof_db).await {
             to_cache_sender
-                .send(WofCacheItem::Langs(admin_id, langs.clone()))
+                .send(WofCacheItem::Langs(country_id, langs.clone()))
                 .unwrap();
             response.admin_langs.extend(langs);
         }

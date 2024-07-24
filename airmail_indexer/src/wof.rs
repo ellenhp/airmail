@@ -1,157 +1,137 @@
 use anyhow::Result;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::OpenFlags;
+use log::debug;
 use serde::Deserialize;
+use sqlx::{
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
+    Pool, Sqlite,
+};
 use std::path::Path;
 
 /// Performs simple point-in-polygon queries against the WhosOnFirst database.
-///
-/// # Safety
-/// Querying the WhosOnFirst database requires the spatialite extension to be loaded
-/// which requires use of unsafe to load the dylib. After the extension is loaded/fails
-/// it is disabled to prevent other connections from loading extensions.
-///
+/// Queries against the WOF database require the SQLite mod_spatialite extension to be loaded.
+/// Requires package: libsqlite3-mod-spatialite on Debian/Ubuntu
 #[derive(Clone)]
 pub struct WhosOnFirst {
-    pool: Pool<SqliteConnectionManager>,
+    pool: Pool<Sqlite>,
 }
 
 impl WhosOnFirst {
     /// Opens a connection to the WhosOnFirst database.
-    /// Requires package: libsqlite3-mod-spatialite on Debian/Ubuntu
-    pub fn new(path: &Path, libspatialite_path: Option<String>) -> Result<Self> {
-        // Default path on Debian/Ubuntu
-        let libspatialite_path = libspatialite_path.unwrap_or("mod_spatialite".to_string());
+    /// Requires the SQLite mod_spatialite extension to be loaded.
+    pub async fn new(path: &Path) -> Result<Self> {
+        let opts = SqliteConnectOptions::new()
+            .filename(path)
+            .journal_mode(SqliteJournalMode::Wal)
+            .pragma("cache_size", "10000")
+            // .pragma("synchronous", "OFF")
+            // .pragma("temp_store", "MEMORY")
+            .pragma("mmap_size", "268435456")
+            // .pragma("foreign_keys", "OFF")
+            // .pragma("recursive_triggers", "OFF")
+            // .pragma("optimize", "0x10002")
+            .read_only(true)
+            .immutable(true)
+            .extension("mod_spatialite");
 
-        // Open the database with read-only and no mutex flags.
-        let conn_man = SqliteConnectionManager::file(path)
-            .with_flags(OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX)
-            .with_init(move |c| {
-                // Enable spatialite extension.
-                // Unsafe is used to permit the use of the spatialite extension, per documentation
-                // after the extension is loaded, it is disabled to prevent other connections from using it.
-                unsafe {
-                    c.load_extension_enable()?;
-                    let load_attempt = c.load_extension(&libspatialite_path, None);
-                    if let Err(e) = &load_attempt {
-                        eprintln!("Failed to load mod_spatialite: {:?}. libsqlite3-mod-spatialite is needed on Debian systems.", e);
-                    }
-                    c.load_extension_disable()?;
-                    load_attempt
-                }?;
+        let pool = SqlitePoolOptions::new()
+            .max_connections(32)
+            // .after_connect(|conn: &mut SqliteConnection, _meta| {
+            //     Box::pin(async move {
+            //         // Warm places
+            //         conn.execute(
+            //             r"
+            //             SELECT place.class, place.type, COUNT(*) AS total
+            //             FROM place
+            //             GROUP BY place.class, place.type
+            //             ORDER BY place.class ASC, place.type ASC
+            //         ",
+            //         )
+            //         .await?;
+            //         Ok(())
+            //     })
+            // })
+            .connect_with(opts)
+            .await?;
 
-                c.execute_batch(
-                    r"
-                        PRAGMA cache_size = 2000;
-                        PRAGMA temp_store = MEMORY;
-                        PRAGMA mmap_size = 268435456;
-                        PRAGMA foreign_keys = OFF;
-                    ",
-                )?;
-
-                Ok(())
-            });
-
-        let pool = Pool::builder()
-            .max_size(num_cpus::get_physical().try_into()?)
-            .build(conn_man)?;
+        debug!("Connected to WhosOnFirst database at {:?}", path);
 
         Ok(Self { pool })
     }
 
-    pub fn point_in_polygon(&self, lon: f64, lat: f64) -> Result<Vec<ConcisePipResponse>> {
-        let connection = self.pool.get()?;
-
-        // Requires the spatialite extension to be loaded.
-        let mut statement = connection.prepare_cached(
+    /// Returns the WOF ID of polygons that contain the given point.
+    /// Requires the spatialite extension to be loaded.
+    pub async fn point_in_polygon(&self, lon: f64, lat: f64) -> Result<Vec<ConcisePipResponse>> {
+        let lon: f32 = lon as f32;
+        let lat: f32 = lat as f32;
+        let rows = sqlx::query_as::<_, ConcisePipResponse>(
             r"
                 SELECT place.source, place.id, place.class, place.type
-                FROM main.point_in_polygon AS pip
+                FROM main.point_in_polygon
                 LEFT JOIN place USING (source, id)
                 WHERE search_frame = MakePoint( ?1, ?2, 4326 )
-                AND INTERSECTS( pip.geom, MakePoint( ?1, ?2, 4326 ) )
+                AND INTERSECTS( point_in_polygon.geom, MakePoint( ?1, ?2, 4326 ) )
                 AND place.source IS NOT NULL
+                LIMIT 1000
             ",
-        )?;
-
-        let rows = statement
-            .query_map([lon, lat], |row| {
-                Ok(ConcisePipResponse {
-                    source: row.get(0)?,
-                    id: row.get(1)?,
-                    class: row.get(2)?,
-                    r#type: row.get(3)?,
-                })
-            })?
-            .flatten()
-            .collect();
+        )
+        .bind(lon)
+        .bind(lat)
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(rows)
     }
 
-    pub fn place_name_by_id(&self, id: u64) -> Result<Vec<PipPlaceName>> {
-        let connection = self.pool.get()?;
+    /// Lookup the name of a place by its WOF ID.
+    pub async fn place_name_by_id(&self, id: u64) -> Result<Vec<PipPlaceName>> {
+        // Convert to i64 for SQLite
+        let id: i64 = id.try_into()?;
 
         // Index for name is on (source, id)
-        let mut statement = connection.prepare_cached(
+        let rows = sqlx::query_as::<_, PipPlaceName>(
             r"
                 SELECT name.lang, name.tag, name.abbr, name.name
                 FROM main.name
                 WHERE name.source = 'wof'
                 AND name.id = ?1
             ",
-        )?;
-
-        let rows = statement
-            .query_map([id], |row| {
-                Ok(PipPlaceName {
-                    lang: row.get(0)?,
-                    tag: row.get(1)?,
-                    abbr: row.get(2)?,
-                    name: row.get(3)?,
-                })
-            })?
-            .flatten()
-            .collect();
+        )
+        .bind(id)
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(rows)
     }
 
-    pub fn properties_for_id(&self, id: u64) -> Result<Vec<WofKV>> {
-        let connection = self.pool.get()?;
+    /// Lookup the properties of a place by its WOF ID.
+    pub async fn properties_for_id(&self, id: u64) -> Result<Vec<WofKV>> {
+        // Convert to i64 for SQLite
+        let id: i64 = id.try_into()?;
 
         // Index for name is on (source, id)
-        let mut statement = connection.prepare_cached(
+        let rows = sqlx::query_as::<_, WofKV>(
             r"
                 SELECT property.key, property.value
                 FROM main.property
                 WHERE property.source = 'wof'
                 AND property.id = ?1
             ",
-        )?;
-
-        let rows = statement
-            .query_map([id], |row| {
-                Ok(WofKV {
-                    key: row.get(0)?,
-                    value: row.get(1)?,
-                })
-            })?
-            .flatten()
-            .collect();
+        )
+        .bind(id)
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(rows)
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, sqlx::FromRow)]
 pub struct WofKV {
     key: String,
     value: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, sqlx::FromRow)]
 pub struct ConcisePipResponse {
     #[allow(dead_code)]
     pub source: String,
@@ -162,7 +142,7 @@ pub struct ConcisePipResponse {
     pub r#type: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, sqlx::FromRow)]
 pub struct PipPlaceName {
     pub lang: String,
     pub tag: String,
