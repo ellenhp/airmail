@@ -1,3 +1,4 @@
+pub mod error;
 mod importer;
 mod query_pip;
 mod wof;
@@ -62,8 +63,9 @@ pub(crate) async fn populate_admin_areas(
         poi.admins.push(admin);
     }
     for lang in pip_response.admin_langs {
-        let _ = IsoCode639_3::from_str(&lang)
-            .map(|iso| poi.languages.push(Language::from_iso_code_639_3(&iso)));
+        if let Ok(iso) = IsoCode639_3::from_str(&lang) {
+            poi.languages.push(Language::from_iso_code_639_3(&iso))
+        }
     }
 
     Ok(())
