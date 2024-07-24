@@ -1,10 +1,13 @@
-use std::{collections::HashSet, error::Error};
+use std::collections::HashSet;
 
+use anyhow::Result;
 use crossbeam::channel::Sender;
+use futures_util::future::join_all;
 use redb::{ReadTransaction, ReadableTable};
 use serde::Deserialize;
 
 use crate::{
+    error::IndexerError,
     wof::{PipLangsResponse, WhosOnFirst},
     WofCacheItem, COUNTRIES, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
 };
@@ -29,7 +32,7 @@ async fn query_pip_inner(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     wof_db: &WhosOnFirst,
-) -> Result<AdminIds, Box<dyn Error>> {
+) -> Result<AdminIds> {
     let desired_level = 15;
     let cell = s2::cellid::CellID(s2cell);
     let cell = if cell.level() > desired_level {
@@ -98,10 +101,7 @@ async fn query_pip_inner(
     })
 }
 
-fn query_names_cache(
-    read: &'_ ReadTransaction<'_>,
-    admin: &u64,
-) -> Result<Vec<String>, Box<dyn Error>> {
+fn query_names_cache(read: &'_ ReadTransaction<'_>, admin: u64) -> Result<Vec<String>> {
     let txn = read;
     let table = txn.open_table(TABLE_NAMES)?;
     if let Some(names_ref) = table.get(admin)? {
@@ -112,13 +112,10 @@ fn query_names_cache(
             .collect::<Vec<String>>();
         return Ok(names);
     }
-    Err("No names found".into())
+    Err(IndexerError::NoNamesFound.into())
 }
 
-fn query_languages_cache(
-    read: &'_ ReadTransaction<'_>,
-    admin: &u64,
-) -> Result<Vec<String>, Box<dyn Error>> {
+fn query_languages_cache(read: &'_ ReadTransaction<'_>, admin: u64) -> Result<Vec<String>> {
     let txn = read;
     let table = txn.open_table(TABLE_LANGS)?;
     if let Some(langs_ref) = table.get(admin)? {
@@ -129,10 +126,10 @@ fn query_languages_cache(
             .collect::<Vec<String>>();
         return Ok(langs);
     }
-    Err("No langs found".into())
+    Err(IndexerError::NoLangsFound.into())
 }
 
-async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
+async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<(u64, Vec<String>)> {
     let response = wof_db.place_name_by_id(admin_id).await.ok()?;
     if response.is_empty() {
         return None;
@@ -166,14 +163,16 @@ async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>>
         .iter()
         .cloned()
         .collect::<Vec<_>>();
-    Some(names)
+    Some((admin_id, names))
 }
 
-async fn query_langs(country_id: u64, wof_db: &WhosOnFirst) -> Option<Vec<String>> {
+async fn query_langs(country_id: u64, wof_db: &WhosOnFirst) -> Option<(u64, Vec<String>)> {
     let response: PipLangsResponse = wof_db.properties_for_id(country_id).await.ok()?.into();
-    response
+    let langs: Vec<String> = response
         .langs
-        .map(|langs| langs.split(',').map(|s| s.to_string()).collect())
+        .map(|langs| langs.split(',').map(|s| s.to_string()).collect())?;
+
+    Some((country_id, langs))
 }
 
 pub(crate) async fn query_pip(
@@ -181,33 +180,45 @@ pub(crate) async fn query_pip(
     to_cache_sender: Sender<WofCacheItem>,
     s2cell: u64,
     wof_db: &WhosOnFirst,
-) -> Result<PipResponse, Box<dyn Error>> {
+) -> Result<PipResponse> {
     let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), wof_db).await?;
     let mut response = PipResponse::default();
+    let mut admin_name_futures = vec![];
+    let mut lang_futures = vec![];
 
+    // Query names for the admin areas
     for admin_id in wof_ids.all_admin_ids {
-        if let Ok(names) = query_names_cache(read, &admin_id) {
-            response.admin_names.extend(names);
-        } else if let Some(names) = query_names(admin_id, wof_db).await {
-            to_cache_sender
-                .send(WofCacheItem::Names(admin_id, names.clone()))
-                .unwrap();
+        if let Ok(names) = query_names_cache(read, admin_id) {
             response.admin_names.extend(names);
         }
+        admin_name_futures.push(query_names(admin_id, wof_db));
+
         if COUNTRIES.contains(&admin_id) {
             continue;
         }
     }
 
+    // Query languages for the country
     if let Some(country_id) = wof_ids.country {
-        if let Ok(langs) = query_languages_cache(read, &country_id) {
-            response.admin_langs.extend(langs);
-        } else if let Some(langs) = query_langs(country_id, wof_db).await {
-            to_cache_sender
-                .send(WofCacheItem::Langs(country_id, langs.clone()))
-                .unwrap();
+        if let Ok(langs) = query_languages_cache(read, country_id) {
             response.admin_langs.extend(langs);
         }
+        lang_futures.push(query_langs(country_id, wof_db));
+    }
+
+    // Drive the futures to completion
+    for (admin_id, names) in join_all(admin_name_futures).await.into_iter().flatten() {
+        to_cache_sender
+            .send(WofCacheItem::Names(admin_id, names.clone()))
+            .unwrap();
+        response.admin_names.extend(names);
+    }
+
+    for (country_id, langs) in join_all(lang_futures).await.into_iter().flatten() {
+        to_cache_sender
+            .send(WofCacheItem::Langs(country_id, langs.clone()))
+            .unwrap();
+        response.admin_langs.extend(langs);
     }
 
     Ok(response)

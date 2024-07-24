@@ -4,7 +4,8 @@ use airmail::{
 };
 use anyhow::Result;
 use crossbeam::channel::{Receiver, Sender};
-use log::debug;
+use futures_util::future::join_all;
+use log::{debug, info, warn};
 use redb::Database;
 use std::{
     path::{Path, PathBuf},
@@ -43,12 +44,12 @@ impl ImporterBuilder {
 
         let db = Database::create(&admin_cache)?;
         {
-            let txn = db.begin_write().unwrap();
+            let txn = db.begin_write()?;
             {
-                txn.open_table(TABLE_AREAS).unwrap();
-                txn.open_table(TABLE_NAMES).unwrap();
+                txn.open_table(TABLE_AREAS)?;
+                txn.open_table(TABLE_NAMES)?;
             }
-            txn.commit().unwrap();
+            txn.commit()?;
         }
 
         let wof_db = WhosOnFirst::new(&self.wof_db_path).await?;
@@ -78,9 +79,11 @@ impl Importer {
             crossbeam::channel::bounded(1024);
         let (to_index_sender, to_index_receiver): (Sender<SchemafiedPoi>, Receiver<SchemafiedPoi>) =
             crossbeam::channel::bounded(1024);
+        let mut handles = vec![];
 
         let admin_cache = self.admin_cache.clone();
-        let cache = spawn(async move {
+
+        handles.push(spawn(async move {
             let mut write = admin_cache.begin_write().unwrap();
             let mut count = 0;
             loop {
@@ -111,9 +114,9 @@ impl Importer {
                     Err(_) => break,
                 }
             }
-        });
+        }));
 
-        let index_builder = spawn(async move {
+        handles.push(spawn(async move {
             let start = std::time::Instant::now();
 
             let mut writer = index.writer().unwrap();
@@ -122,7 +125,7 @@ impl Importer {
                 {
                     count += 1;
                     if count % 10000 == 0 {
-                        println!(
+                        info!(
                             "{} POIs parsed in {} seconds, {} per second.",
                             count,
                             start.elapsed().as_secs(),
@@ -133,15 +136,16 @@ impl Importer {
 
                 if let Ok(poi) = to_index_receiver.recv() {
                     if let Err(err) = writer.add_poi(poi, &source).await {
-                        println!("Failed to add POI to index. {}", err);
+                        warn!("Failed to add POI to index. {}", err);
                     }
                 } else {
                     break;
                 }
             }
             writer.commit().unwrap();
-        });
+        }));
 
+        // Spawn processing workers
         for _ in 0..num_cpus::get_physical() {
             let no_admin_receiver = receiver.clone();
             let to_index_sender = to_index_sender.clone();
@@ -149,39 +153,40 @@ impl Importer {
             let admin_cache = self.admin_cache.clone();
             let wof_db = self.wof_db.clone();
 
-            // nonblocking_join_handles.push(spawn(async move {
-            let mut read = admin_cache.begin_read().unwrap();
-            let mut counter = 0;
-            while let Ok(mut poi) = no_admin_receiver.recv() {
-                counter += 1;
-                if counter % 1000 == 0 {
-                    read = admin_cache.begin_read().unwrap();
+            handles.push(spawn(async move {
+                let mut read = admin_cache.begin_read().unwrap();
+                let mut counter = 0;
+                while let Ok(mut poi) = no_admin_receiver.recv() {
+                    counter += 1;
+                    if counter % 1000 == 0 {
+                        read = admin_cache.begin_read().unwrap();
 
-                    debug!(
-                        "Cache queue, index queue: {}, {}",
-                        to_cache_sender.len(),
-                        to_index_sender.len()
-                    );
-                }
+                        debug!(
+                            "Cache queue, index queue: {}, {}",
+                            to_cache_sender.len(),
+                            to_index_sender.len()
+                        );
+                    }
 
-                match populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, &wof_db).await
-                {
-                    Ok(()) => {
-                        let poi = SchemafiedPoi::from(poi);
-                        to_index_sender.send(poi).unwrap();
-                    }
-                    Err(err) => {
-                        println!("Failed to populate admin areas, {}", err);
+                    match populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, &wof_db)
+                        .await
+                    {
+                        Ok(()) => {
+                            let poi = SchemafiedPoi::from(poi);
+                            to_index_sender.send(poi).unwrap();
+                        }
+                        Err(err) => {
+                            warn!("Failed to populate admin areas, {}", err);
+                        }
                     }
                 }
-            }
-            // }));
+            }));
         }
         drop(to_index_sender);
+        drop(to_cache_sender);
 
-        println!("Waiting for tasks to finish.");
-        cache.await.unwrap();
-        index_builder.await.unwrap();
+        info!("Waiting for tasks to finish.");
+        join_all(handles).await;
 
         Ok(())
     }

@@ -99,9 +99,10 @@ fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
 }
 
 pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<()> {
-    dbg!(osmx_path);
+    info!("Loading osmx from path: {:?}", osmx_path);
     let db = Database::open(osmx_path).unwrap();
-    let mut count = 0;
+    let mut interesting = 0;
+    let mut total = 0;
     info!("Processing nodes");
     {
         let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
@@ -110,17 +111,25 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
             .map_err(IndexerError::from)?
             .iter()
             .for_each(|(node_id, node)| {
-                count += 1;
-                if count % 10000 == 0 {
-                    debug!("Processed {} nodes, queue size: {}", count, sender.len());
+                total += 1;
+                if interesting % 10000 == 0 {
+                    debug!(
+                        "Processed interesting/total: {}/{} nodes, queue size: {}",
+                        interesting,
+                        total,
+                        sender.len()
+                    );
                 }
 
                 let tags = tags(node.tags());
                 if let Ok(tags) = tags {
                     let location = locations.get(node_id).expect("Nodes must have locations");
                     if let Some(poi) = tags_to_poi(&tags, location.lat(), location.lon()) {
-                        if let Err(err) = sender.send(poi) {
-                            warn!("Error from sender: {}", err);
+                        match sender.send(poi) {
+                            Ok(_) => {
+                                interesting += 1;
+                            }
+                            Err(err) => warn!("Error from sender: {}", err),
                         }
                     }
                 }
@@ -134,16 +143,23 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
             .map_err(IndexerError::from)?
             .iter()
             .for_each(|(_way_id, way)| {
-                count += 1;
-                if count % 10000 == 0 {
-                    debug!("Processed {} ways, queue size: {}", count, sender.len());
+                if interesting % 10000 == 0 {
+                    debug!(
+                        "Processed interesting/total: {}/{} nodes, queue size: {}",
+                        interesting,
+                        total,
+                        sender.len()
+                    );
                 }
 
                 let tags = tags(way.tags());
                 if let Ok(tags) = tags {
                     if let Some(poi) = index_way(&tags, &way, &locations) {
-                        if let Err(err) = sender.send(poi) {
-                            warn!("Error from sender: {}", err);
+                        match sender.send(poi) {
+                            Ok(_) => {
+                                interesting += 1;
+                            }
+                            Err(err) => warn!("Error from sender: {}", err),
                         }
                     }
                 }

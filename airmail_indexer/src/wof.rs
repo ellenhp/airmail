@@ -22,19 +22,19 @@ impl WhosOnFirst {
         let opts = SqliteConnectOptions::new()
             .filename(path)
             .journal_mode(SqliteJournalMode::Wal)
-            .pragma("cache_size", "10000")
+            // .pragma("cache_size", "10000")
             // .pragma("synchronous", "OFF")
             // .pragma("temp_store", "MEMORY")
-            .pragma("mmap_size", "268435456")
+            // .pragma("mmap_size", "268435456")
             // .pragma("foreign_keys", "OFF")
             // .pragma("recursive_triggers", "OFF")
             // .pragma("optimize", "0x10002")
-            .read_only(true)
-            .immutable(true)
+            // .read_only(true)
+            // .immutable(true)
             .extension("mod_spatialite");
 
         let pool = SqlitePoolOptions::new()
-            .max_connections(32)
+            .max_connections(64)
             // .after_connect(|conn: &mut SqliteConnection, _meta| {
             //     Box::pin(async move {
             //         // Warm places
