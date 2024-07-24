@@ -34,7 +34,7 @@ impl WhosOnFirst {
             .extension("mod_spatialite");
 
         let pool = SqlitePoolOptions::new()
-            .max_connections(64)
+            .max_connections(num_cpus::get_physical().try_into()?)
             // .after_connect(|conn: &mut SqliteConnection, _meta| {
             //     Box::pin(async move {
             //         // Warm places
@@ -71,6 +71,12 @@ impl WhosOnFirst {
                 WHERE search_frame = MakePoint( ?1, ?2, 4326 )
                 AND INTERSECTS( point_in_polygon.geom, MakePoint( ?1, ?2, 4326 ) )
                 AND place.source IS NOT NULL
+                AND (
+                    place.type != 'planet'
+                    AND place.type != 'marketarea'
+                    AND place.type != 'county'
+                    AND place.type != 'timezone'
+                )
                 LIMIT 1000
             ",
         )
@@ -94,6 +100,11 @@ impl WhosOnFirst {
                 FROM main.name
                 WHERE name.source = 'wof'
                 AND name.id = ?1
+                AND name.tag IN ('preferred', 'default')
+                AND name.lang IN (
+                    'ara', 'dan', 'deu', 'fra', 'fin', 'hun', 'gre', 'ita', 'nld', 'por',
+                    'rus', 'ron', 'spa', 'eng', 'swe', 'tam', 'tur', 'zho'
+                )
             ",
         )
         .bind(id)
@@ -115,6 +126,7 @@ impl WhosOnFirst {
                 FROM main.property
                 WHERE property.source = 'wof'
                 AND property.id = ?1
+                AND property.key = 'wof:lang_x_spoken'
             ",
         )
         .bind(id)

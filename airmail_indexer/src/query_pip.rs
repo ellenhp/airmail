@@ -76,6 +76,8 @@ async fn query_pip_inner(
     let mut response_ids = Vec::new();
     for concise_response in response {
         let admin_id: u64 = concise_response.id.parse()?;
+
+        // These filters are also applied in SQL
         if concise_response.r#type == "planet"
             || concise_response.r#type == "marketarea"
             || concise_response.r#type == "county"
@@ -136,6 +138,7 @@ async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<(u64, Vec<St
     }
     let names = response
         .iter()
+        // These languages and filters are also applied in SQL
         .filter(|place_name| place_name.tag == "preferred" || place_name.tag == "default")
         .filter(|place_name| match place_name.lang.as_str() {
             "ara" => true, // Arabic.
@@ -163,6 +166,7 @@ async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<(u64, Vec<St
         .iter()
         .cloned()
         .collect::<Vec<_>>();
+
     Some((admin_id, names))
 }
 
@@ -188,13 +192,15 @@ pub(crate) async fn query_pip(
 
     // Query names for the admin areas
     for admin_id in wof_ids.all_admin_ids {
-        if let Ok(names) = query_names_cache(read, admin_id) {
-            response.admin_names.extend(names);
-        }
-        admin_name_futures.push(query_names(admin_id, wof_db));
-
+        // This check was at the end, but I think it should be here as the ID has already been looked up
         if COUNTRIES.contains(&admin_id) {
             continue;
+        }
+
+        if let Ok(names) = query_names_cache(read, admin_id) {
+            response.admin_names.extend(names);
+        } else {
+            admin_name_futures.push(query_names(admin_id, wof_db));
         }
     }
 
@@ -202,8 +208,9 @@ pub(crate) async fn query_pip(
     if let Some(country_id) = wof_ids.country {
         if let Ok(langs) = query_languages_cache(read, country_id) {
             response.admin_langs.extend(langs);
+        } else {
+            lang_futures.push(query_langs(country_id, wof_db));
         }
-        lang_futures.push(query_langs(country_id, wof_db));
     }
 
     // Drive the futures to completion

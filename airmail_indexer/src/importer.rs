@@ -5,7 +5,7 @@ use airmail::{
 use anyhow::Result;
 use crossbeam::channel::{Receiver, Sender};
 use futures_util::future::join_all;
-use log::{debug, info, warn};
+use log::{info, trace, warn};
 use redb::Database;
 use std::{
     path::{Path, PathBuf},
@@ -146,7 +146,7 @@ impl Importer {
         }));
 
         // Spawn processing workers
-        for _ in 0..num_cpus::get_physical() {
+        for _ in 0..num_cpus::get() {
             let no_admin_receiver = receiver.clone();
             let to_index_sender = to_index_sender.clone();
             let to_cache_sender = to_cache_sender.clone();
@@ -161,7 +161,7 @@ impl Importer {
                     if counter % 1000 == 0 {
                         read = admin_cache.begin_read().unwrap();
 
-                        debug!(
+                        trace!(
                             "Cache queue, index queue: {}, {}",
                             to_cache_sender.len(),
                             to_index_sender.len()
@@ -187,6 +187,7 @@ impl Importer {
 
         info!("Waiting for tasks to finish.");
         join_all(handles).await;
+        info!("Import complete.");
 
         Ok(())
     }
