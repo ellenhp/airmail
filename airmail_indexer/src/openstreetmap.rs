@@ -1,8 +1,11 @@
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error, path::Path};
 
 use airmail::poi::ToIndexPoi;
+use airmail_indexer::error::IndexerError;
+use anyhow::Result;
+use crossbeam::channel::Sender;
 use geo::{Centroid, Coord, LineString, Polygon};
-use log::{debug, warn};
+use log::{debug, info, warn};
 use osmx::{Database, Locations, Transaction, Way};
 
 fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<ToIndexPoi> {
@@ -24,7 +27,7 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<ToI
     let names = {
         let mut names = Vec::new();
         tags.iter()
-            .filter(|(key, _value)| key.contains("name:") || key.to_string() == "name")
+            .filter(|(key, _value)| key.contains("name:") || *key == "name")
             .for_each(|(_key, value)| {
                 names.push(value.to_string());
                 // TODO: Remove once we get stemmers again.
@@ -48,9 +51,7 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<ToI
             unit,
             lat,
             lng,
-            tags.into_iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect(),
+            tags.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
         )
         .unwrap(),
     )
@@ -59,9 +60,9 @@ fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<ToI
 fn way_centroid(way: &Way, location_table: &Locations) -> Option<(f64, f64)> {
     let node_positions: Vec<Coord> = way
         .nodes()
-        .filter_map(|node| {
+        .map(|node| {
             let node = location_table.get(node).expect("Nodes must have locations");
-            Some(Coord::from((node.lon(), node.lat())))
+            Coord::from((node.lon(), node.lat()))
         })
         .collect();
 
@@ -84,7 +85,7 @@ fn index_way(
     location_table: &Locations,
 ) -> Option<ToIndexPoi> {
     let (lng, lat) = way_centroid(way, location_table)?;
-    tags_to_poi(&tags, lat, lng)
+    tags_to_poi(tags, lat, lng)
 }
 
 fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
@@ -97,44 +98,67 @@ fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
     Ok(tags)
 }
 
-pub(crate) fn parse_osm<CB: Sync + Fn(ToIndexPoi) -> Result<(), Box<dyn std::error::Error>>>(
-    osmx_path: &str,
-    callback: &CB,
-) -> Result<(), Box<dyn std::error::Error>> {
-    dbg!(osmx_path);
+/// Parse an OSMExpress file and send POIs for indexing.
+pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<()> {
+    info!("Loading osmx from path: {:?}", osmx_path);
     let db = Database::open(osmx_path).unwrap();
-    println!("Processing nodes");
+    let mut interesting = 0;
+    let mut total = 0;
+    info!("Processing nodes");
     {
-        let osm = Transaction::begin(&db)?;
-        let locations = osm.locations()?;
-        osm.nodes()?.iter().for_each(|(node_id, node)| {
+        let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
+        let locations = osm.locations().map_err(IndexerError::from)?;
+        for (node_id, node) in osm.nodes().map_err(IndexerError::from)?.iter() {
+            total += 1;
+            if interesting % 10000 == 0 {
+                debug!(
+                    "Processed interesting/total: {}/{} nodes, queue size: {}",
+                    interesting,
+                    total,
+                    sender.len()
+                );
+            }
+
             let tags = tags(node.tags());
             if let Ok(tags) = tags {
                 let location = locations.get(node_id).expect("Nodes must have locations");
                 if let Some(poi) = tags_to_poi(&tags, location.lat(), location.lon()) {
-                    if let Err(err) = callback(poi) {
-                        warn!("Error from callback: {}", err);
-                    }
+                    sender.send(poi).map_err(|e| {
+                        warn!("Error from sender: {}", e);
+                        e
+                    })?;
+                    interesting += 1;
                 }
             }
-        });
+        }
     }
-    println!("Processing ways");
+    info!("Processing ways");
     {
-        let osm = Transaction::begin(&db)?;
-        let locations = osm.locations()?;
-        osm.ways()?.iter().for_each(|(_way_id, way)| {
+        let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
+        let locations = osm.locations().map_err(IndexerError::from)?;
+        for (_way_id, way) in osm.ways().map_err(IndexerError::from)?.iter() {
+            if interesting % 10000 == 0 {
+                debug!(
+                    "Processed interesting/total: {}/{} nodes, queue size: {}",
+                    interesting,
+                    total,
+                    sender.len()
+                );
+            }
+
             let tags = tags(way.tags());
             if let Ok(tags) = tags {
-                index_way(&tags, &way, &locations).map(|poi| {
-                    if let Err(err) = callback(poi) {
-                        warn!("Error from callback: {}", err);
-                    }
-                });
+                if let Some(poi) = index_way(&tags, &way, &locations) {
+                    sender.send(poi).map_err(|e| {
+                        warn!("Error from sender: {}", e);
+                        e
+                    })?;
+                    interesting += 1;
+                }
             }
-        });
+        }
     }
-    println!("Skipping relations (FIXME)");
-    println!("Done, waiting for worker threads to finish.");
+    info!("Skipping relations (FIXME)");
+    info!("OSM parsing complete");
     Ok(())
 }

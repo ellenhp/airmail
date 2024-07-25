@@ -4,59 +4,55 @@ use airmail::{
 };
 use anyhow::Result;
 use crossbeam::channel::{Receiver, Sender};
+use futures_util::future::join_all;
+use log::{info, trace, warn};
 use redb::Database;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use tokio::spawn;
+use tokio::{spawn, task::spawn_blocking};
 
 use crate::{
     populate_admin_areas, wof::WhosOnFirst, WofCacheItem, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
 };
 
 pub struct ImporterBuilder {
-    admin_cache: String,
+    admin_cache: Option<PathBuf>,
     wof_db_path: PathBuf,
-    libspatialite_path: Option<String>,
 }
 
 impl ImporterBuilder {
     pub fn new(whosonfirst_spatialite_path: &Path) -> Self {
-        let tmp_dir = std::env::temp_dir();
-        let admin_cache = tmp_dir.join("admin_cache.db").to_string_lossy().to_string();
-
         Self {
-            admin_cache,
+            admin_cache: None,
             wof_db_path: whosonfirst_spatialite_path.to_path_buf(),
-            libspatialite_path: None,
         }
     }
 
-    pub fn admin_cache(mut self, admin_cache: &str) -> Self {
-        self.admin_cache = admin_cache.to_string();
-        self
-    }
-
-    pub fn libspatialite_path(mut self, libspatialite_path: &str) -> Self {
-        self.libspatialite_path = Some(libspatialite_path.to_string());
+    pub fn admin_cache(mut self, admin_cache: &Path) -> Self {
+        self.admin_cache = Some(admin_cache.to_path_buf());
         self
     }
 
     pub async fn build(self) -> Result<Importer> {
-        let db = Database::create(&self.admin_cache)
-            .expect("Failed to open or create administrative area cache database.");
+        let admin_cache = if let Some(admin_cache) = self.admin_cache {
+            admin_cache
+        } else {
+            std::env::temp_dir().join("admin_cache.db")
+        };
+
+        let db = Database::create(&admin_cache)?;
         {
-            let txn = db.begin_write().unwrap();
+            let txn = db.begin_write()?;
             {
-                txn.open_table(TABLE_AREAS).unwrap();
-                txn.open_table(TABLE_NAMES).unwrap();
+                txn.open_table(TABLE_AREAS)?;
+                txn.open_table(TABLE_NAMES)?;
             }
-            txn.commit().unwrap();
+            txn.commit()?;
         }
 
-        let wof_db = WhosOnFirst::new(&self.wof_db_path, self.libspatialite_path)
-            .expect("Failed to open WhosOnFirst database.");
+        let wof_db = WhosOnFirst::new(&self.wof_db_path).await?;
 
         Ok(Importer {
             admin_cache: Arc::new(db),
@@ -73,126 +69,125 @@ pub struct Importer {
 impl Importer {
     pub async fn run_import(
         &self,
-        index: &mut AirmailIndex,
+        mut index: AirmailIndex,
         source: &str,
         receiver: Receiver<ToIndexPoi>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut nonblocking_join_handles = Vec::new();
+    ) -> Result<()> {
+        let source = source.to_string();
+        // let mut nonblocking_join_handles = Vec::new();
         let (to_cache_sender, to_cache_receiver): (Sender<WofCacheItem>, Receiver<WofCacheItem>) =
-            crossbeam::channel::bounded(1024 * 64);
+            crossbeam::channel::bounded(1024);
         let (to_index_sender, to_index_receiver): (Sender<SchemafiedPoi>, Receiver<SchemafiedPoi>) =
-            crossbeam::channel::bounded(1024 * 64);
-        {
-            let admin_cache = self.admin_cache.clone();
-            std::thread::spawn(move || {
-                let mut write = admin_cache.begin_write().unwrap();
-                let mut count = 0;
-                loop {
-                    count += 1;
-                    if count % 5000 == 0 {
-                        write.commit().unwrap();
-                        write = admin_cache.begin_write().unwrap();
+            crossbeam::channel::bounded(1024);
+        let mut handles = vec![];
+
+        let admin_cache = self.admin_cache.clone();
+
+        handles.push(spawn_blocking(move || {
+            let mut write = admin_cache.begin_write().unwrap();
+            let mut count = 0;
+            loop {
+                count += 1;
+                if count % 5000 == 0 {
+                    write.commit().unwrap();
+                    write = admin_cache.begin_write().unwrap();
+                }
+                match to_cache_receiver.recv() {
+                    Ok(WofCacheItem::Names(admin, names)) => {
+                        let mut table = write.open_table(TABLE_NAMES).unwrap();
+                        let packed = names.join("\0");
+                        table.insert(admin, packed.as_str()).unwrap();
                     }
-                    match to_cache_receiver.recv() {
-                        Ok(WofCacheItem::Names(admin, names)) => {
-                            let mut table = write.open_table(TABLE_NAMES).unwrap();
-                            let packed = names.join("\0");
-                            table.insert(admin, packed.as_str()).unwrap();
-                        }
-                        Ok(WofCacheItem::Langs(admin, langs)) => {
-                            let mut table = write.open_table(TABLE_LANGS).unwrap();
-                            let packed = langs.join("\0");
-                            table.insert(admin, packed.as_str()).unwrap();
-                        }
-                        Ok(WofCacheItem::Admins(s2cell, admins)) => {
-                            let mut table = write.open_table(TABLE_AREAS).unwrap();
-                            let packed = admins
-                                .iter()
-                                .flat_map(|id| id.to_le_bytes())
-                                .collect::<Vec<_>>();
-                            table.insert(s2cell, packed.as_slice()).unwrap();
-                        }
-                        Err(_) => break,
+                    Ok(WofCacheItem::Langs(admin, langs)) => {
+                        let mut table = write.open_table(TABLE_LANGS).unwrap();
+                        let packed = langs.join("\0");
+                        table.insert(admin, packed.as_str()).unwrap();
+                    }
+                    Ok(WofCacheItem::Admins(s2cell, admins)) => {
+                        let mut table = write.open_table(TABLE_AREAS).unwrap();
+                        let packed = admins
+                            .iter()
+                            .flat_map(|id| id.to_le_bytes())
+                            .collect::<Vec<_>>();
+                        table.insert(s2cell, packed.as_slice()).unwrap();
+                    }
+                    Err(_) => break,
+                }
+            }
+        }));
+
+        handles.push(spawn_blocking(move || {
+            let start = std::time::Instant::now();
+
+            let mut writer = index.writer().unwrap();
+            let mut count = 0;
+            loop {
+                {
+                    count += 1;
+                    if count % 10000 == 0 {
+                        info!(
+                            "{} POIs parsed in {} seconds, {} per second.",
+                            count,
+                            start.elapsed().as_secs(),
+                            count as f64 / start.elapsed().as_secs_f64(),
+                        );
                     }
                 }
-            });
-        }
 
-        for _ in 0..num_cpus::get_physical() {
+                if let Ok(poi) = to_index_receiver.recv() {
+                    if let Err(err) = writer.add_poi(poi, &source) {
+                        warn!("Failed to add POI to index. {}", err);
+                    }
+                } else {
+                    break;
+                }
+            }
+            writer.commit().unwrap();
+        }));
+
+        // Spawn processing workers
+        for _ in 0..num_cpus::get() {
             let no_admin_receiver = receiver.clone();
             let to_index_sender = to_index_sender.clone();
             let to_cache_sender = to_cache_sender.clone();
             let admin_cache = self.admin_cache.clone();
             let wof_db = self.wof_db.clone();
 
-            nonblocking_join_handles.push(spawn(async move {
+            handles.push(spawn(async move {
                 let mut read = admin_cache.begin_read().unwrap();
                 let mut counter = 0;
                 while let Ok(mut poi) = no_admin_receiver.recv() {
                     counter += 1;
                     if counter % 1000 == 0 {
                         read = admin_cache.begin_read().unwrap();
-                    }
-                    let mut sent = false;
-                    for attempt in 0..5 {
-                        if attempt > 0 {
-                            println!("Retrying to populate admin areas.");
-                            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
-                        }
 
-                        if let Err(err) =
-                            populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, &wof_db)
-                                .await
-                        {
-                            println!(
-                                "Failed to populate admin areas, {}, attempt: {}",
-                                err, attempt
-                            );
-                        } else {
+                        trace!(
+                            "Cache queue, index queue: {}, {}",
+                            to_cache_sender.len(),
+                            to_index_sender.len()
+                        );
+                    }
+
+                    match populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, &wof_db)
+                        .await
+                    {
+                        Ok(()) => {
                             let poi = SchemafiedPoi::from(poi);
                             to_index_sender.send(poi).unwrap();
-                            sent = true;
-                            break;
                         }
-                    }
-                    if !sent {
-                        println!("Failed to populate admin areas after 5 attempts. Skipping POI.");
+                        Err(err) => {
+                            warn!("Failed to populate admin areas, {}", err);
+                        }
                     }
                 }
             }));
         }
         drop(to_index_sender);
-        let start = std::time::Instant::now();
+        drop(to_cache_sender);
 
-        let mut writer = index.writer().unwrap();
-        let mut count = 0;
-        loop {
-            {
-                count += 1;
-                if count % 10000 == 0 {
-                    println!(
-                        "{} POIs parsed in {} seconds, {} per second.",
-                        count,
-                        start.elapsed().as_secs(),
-                        count as f64 / start.elapsed().as_secs_f64(),
-                    );
-                }
-            }
-
-            if let Ok(poi) = to_index_receiver.recv() {
-                if let Err(err) = writer.add_poi(poi, source).await {
-                    println!("Failed to add POI to index. {}", err);
-                }
-            } else {
-                break;
-            }
-        }
-        writer.commit().unwrap();
-
-        println!("Waiting for tasks to finish.");
-        for handle in nonblocking_join_handles {
-            handle.await.unwrap();
-        }
+        info!("Waiting for indexing to finish");
+        join_all(handles).await;
+        info!("Indexing complete");
 
         Ok(())
     }

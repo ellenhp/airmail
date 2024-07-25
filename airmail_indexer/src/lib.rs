@@ -1,3 +1,4 @@
+pub mod error;
 mod importer;
 mod query_pip;
 mod wof;
@@ -8,10 +9,11 @@ mod wof_tests;
 pub use importer::{Importer, ImporterBuilder};
 
 use airmail::poi::ToIndexPoi;
+use anyhow::Result;
 use crossbeam::channel::Sender;
 use lingua::{IsoCode639_3, Language};
 use redb::{ReadTransaction, TableDefinition};
-use std::{error::Error, str::FromStr};
+use std::str::FromStr;
 use wof::WhosOnFirst;
 
 pub(crate) const TABLE_AREAS: TableDefinition<u64, &[u8]> = TableDefinition::new("admin_areas");
@@ -56,14 +58,15 @@ pub(crate) async fn populate_admin_areas(
     to_cache_sender: Sender<WofCacheItem>,
     poi: &mut ToIndexPoi,
     wof_db: &WhosOnFirst,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, wof_db).await?;
     for admin in pip_response.admin_names {
         poi.admins.push(admin);
     }
     for lang in pip_response.admin_langs {
-        let _ = IsoCode639_3::from_str(&lang)
-            .map(|iso| poi.languages.push(Language::from_iso_code_639_3(&iso)));
+        if let Ok(iso) = IsoCode639_3::from_str(&lang) {
+            poi.languages.push(Language::from_iso_code_639_3(&iso))
+        }
     }
 
     Ok(())

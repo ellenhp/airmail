@@ -1,5 +1,7 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 
+use anyhow::Result;
 use futures_util::future::join_all;
 use geo::Rect;
 use itertools::Itertools;
@@ -24,6 +26,7 @@ use tantivy_uffd::RemoteDirectory;
 use tokio::task::spawn_blocking;
 use unicode_segmentation::UnicodeSegmentation;
 
+use crate::error::AirmailError;
 use crate::{
     poi::{AirmailPoi, SchemafiedPoi},
     query::all_subsequences,
@@ -63,8 +66,8 @@ impl AirmailIndex {
             .set_indexed()
             .set_stored()
             .set_fast();
-        assert_eq!(s2cell_parent_index_options.fieldnorms(), false);
-        assert_eq!(s2cell_index_options.fieldnorms(), false);
+        assert!(!s2cell_parent_index_options.fieldnorms());
+        assert!(!s2cell_index_options.fieldnorms());
 
         let _ = schema_builder.add_text_field(FIELD_CONTENT, text_options.clone());
         let _ = schema_builder.add_text_field(FIELD_INDEXED_TAG, tag_options);
@@ -109,7 +112,7 @@ impl AirmailIndex {
         self.tantivy_index.schema().get_field(FIELD_TAGS).unwrap()
     }
 
-    pub fn create(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn create(index_dir: &PathBuf) -> Result<Self> {
         let schema = Self::schema();
         let tantivy_index =
             tantivy::Index::open_or_create(MmapDirectory::open(index_dir)?, schema)?;
@@ -119,7 +122,7 @@ impl AirmailIndex {
         })
     }
 
-    pub fn new(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(index_dir: &str) -> Result<Self> {
         let tantivy_index = tantivy::Index::open_in_dir(index_dir)?;
         Ok(Self {
             tantivy_index: Arc::new(tantivy_index),
@@ -127,7 +130,7 @@ impl AirmailIndex {
         })
     }
 
-    pub fn new_remote(base_url: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new_remote(base_url: &str) -> Result<Self> {
         let tantivy_index =
             tantivy::Index::open(RemoteDirectory::<{ 2 * 1024 * 1024 }>::new(base_url))?;
         Ok(Self {
@@ -136,7 +139,7 @@ impl AirmailIndex {
         })
     }
 
-    pub fn writer(&mut self) -> Result<AirmailIndexWriter, Box<dyn std::error::Error>> {
+    pub fn writer(&mut self) -> Result<AirmailIndexWriter> {
         let tantivy_writer = self
             .tantivy_index
             .writer::<TantivyDocument>(2_000_000_000)?;
@@ -147,7 +150,7 @@ impl AirmailIndex {
         Ok(writer)
     }
 
-    pub async fn merge(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn merge(&mut self) -> Result<()> {
         let ids = self.tantivy_index.searchable_segment_ids()?;
         self.tantivy_index
             .writer::<TantivyDocument>(2_000_000_000)?
@@ -156,7 +159,7 @@ impl AirmailIndex {
         Ok(())
     }
 
-    pub async fn num_docs(&self) -> Result<u64, Box<dyn std::error::Error>> {
+    pub async fn num_docs(&self) -> Result<u64> {
         let index = self.tantivy_index.clone();
         let count = spawn_blocking(move || {
             if let Ok(tantivy_reader) = index.reader() {
@@ -165,7 +168,7 @@ impl AirmailIndex {
                 None
             }
         });
-        Ok(count.await?.ok_or("Error getting count")?)
+        Ok(count.await?.ok_or(AirmailError::UnableToCount)?)
     }
 
     async fn construct_query(
@@ -244,37 +247,35 @@ impl AirmailIndex {
                         boost,
                     )));
                 }
-            } else {
-                if possible_query.len() >= 8 && lenient {
-                    let query = if tokens.ends_with(&[possible_query]) {
-                        FuzzyTermQuery::new_prefix(term, 1, true)
-                    } else {
-                        FuzzyTermQuery::new(term, 1, true)
-                    };
-                    if self.is_remote {
-                        let searcher = searcher.clone();
-                        let query = query.clone();
-                        spawn_blocking(move || {
-                            let _ = searcher.search(&query, &Count);
-                        });
-                    }
-                    mandatory_queries.push(Box::new(BoostQuery::new(Box::new(query), boost)));
+            } else if possible_query.len() >= 8 && lenient {
+                let query = if tokens.ends_with(&[possible_query]) {
+                    FuzzyTermQuery::new_prefix(term, 1, true)
                 } else {
-                    let query: Box<dyn Query> =
-                        if self.is_remote || !lenient || !tokens.ends_with(&[possible_query]) {
-                            Box::new(TermQuery::new(term, IndexRecordOption::Basic))
-                        } else {
-                            Box::new(FuzzyTermQuery::new_prefix(term, 0, false))
-                        };
-                    if self.is_remote {
-                        let searcher = searcher.clone();
-                        let query = query.box_clone();
-                        spawn_blocking(move || {
-                            let _ = searcher.search(&query, &Count);
-                        });
-                    }
-                    mandatory_queries.push(Box::new(BoostQuery::new(query, boost)));
+                    FuzzyTermQuery::new(term, 1, true)
                 };
+                if self.is_remote {
+                    let searcher = searcher.clone();
+                    let query = query.clone();
+                    spawn_blocking(move || {
+                        let _ = searcher.search(&query, &Count);
+                    });
+                }
+                mandatory_queries.push(Box::new(BoostQuery::new(Box::new(query), boost)));
+            } else {
+                let query: Box<dyn Query> =
+                    if self.is_remote || !lenient || !tokens.ends_with(&[possible_query]) {
+                        Box::new(TermQuery::new(term, IndexRecordOption::Basic))
+                    } else {
+                        Box::new(FuzzyTermQuery::new_prefix(term, 0, false))
+                    };
+                if self.is_remote {
+                    let searcher = searcher.clone();
+                    let query = query.box_clone();
+                    spawn_blocking(move || {
+                        let _ = searcher.search(&query, &Count);
+                    });
+                }
+                mandatory_queries.push(Box::new(BoostQuery::new(query, boost)));
             }
         }
 
@@ -328,7 +329,7 @@ impl AirmailIndex {
             ]));
         }
 
-        return Box::new(final_query);
+        Box::new(final_query)
     }
 
     /// This is public because I don't want one big mega-crate but its API should not be considered even remotely stable.
@@ -339,7 +340,7 @@ impl AirmailIndex {
         tags: Option<Vec<String>>,
         bbox: Option<Rect<f64>>,
         boost_regions: &[(f32, Rect<f64>)],
-    ) -> Result<Vec<(AirmailPoi, f32)>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<(AirmailPoi, f32)>> {
         let tantivy_reader = self.tantivy_index.reader()?;
         let searcher = tantivy_reader.searcher();
         let query_string = query.trim().replace("'s", "s");
@@ -352,7 +353,7 @@ impl AirmailIndex {
                     &query_string,
                     tags,
                     bbox,
-                    &boost_regions,
+                    boost_regions,
                     request_leniency,
                 )
                 .await;
@@ -424,11 +425,7 @@ impl AirmailIndexWriter {
         doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), value);
     }
 
-    pub async fn add_poi(
-        &mut self,
-        poi: SchemafiedPoi,
-        source: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn add_poi(&mut self, poi: SchemafiedPoi, source: &str) -> Result<()> {
         let mut doc = TantivyDocument::default();
         for content in poi.content {
             self.process_field(&mut doc, &content);
@@ -468,7 +465,7 @@ impl AirmailIndexWriter {
         Ok(())
     }
 
-    pub fn commit(mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn commit(mut self) -> Result<()> {
         self.tantivy_writer.commit()?;
         Ok(())
     }

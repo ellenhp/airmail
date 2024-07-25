@@ -1,5 +1,4 @@
-use std::error::Error;
-
+use anyhow::Result;
 use lingua::Language;
 use serde::{Deserialize, Serialize};
 
@@ -16,12 +15,7 @@ pub struct AirmailPoi {
 }
 
 impl AirmailPoi {
-    pub fn new(
-        source: String,
-        lat: f64,
-        lng: f64,
-        tags: Vec<(String, String)>,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn new(source: String, lat: f64, lng: f64, tags: Vec<(String, String)>) -> Result<Self> {
         let s2cell = s2::cellid::CellID::from(s2::latlng::LatLng::from_degrees(lat, lng)).0;
 
         Ok(Self {
@@ -56,7 +50,7 @@ impl ToIndexPoi {
         lat: f64,
         lng: f64,
         tags: Vec<(String, String)>,
-    ) -> Result<Self, Box<dyn Error>> {
+    ) -> Result<Self> {
         let s2cell = s2::cellid::CellID::from(s2::latlng::LatLng::from_degrees(lat, lng)).0;
 
         Ok(Self {
