@@ -5,7 +5,9 @@ use airmail_indexer::ImporterBuilder;
 use anyhow::Result;
 use clap::Parser;
 use env_logger::Env;
-use tokio::task::spawn_blocking;
+use futures_util::future::join_all;
+use log::warn;
+use tokio::{select, spawn, task::spawn_blocking};
 
 mod openstreetmap;
 
@@ -40,21 +42,38 @@ struct Args {
 async fn main() -> Result<()> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     let args = Args::parse();
+    let mut handles = vec![];
 
     // Create the index
     let index = AirmailIndex::create(&args.index)?;
+
+    // Setup the import pipeline
     let mut import_builder = ImporterBuilder::new(&args.wof_db);
     if let Some(admin_cache) = args.admin_cache {
         import_builder = import_builder.admin_cache(&admin_cache);
     }
     let importer = import_builder.build().await?;
 
+    // Send POIs from the OSM parser to the importer
     let (poi_sender, poi_receiver) = crossbeam::channel::bounded(4096);
 
-    // Load the OSM data and pass to channel
-    let osm_loader = spawn_blocking(move || openstreetmap::parse_osm(&args.osmx, poi_sender));
-    importer.run_import(index, "osm", poi_receiver).await?;
-    osm_loader.await??;
+    // Spawn the OSM parser
+    handles.push(spawn_blocking(move || {
+        openstreetmap::parse_osm(&args.osmx, poi_sender)
+    }));
+
+    // Spawn the importer
+    handles.push(spawn(async move {
+        importer.run_import(index, "osm", poi_receiver).await
+    }));
+
+    // Wait for the first thing to finish
+    select! {
+        _ = join_all(handles) => {}
+        _ = tokio::signal::ctrl_c() => {
+            warn!("Received ctrl-c, shutting down");
+        }
+    }
 
     Ok(())
 }

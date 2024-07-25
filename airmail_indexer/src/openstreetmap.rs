@@ -98,6 +98,7 @@ fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
     Ok(tags)
 }
 
+/// Parse an OSMExpress file and send POIs for indexing.
 pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<()> {
     info!("Loading osmx from path: {:?}", osmx_path);
     let db = Database::open(osmx_path).unwrap();
@@ -107,65 +108,57 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
     {
         let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
         let locations = osm.locations().map_err(IndexerError::from)?;
-        osm.nodes()
-            .map_err(IndexerError::from)?
-            .iter()
-            .for_each(|(node_id, node)| {
-                total += 1;
-                if interesting % 10000 == 0 {
-                    debug!(
-                        "Processed interesting/total: {}/{} nodes, queue size: {}",
-                        interesting,
-                        total,
-                        sender.len()
-                    );
-                }
+        for (node_id, node) in osm.nodes().map_err(IndexerError::from)?.iter() {
+            total += 1;
+            if interesting % 10000 == 0 {
+                debug!(
+                    "Processed interesting/total: {}/{} nodes, queue size: {}",
+                    interesting,
+                    total,
+                    sender.len()
+                );
+            }
 
-                let tags = tags(node.tags());
-                if let Ok(tags) = tags {
-                    let location = locations.get(node_id).expect("Nodes must have locations");
-                    if let Some(poi) = tags_to_poi(&tags, location.lat(), location.lon()) {
-                        match sender.send(poi) {
-                            Ok(_) => {
-                                interesting += 1;
-                            }
-                            Err(err) => warn!("Error from sender: {}", err),
-                        }
-                    }
+            let tags = tags(node.tags());
+            if let Ok(tags) = tags {
+                let location = locations.get(node_id).expect("Nodes must have locations");
+                if let Some(poi) = tags_to_poi(&tags, location.lat(), location.lon()) {
+                    sender.send(poi).map_err(|e| {
+                        warn!("Error from sender: {}", e);
+                        e
+                    })?;
+                    interesting += 1;
                 }
-            });
+            }
+        }
     }
     info!("Processing ways");
     {
         let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
         let locations = osm.locations().map_err(IndexerError::from)?;
-        osm.ways()
-            .map_err(IndexerError::from)?
-            .iter()
-            .for_each(|(_way_id, way)| {
-                if interesting % 10000 == 0 {
-                    debug!(
-                        "Processed interesting/total: {}/{} nodes, queue size: {}",
-                        interesting,
-                        total,
-                        sender.len()
-                    );
-                }
+        for (_way_id, way) in osm.ways().map_err(IndexerError::from)?.iter() {
+            if interesting % 10000 == 0 {
+                debug!(
+                    "Processed interesting/total: {}/{} nodes, queue size: {}",
+                    interesting,
+                    total,
+                    sender.len()
+                );
+            }
 
-                let tags = tags(way.tags());
-                if let Ok(tags) = tags {
-                    if let Some(poi) = index_way(&tags, &way, &locations) {
-                        match sender.send(poi) {
-                            Ok(_) => {
-                                interesting += 1;
-                            }
-                            Err(err) => warn!("Error from sender: {}", err),
-                        }
-                    }
+            let tags = tags(way.tags());
+            if let Ok(tags) = tags {
+                if let Some(poi) = index_way(&tags, &way, &locations) {
+                    sender.send(poi).map_err(|e| {
+                        warn!("Error from sender: {}", e);
+                        e
+                    })?;
+                    interesting += 1;
                 }
-            });
+            }
+        }
     }
     info!("Skipping relations (FIXME)");
-    info!("Done, waiting for worker threads to finish.");
+    info!("OSM parsing complete");
     Ok(())
 }

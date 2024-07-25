@@ -185,9 +185,9 @@ impl Importer {
         drop(to_index_sender);
         drop(to_cache_sender);
 
-        info!("Waiting for tasks to finish.");
+        info!("Waiting for indexing to finish");
         join_all(handles).await;
-        info!("Import complete.");
+        info!("Indexing complete");
 
         Ok(())
     }
