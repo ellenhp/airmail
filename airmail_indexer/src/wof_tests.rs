@@ -1,4 +1,5 @@
 use anyhow::Result;
+use env_logger::Env;
 use std::path::Path;
 
 use log::debug;
@@ -7,7 +8,9 @@ use crate::wof::WhosOnFirst;
 
 #[tokio::test]
 async fn wof_read() -> Result<()> {
-    let _ = env_logger::builder().is_test(true).try_init();
+    let _ = env_logger::Builder::from_env(Env::default().default_filter_or("debug"))
+        .is_test(true)
+        .try_init();
 
     // Connect to the WhosOnFirst database.
     // Ensuring the database is present, and the mod_spatialite extension is loaded.

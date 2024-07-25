@@ -22,34 +22,21 @@ impl WhosOnFirst {
         let opts = SqliteConnectOptions::new()
             .filename(path)
             .journal_mode(SqliteJournalMode::Wal)
-            // .pragma("cache_size", "10000")
-            // .pragma("synchronous", "OFF")
-            // .pragma("temp_store", "MEMORY")
-            // .pragma("mmap_size", "268435456")
-            // .pragma("foreign_keys", "OFF")
-            // .pragma("recursive_triggers", "OFF")
-            // .pragma("optimize", "0x10002")
-            // .read_only(true)
-            // .immutable(true)
+            .pragma("cache_size", "1000000")
+            .pragma("synchronous", "OFF")
+            .pragma("temp_store", "MEMORY")
+            .pragma("mmap_size", "1073741824") // 1GB, virtual memory
+            .pragma("foreign_keys", "OFF")
+            .pragma("recursive_triggers", "OFF")
+            .pragma("page_size", "32768")
+            .pragma("locking_mode", "NORMAL")
             .extension("mod_spatialite");
 
+        let connections = num_cpus::get_physical().try_into()?;
+
         let pool = SqlitePoolOptions::new()
-            .max_connections(num_cpus::get_physical().try_into()?)
-            // .after_connect(|conn: &mut SqliteConnection, _meta| {
-            //     Box::pin(async move {
-            //         // Warm places
-            //         conn.execute(
-            //             r"
-            //             SELECT place.class, place.type, COUNT(*) AS total
-            //             FROM place
-            //             GROUP BY place.class, place.type
-            //             ORDER BY place.class ASC, place.type ASC
-            //         ",
-            //         )
-            //         .await?;
-            //         Ok(())
-            //     })
-            // })
+            .min_connections(connections)
+            .max_connections(connections)
             .connect_with(opts)
             .await?;
 
@@ -145,11 +132,11 @@ pub struct WofKV {
 
 #[derive(Debug, Clone, Deserialize, sqlx::FromRow)]
 pub struct ConcisePipResponse {
-    #[allow(dead_code)]
-    pub source: String,
+    // #[allow(dead_code)]
+    // pub source: String,
     pub id: String,
-    #[allow(dead_code)]
-    pub class: String,
+    // #[allow(dead_code)]
+    // pub class: String,
     #[serde(rename = "type")]
     pub r#type: String,
 }
@@ -158,8 +145,8 @@ pub struct ConcisePipResponse {
 pub struct PipPlaceName {
     pub lang: String,
     pub tag: String,
-    #[allow(dead_code)]
-    pub abbr: bool,
+    // #[allow(dead_code)]
+    // pub abbr: bool,
     pub name: String,
 }
 

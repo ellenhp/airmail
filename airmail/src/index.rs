@@ -425,7 +425,7 @@ impl AirmailIndexWriter {
         doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), value);
     }
 
-    pub async fn add_poi(&mut self, poi: SchemafiedPoi, source: &str) -> Result<()> {
+    pub fn add_poi(&mut self, poi: SchemafiedPoi, source: &str) -> Result<()> {
         let mut doc = TantivyDocument::default();
         for content in poi.content {
             self.process_field(&mut doc, &content);

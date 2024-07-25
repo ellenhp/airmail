@@ -11,7 +11,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use tokio::spawn;
+use tokio::{spawn, task::spawn_blocking};
 
 use crate::{
     populate_admin_areas, wof::WhosOnFirst, WofCacheItem, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
@@ -83,7 +83,7 @@ impl Importer {
 
         let admin_cache = self.admin_cache.clone();
 
-        handles.push(spawn(async move {
+        handles.push(spawn_blocking(move || {
             let mut write = admin_cache.begin_write().unwrap();
             let mut count = 0;
             loop {
@@ -116,7 +116,7 @@ impl Importer {
             }
         }));
 
-        handles.push(spawn(async move {
+        handles.push(spawn_blocking(move || {
             let start = std::time::Instant::now();
 
             let mut writer = index.writer().unwrap();
@@ -135,7 +135,7 @@ impl Importer {
                 }
 
                 if let Ok(poi) = to_index_receiver.recv() {
-                    if let Err(err) = writer.add_poi(poi, &source).await {
+                    if let Err(err) = writer.add_poi(poi, &source) {
                         warn!("Failed to add POI to index. {}", err);
                     }
                 } else {
