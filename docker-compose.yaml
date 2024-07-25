@@ -14,21 +14,6 @@ services:
       - ./data:/data
     command: expand /data/australia-latest.osm.pbf /data/australia-latest.osm.osmx
 
-  spatial:
-    image: spatial_custom:latest
-    build:
-      context: ./spatial
-      dockerfile: ./Dockerfile
-    profiles:
-      - index
-    stop_signal: KILL
-    restart: no
-    volumes:
-      - ./data:/data
-    ports:
-      - 3000:3000
-    command: server --db /data/whosonfirst-data-admin-latest.spatial.db
-
   build-index:
     image: build:latest
     build:
@@ -40,7 +25,7 @@ services:
     restart: no
     volumes:
       - ./data:/data
-    command: airmail_import_osm --wof-db /data/whosonfirst-data-admin-latest.spatial.db --index /data/index --admin-cache /data/admin-cache --osmx /data/australia-latest.osm.osmx
+    command: indexer --wof-db /data/whosonfirst-data-admin-latest.spatial.db --index /data/index --admin-cache /data/admin-cache --osmx /data/australia-latest.osm.osmx
 
   airmail:
     image: airmail:latest

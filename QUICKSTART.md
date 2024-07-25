@@ -54,7 +54,7 @@ ls -lh ./data/whosonfirst-data-admin-latest.spatial.db ./data/australia-latest.o
 
 # Build the index
 docker compose --profile index run build-index \
-airmail_import_osm --wof-db /data/whosonfirst-data-admin-latest.spatial.db \
+indexer --wof-db /data/whosonfirst-data-admin-latest.spatial.db \
 --index /data/index \
 --osmx /data/australia-latest.osm.osmx
 ```
