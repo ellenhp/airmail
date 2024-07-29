@@ -1,3 +1,6 @@
+#![forbid(unsafe_code)]
+#![warn(clippy::pedantic)]
+
 use airmail_indexer::ImporterBuilder;
 use anyhow::Result;
 use clap::Parser;
@@ -30,16 +33,16 @@ struct Args {
     #[clap(long, short)]
     admin_cache: Option<PathBuf>,
 
-    /// Path to WhosOnFirst spatial index for point-in-polygon lookups. If this is specified
+    /// Path to `WhosOnFirst` spatial index for point-in-polygon lookups. If this is specified
     /// we'll use the spatial index instead of sqlite geospatial lookups. This will speed up imports,
     /// after the index is built. It'll be faster for planet scale imports, or frequent imports
-    /// but will use 10GB of memory and takes a few minutes to build. mod_spatialite is not required
+    /// but will use 10GB of memory and takes a few minutes to build. `mod_spatialite` is not required
     /// if this is specified.
     #[clap(long, short)]
     pip_tree: Option<PathBuf>,
 
     // ============================ OSM-specific options ===================================
-    /// Path to an OSMExpress file to import.
+    /// Path to an `OSMExpress` file to import.
     #[clap(long, short)]
     osmx: PathBuf,
 }
@@ -65,7 +68,7 @@ async fn main() -> Result<()> {
 
     // Spawn the OSM parser
     handles.push(spawn_blocking(move || {
-        openstreetmap::parse_osm(&args.osmx, poi_sender)
+        openstreetmap::parse_osm(&args.osmx, &poi_sender)
     }));
 
     // Spawn the importer
