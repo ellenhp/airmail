@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, path::Path};
+use std::{collections::HashMap, path::Path};
 
 use airmail::poi::ToIndexPoi;
 use airmail_indexer::error::IndexerError;
@@ -9,20 +9,9 @@ use log::{debug, info, warn};
 use osmx::{Database, Locations, Transaction, Way};
 
 fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<ToIndexPoi> {
-    if tags.is_empty() {
-        return None;
-    }
-    if tags.contains_key("highway")
-        || tags.contains_key("natural")
-        || tags.contains_key("boundary")
-        || tags.contains_key("admin_level")
-    {
-        return None;
-    }
-
-    let house_number = tags.get("addr:housenumber").map(|s| s.to_string());
-    let road = tags.get("addr:street").map(|s| s.to_string());
-    let unit = tags.get("addr:unit").map(|s| s.to_string());
+    let house_number = tags.get("addr:housenumber").map(ToString::to_string);
+    let road = tags.get("addr:street").map(ToString::to_string);
+    let unit = tags.get("addr:unit").map(ToString::to_string);
 
     let names = {
         let mut names = Vec::new();
@@ -88,26 +77,40 @@ fn index_way(
     tags_to_poi(tags, lat, lng)
 }
 
-fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
-    tag_iterator: I,
-) -> Result<HashMap<String, String>, Box<dyn Error>> {
+fn valid_tags(tags: &HashMap<String, String>) -> bool {
+    if tags.is_empty() {
+        return false;
+    }
+    if tags.contains_key("highway")
+        || tags.contains_key("natural")
+        || tags.contains_key("boundary")
+        || tags.contains_key("admin_level")
+    {
+        return false;
+    }
+
+    true
+}
+
+fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(tag_iterator: I) -> HashMap<String, String> {
     let mut tags = HashMap::new();
     for (key, value) in tag_iterator {
         tags.insert(key.to_string(), value.to_string());
     }
-    Ok(tags)
+
+    tags
 }
 
-/// Parse an OSMExpress file and send POIs for indexing.
-pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<()> {
+/// Parse an `OSMExpress` file and send POIs for indexing.
+pub(crate) fn parse_osm(osmx_path: &Path, sender: &Sender<ToIndexPoi>) -> Result<()> {
     info!("Loading osmx from path: {:?}", osmx_path);
-    let db = Database::open(osmx_path).unwrap();
+    let db = Database::open(osmx_path).map_err(IndexerError::from)?;
+    let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
+    let locations = osm.locations().map_err(IndexerError::from)?;
     let mut interesting = 0;
     let mut total = 0;
     info!("Processing nodes");
     {
-        let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
-        let locations = osm.locations().map_err(IndexerError::from)?;
         for (node_id, node) in osm.nodes().map_err(IndexerError::from)?.iter() {
             total += 1;
             if interesting % 10000 == 0 {
@@ -120,7 +123,7 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
             }
 
             let tags = tags(node.tags());
-            if let Ok(tags) = tags {
+            if valid_tags(&tags) {
                 let location = locations.get(node_id).expect("Nodes must have locations");
                 if let Some(poi) = tags_to_poi(&tags, location.lat(), location.lon()) {
                     sender.send(poi).map_err(|e| {
@@ -134,8 +137,6 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
     }
     info!("Processing ways");
     {
-        let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
-        let locations = osm.locations().map_err(IndexerError::from)?;
         for (_way_id, way) in osm.ways().map_err(IndexerError::from)?.iter() {
             if interesting % 10000 == 0 {
                 debug!(
@@ -145,9 +146,8 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
                     sender.len()
                 );
             }
-
             let tags = tags(way.tags());
-            if let Ok(tags) = tags {
+            if valid_tags(&tags) {
                 if let Some(poi) = index_way(&tags, &way, &locations) {
                     sender.send(poi).map_err(|e| {
                         warn!("Error from sender: {}", e);

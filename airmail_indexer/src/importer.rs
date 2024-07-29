@@ -14,29 +14,44 @@ use std::{
 use tokio::{spawn, task::spawn_blocking};
 
 use crate::{
-    populate_admin_areas, wof::WhosOnFirst, WofCacheItem, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
+    pip_tree::PipTree,
+    populate_admin_areas,
+    wof::{ConcisePipResponse, WhosOnFirst},
+    WofCacheItem, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
 };
 
 pub struct ImporterBuilder {
-    admin_cache: Option<PathBuf>,
+    index: AirmailIndex,
+    admin_cache_path: Option<PathBuf>,
     wof_db_path: PathBuf,
+    pip_tree_path: Option<PathBuf>,
 }
 
 impl ImporterBuilder {
-    pub fn new(whosonfirst_spatialite_path: &Path) -> Self {
-        Self {
-            admin_cache: None,
-            wof_db_path: whosonfirst_spatialite_path.to_path_buf(),
-        }
+    pub fn new(airmail_index_path: &Path, wof_db_path: &Path) -> Result<Self> {
+        // Create the index
+        let index = AirmailIndex::create(airmail_index_path)?;
+
+        Ok(Self {
+            index,
+            admin_cache_path: None,
+            wof_db_path: wof_db_path.to_path_buf(),
+            pip_tree_path: None,
+        })
     }
 
     pub fn admin_cache(mut self, admin_cache: &Path) -> Self {
-        self.admin_cache = Some(admin_cache.to_path_buf());
+        self.admin_cache_path = Some(admin_cache.to_path_buf());
+        self
+    }
+
+    pub fn pip_tree_cache(mut self, pip_tree_cache: &Path) -> Self {
+        self.pip_tree_path = Some(pip_tree_cache.to_path_buf());
         self
     }
 
     pub async fn build(self) -> Result<Importer> {
-        let admin_cache = if let Some(admin_cache) = self.admin_cache {
+        let admin_cache = if let Some(admin_cache) = self.admin_cache_path {
             admin_cache
         } else {
             std::env::temp_dir().join("admin_cache.db")
@@ -54,27 +69,40 @@ impl ImporterBuilder {
 
         let wof_db = WhosOnFirst::new(&self.wof_db_path).await?;
 
-        Ok(Importer {
-            admin_cache: Arc::new(db),
-            wof_db,
-        })
+        let pip_tree = if let Some(pip_tree_cache) = self.pip_tree_path {
+            Some(PipTree::new_or_load(&wof_db, &pip_tree_cache).await?)
+        } else {
+            None
+        };
+
+        Importer::new(self.index, db, wof_db, pip_tree).await
     }
 }
 
 pub struct Importer {
+    index: AirmailIndex,
     admin_cache: Arc<Database>,
     wof_db: WhosOnFirst,
+    pip_tree: Option<PipTree<ConcisePipResponse>>,
 }
 
 impl Importer {
-    pub async fn run_import(
-        &self,
-        mut index: AirmailIndex,
-        source: &str,
-        receiver: Receiver<ToIndexPoi>,
-    ) -> Result<()> {
+    pub async fn new(
+        index: AirmailIndex,
+        admin_cache: Database,
+        wof_db: WhosOnFirst,
+        pip_tree: Option<PipTree<ConcisePipResponse>>,
+    ) -> Result<Self> {
+        Ok(Self {
+            index,
+            admin_cache: Arc::new(admin_cache),
+            wof_db,
+            pip_tree,
+        })
+    }
+
+    pub async fn run_import(mut self, source: &str, receiver: Receiver<ToIndexPoi>) -> Result<()> {
         let source = source.to_string();
-        // let mut nonblocking_join_handles = Vec::new();
         let (to_cache_sender, to_cache_receiver): (Sender<WofCacheItem>, Receiver<WofCacheItem>) =
             crossbeam::channel::bounded(1024);
         let (to_index_sender, to_index_receiver): (Sender<SchemafiedPoi>, Receiver<SchemafiedPoi>) =
@@ -116,10 +144,11 @@ impl Importer {
             }
         }));
 
+        let mut writer = self.index.writer()?;
+
         handles.push(spawn_blocking(move || {
             let start = std::time::Instant::now();
 
-            let mut writer = index.writer().unwrap();
             let mut count = 0;
             loop {
                 {
@@ -152,6 +181,7 @@ impl Importer {
             let to_cache_sender = to_cache_sender.clone();
             let admin_cache = self.admin_cache.clone();
             let wof_db = self.wof_db.clone();
+            let pip_tree = self.pip_tree.clone();
 
             handles.push(spawn(async move {
                 let mut read = admin_cache.begin_read().unwrap();
@@ -168,8 +198,14 @@ impl Importer {
                         );
                     }
 
-                    match populate_admin_areas(&read, to_cache_sender.clone(), &mut poi, &wof_db)
-                        .await
+                    match populate_admin_areas(
+                        &read,
+                        to_cache_sender.clone(),
+                        &mut poi,
+                        &wof_db,
+                        &pip_tree,
+                    )
+                    .await
                     {
                         Ok(()) => {
                             let poi = SchemafiedPoi::from(poi);

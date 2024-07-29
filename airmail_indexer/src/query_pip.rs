@@ -8,7 +8,8 @@ use serde::Deserialize;
 
 use crate::{
     error::IndexerError,
-    wof::{PipLangsResponse, WhosOnFirst},
+    pip_tree::PipTree,
+    wof::{ConcisePipResponse, PipLangsResponse, WhosOnFirst},
     WofCacheItem, COUNTRIES, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
 };
 
@@ -32,6 +33,7 @@ async fn query_pip_inner(
     read: &'_ ReadTransaction<'_>,
     to_cache_sender: Sender<WofCacheItem>,
     wof_db: &WhosOnFirst,
+    pip_tree: &Option<PipTree<ConcisePipResponse>>,
 ) -> Result<AdminIds> {
     let desired_level = 15;
     let cell = s2::cellid::CellID(s2cell);
@@ -72,19 +74,26 @@ async fn query_pip_inner(
     let lat_lng = s2::latlng::LatLng::from(cell);
     let lat = lat_lng.lat.deg();
     let lng = lat_lng.lng.deg();
-    let response = wof_db.point_in_polygon(lng, lat).await?;
+
+    // Prefer the pip_tree, if in use
+    let response = if let Some(pip_tree) = pip_tree {
+        pip_tree.point_in_polygon(lng, lat).await?
+    } else {
+        wof_db.point_in_polygon(lng, lat).await?
+    };
+
     let mut response_ids = Vec::new();
     for concise_response in response {
         let admin_id: u64 = concise_response.id.parse()?;
 
-        // These filters are also applied in SQL
-        if concise_response.r#type == "planet"
-            || concise_response.r#type == "marketarea"
-            || concise_response.r#type == "county"
-            || concise_response.r#type == "timezone"
-        {
-            continue;
-        }
+        // These filters are applied in SQL, to reduce allocations
+        // if concise_response.r#type == "planet"
+        //     || concise_response.r#type == "marketarea"
+        //     || concise_response.r#type == "county"
+        //     || concise_response.r#type == "timezone"
+        // {
+        //     continue;
+        // }
         response_ids.push(admin_id);
     }
 
@@ -184,8 +193,9 @@ pub(crate) async fn query_pip(
     to_cache_sender: Sender<WofCacheItem>,
     s2cell: u64,
     wof_db: &WhosOnFirst,
+    pip_tree: &Option<PipTree<ConcisePipResponse>>,
 ) -> Result<PipResponse> {
-    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), wof_db).await?;
+    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), wof_db, pip_tree).await?;
     let mut response = PipResponse::default();
     let mut admin_name_futures = vec![];
     let mut lang_futures = vec![];

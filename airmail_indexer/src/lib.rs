@@ -1,5 +1,6 @@
 pub mod error;
 mod importer;
+mod pip_tree;
 mod query_pip;
 mod wof;
 
@@ -12,9 +13,10 @@ use airmail::poi::ToIndexPoi;
 use anyhow::Result;
 use crossbeam::channel::Sender;
 use lingua::{IsoCode639_3, Language};
+use pip_tree::PipTree;
 use redb::{ReadTransaction, TableDefinition};
 use std::str::FromStr;
-use wof::WhosOnFirst;
+use wof::{ConcisePipResponse, WhosOnFirst};
 
 pub(crate) const TABLE_AREAS: TableDefinition<u64, &[u8]> = TableDefinition::new("admin_areas");
 pub(crate) const TABLE_NAMES: TableDefinition<u64, &str> = TableDefinition::new("admin_names");
@@ -58,8 +60,10 @@ pub(crate) async fn populate_admin_areas(
     to_cache_sender: Sender<WofCacheItem>,
     poi: &mut ToIndexPoi,
     wof_db: &WhosOnFirst,
+    pip_tree: &Option<PipTree<ConcisePipResponse>>,
 ) -> Result<()> {
-    let pip_response = query_pip::query_pip(read, to_cache_sender, poi.s2cell, wof_db).await?;
+    let pip_response =
+        query_pip::query_pip(read, to_cache_sender, poi.s2cell, wof_db, pip_tree).await?;
     for admin in pip_response.admin_names {
         poi.admins.push(admin);
     }
