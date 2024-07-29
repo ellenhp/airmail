@@ -105,13 +105,13 @@ fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
 /// Parse an OSMExpress file and send POIs for indexing.
 pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<()> {
     info!("Loading osmx from path: {:?}", osmx_path);
-    let db = Database::open(osmx_path).unwrap();
+    let db = Database::open(osmx_path).map_err(IndexerError::from)?;
+    let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
+    let locations = osm.locations().map_err(IndexerError::from)?;
     let mut interesting = 0;
     let mut total = 0;
     info!("Processing nodes");
     {
-        let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
-        let locations = osm.locations().map_err(IndexerError::from)?;
         for (node_id, node) in osm.nodes().map_err(IndexerError::from)?.iter() {
             total += 1;
             if interesting % 10000 == 0 {
@@ -123,10 +123,9 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
                 );
             }
 
-            let tags = tags(node.tags());
-            if let Ok(tags) = tags {
-                let location = locations.get(node_id).expect("Nodes must have locations");
+            if let Ok(tags) = tags(node.tags()) {
                 if valid_tags(&tags) {
+                    let location = locations.get(node_id).expect("Nodes must have locations");
                     if let Some(poi) = tags_to_poi(&tags, location.lat(), location.lon()) {
                         sender.send(poi).map_err(|e| {
                             warn!("Error from sender: {}", e);
@@ -140,8 +139,6 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
     }
     info!("Processing ways");
     {
-        let osm = Transaction::begin(&db).map_err(IndexerError::from)?;
-        let locations = osm.locations().map_err(IndexerError::from)?;
         for (_way_id, way) in osm.ways().map_err(IndexerError::from)?.iter() {
             if interesting % 10000 == 0 {
                 debug!(
@@ -152,8 +149,7 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
                 );
             }
 
-            let tags = tags(way.tags());
-            if let Ok(tags) = tags {
+            if let Ok(tags) = tags(way.tags()) {
                 if valid_tags(&tags) {
                     if let Some(poi) = index_way(&tags, &way, &locations) {
                         sender.send(poi).map_err(|e| {

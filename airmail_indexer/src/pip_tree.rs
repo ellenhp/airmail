@@ -3,7 +3,7 @@ use std::{path::Path, sync::Arc};
 use anyhow::Result;
 use geo::Polygon;
 use geo_types::{Geometry, Point};
-use log::debug;
+use log::{debug, info};
 use rstar::{primitives::GeomWithData, RTree, AABB};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::task::spawn_blocking;
@@ -34,7 +34,7 @@ impl PipTree<ConcisePipResponse> {
 
     /// Create a new `PipTree` from a `WhosOnFirst` database.
     pub async fn new_from_wof_db(wof_db: &WhosOnFirst) -> Result<Self> {
-        debug!("Creating PipTree from WhosOnFirst database");
+        info!("Creating PipTree from WhosOnFirst database");
         let features: Vec<PipWithGeometry> = wof_db.all_polygons().await?;
         Ok(Self::new(features))
     }
@@ -44,7 +44,7 @@ impl PipTree<ConcisePipResponse> {
         let path = path.to_path_buf();
 
         let handle = spawn_blocking(move || {
-            debug!("Loading PipTree from disk: {:?}", path);
+            info!("Loading PipTree from disk: {:?}", path);
 
             let file = std::fs::File::open(path)?;
             let reader = std::io::BufReader::new(file);
@@ -83,7 +83,7 @@ where
             })
             .collect();
 
-        debug!("Creating PipTree with {} polygons", features.len());
+        info!("Creating PipTree with {} polygons", features.len());
         let tree = RTree::bulk_load(features);
         debug!("PipTree created");
 
