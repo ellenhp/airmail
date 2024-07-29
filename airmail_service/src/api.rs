@@ -9,6 +9,7 @@ use axum::{
 };
 use deunicode::deunicode;
 use geo::{Coord, Rect};
+use log::debug;
 use serde::{Deserialize, Serialize};
 
 use crate::error::AirmailServiceError;
@@ -73,7 +74,12 @@ pub async fn search(
 
     let results = index.search(&query, leniency, tags, bbox, &[]).await?;
 
-    println!("{} results found in {:?}", results.len(), start.elapsed());
+    debug!(
+        "Query: {:?} produced: {} results found in {:?}",
+        params,
+        results.len(),
+        start.elapsed()
+    );
 
     let response = Response {
         metadata: MetadataResponse { query: params },

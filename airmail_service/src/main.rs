@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::pedantic)]
 
+use std::future::IntoFuture;
 use std::sync::Arc;
 
 use airmail::index::AirmailIndex;
@@ -9,8 +10,9 @@ use api::search;
 use axum::{http::HeaderValue, routing::get, Router};
 use clap::Parser;
 use env_logger::Env;
-use log::{debug, info};
+use log::{debug, info, warn};
 use tokio::net::TcpListener;
+use tokio::select;
 use tower_http::cors::CorsLayer;
 
 mod api;
@@ -60,7 +62,14 @@ async fn main() -> Result<()> {
 
     info!("Listening at: {}/search?q=query", args.bind);
     let listener = TcpListener::bind(args.bind).await?;
-    axum::serve(listener, app).await?;
+    let server = axum::serve(listener, app.into_make_service()).into_future();
+
+    select! {
+        _ = server => {}
+        _ = tokio::signal::ctrl_c() => {
+            warn!("Received ctrl-c, shutting down");
+        }
+    }
 
     Ok(())
 }
