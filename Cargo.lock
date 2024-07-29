@@ -119,6 +119,7 @@ name = "airmail_service"
 version = "0.1.0"
 dependencies = [
  "airmail",
+ "anyhow",
  "axum",
  "clap",
  "deunicode",
@@ -128,6 +129,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
  "tower-http",
 ]

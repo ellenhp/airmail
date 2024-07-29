@@ -1,114 +1,66 @@
-use std::{collections::HashMap, error::Error, sync::Arc};
+#![forbid(unsafe_code)]
+#![warn(clippy::pedantic)]
 
-use airmail::{index::AirmailIndex, poi::AirmailPoi};
-use axum::{
-    extract::{Query, State},
-    http::HeaderValue,
-    routing::get,
-    Json, Router,
-};
+use std::sync::Arc;
+
+use airmail::index::AirmailIndex;
+use anyhow::Result;
+use api::search;
+use axum::{http::HeaderValue, routing::get, Router};
 use clap::Parser;
-use deunicode::deunicode;
-use geo::{Coord, Rect};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use tokio::task::spawn_blocking;
+use env_logger::Env;
+use log::{debug, info};
+use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
+
+mod api;
+mod error;
 
 #[derive(Debug, Parser)]
 struct Args {
+    /// The path to the index to load
     #[arg(short, long, env = "AIRMAIL_INDEX")]
     index: String,
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Response {
-    metadata: HashMap<String, Value>,
-    features: Vec<AirmailPoi>,
-}
+    /// The address to bind to
+    #[arg(short, long, env = "AIRMAIL_BIND", default_value = "127.0.0.1:3000")]
+    bind: String,
 
-fn parse_bbox(s: &str) -> Option<Rect> {
-    let mut parts = s.split(',');
-    let min_lng: f64 = parts.next()?.parse().ok()?;
-    let min_lat: f64 = parts.next()?.parse().ok()?;
-    let max_lng: f64 = parts.next()?.parse().ok()?;
-    let max_lat: f64 = parts.next()?.parse().ok()?;
-
-    Some(Rect::new(
-        Coord {
-            y: min_lat,
-            x: min_lng,
-        },
-        Coord {
-            y: max_lat,
-            x: max_lng,
-        },
-    ))
-}
-
-async fn search(
-    Query(params): Query<HashMap<String, String>>,
-    State(index): State<Arc<AirmailIndex>>,
-) -> Json<Value> {
-    let query = params.get("q").unwrap();
-    let query = deunicode(query.trim()).to_lowercase();
-    let tags: Option<Vec<String>> = params
-        .get("tags")
-        .map(|s| s.split(',').map(|s| s.to_string()).collect());
-    let leniency = params
-        .get("lenient")
-        .map(|s| s.parse().unwrap())
-        .unwrap_or(false);
-
-    let bbox = params.get("bbox").and_then(|s| parse_bbox(s));
-
-    let start = std::time::Instant::now();
-
-    let results = index
-        .search(&query, leniency, tags, bbox, &[])
-        .await
-        .unwrap();
-
-    println!("{} results found in {:?}", results.len(), start.elapsed());
-
-    let mut response = Response {
-        metadata: HashMap::new(),
-        features: results
-            .clone()
-            .into_iter()
-            .map(|(results, _)| results.clone())
-            .collect::<Vec<AirmailPoi>>(),
-    };
-
-    response
-        .metadata
-        .insert("query".to_string(), Value::String(query));
-
-    Json(serde_json::to_value(response).unwrap())
+    /// Cors origins to allow
+    #[arg(
+        short,
+        long,
+        env = "AIRMAIL_CORS",
+        default_value = "http://localhost:5173"
+    )]
+    cors: Option<Vec<String>>,
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    env_logger::init();
+async fn main() -> Result<()> {
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     let args = Args::parse();
-    let index_path = args.index.clone();
 
-    let index = spawn_blocking(move || {
-        if index_path.starts_with("http") {
-            Arc::new(AirmailIndex::new_remote(&index_path).unwrap())
-        } else {
-            Arc::new(AirmailIndex::new(&index_path).unwrap())
-        }
-    })
-    .await
-    .unwrap();
-    println!("Have {} docs", index.num_docs().await?);
+    debug!("Loading index from {}", args.index);
+    let index = if args.index.starts_with("http") {
+        Arc::new(AirmailIndex::new_remote(&args.index)?)
+    } else {
+        Arc::new(AirmailIndex::new(&args.index)?)
+    };
+
+    let mut cors = CorsLayer::new();
+    for origin in args.cors.unwrap_or_default() {
+        cors = cors.allow_origin(origin.parse::<HeaderValue>()?);
+    }
+
+    info!("Loaded {} docs from index", index.num_docs().await?);
     let app = Router::new()
         .route("/search", get(search).with_state(index))
-        .layer(
-            CorsLayer::new().allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap()),
-        );
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+        .layer(cors);
+
+    info!("Listening at: {}/search?q=query", args.bind);
+    let listener = TcpListener::bind(args.bind).await?;
+    axum::serve(listener, app).await?;
+
     Ok(())
 }
