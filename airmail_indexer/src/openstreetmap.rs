@@ -9,17 +9,6 @@ use log::{debug, info, warn};
 use osmx::{Database, Locations, Transaction, Way};
 
 fn tags_to_poi(tags: &HashMap<String, String>, lat: f64, lng: f64) -> Option<ToIndexPoi> {
-    if tags.is_empty() {
-        return None;
-    }
-    if tags.contains_key("highway")
-        || tags.contains_key("natural")
-        || tags.contains_key("boundary")
-        || tags.contains_key("admin_level")
-    {
-        return None;
-    }
-
     let house_number = tags.get("addr:housenumber").map(|s| s.to_string());
     let road = tags.get("addr:street").map(|s| s.to_string());
     let unit = tags.get("addr:unit").map(|s| s.to_string());
@@ -88,6 +77,21 @@ fn index_way(
     tags_to_poi(tags, lat, lng)
 }
 
+fn valid_tags(tags: &HashMap<String, String>) -> bool {
+    if tags.is_empty() {
+        return false;
+    }
+    if tags.contains_key("highway")
+        || tags.contains_key("natural")
+        || tags.contains_key("boundary")
+        || tags.contains_key("admin_level")
+    {
+        return false;
+    }
+
+    true
+}
+
 fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
     tag_iterator: I,
 ) -> Result<HashMap<String, String>, Box<dyn Error>> {
@@ -122,12 +126,14 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
             let tags = tags(node.tags());
             if let Ok(tags) = tags {
                 let location = locations.get(node_id).expect("Nodes must have locations");
-                if let Some(poi) = tags_to_poi(&tags, location.lat(), location.lon()) {
-                    sender.send(poi).map_err(|e| {
-                        warn!("Error from sender: {}", e);
-                        e
-                    })?;
-                    interesting += 1;
+                if valid_tags(&tags) {
+                    if let Some(poi) = tags_to_poi(&tags, location.lat(), location.lon()) {
+                        sender.send(poi).map_err(|e| {
+                            warn!("Error from sender: {}", e);
+                            e
+                        })?;
+                        interesting += 1;
+                    }
                 }
             }
         }
@@ -148,12 +154,14 @@ pub(crate) fn parse_osm(osmx_path: &Path, sender: Sender<ToIndexPoi>) -> Result<
 
             let tags = tags(way.tags());
             if let Ok(tags) = tags {
-                if let Some(poi) = index_way(&tags, &way, &locations) {
-                    sender.send(poi).map_err(|e| {
-                        warn!("Error from sender: {}", e);
-                        e
-                    })?;
-                    interesting += 1;
+                if valid_tags(&tags) {
+                    if let Some(poi) = index_way(&tags, &way, &locations) {
+                        sender.send(poi).map_err(|e| {
+                            warn!("Error from sender: {}", e);
+                            e
+                        })?;
+                        interesting += 1;
+                    }
                 }
             }
         }
