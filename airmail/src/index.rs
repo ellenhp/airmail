@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -112,7 +112,7 @@ impl AirmailIndex {
         self.tantivy_index.schema().get_field(FIELD_TAGS).unwrap()
     }
 
-    pub fn create(index_dir: &PathBuf) -> Result<Self> {
+    pub fn create(index_dir: &Path) -> Result<Self> {
         let schema = Self::schema();
         let tantivy_index =
             tantivy::Index::open_or_create(MmapDirectory::open(index_dir)?, schema)?;

@@ -1,12 +1,10 @@
-use std::path::PathBuf;
-
-use airmail::index::AirmailIndex;
 use airmail_indexer::ImporterBuilder;
 use anyhow::Result;
 use clap::Parser;
 use env_logger::Env;
 use futures_util::future::join_all;
 use log::warn;
+use std::path::PathBuf;
 use tokio::{select, spawn, task::spawn_blocking};
 
 mod openstreetmap;
@@ -32,6 +30,14 @@ struct Args {
     #[clap(long, short)]
     admin_cache: Option<PathBuf>,
 
+    /// Path to WhosOnFirst spatial index for point-in-polygon lookups. If this is specified
+    /// we'll use the spatial index instead of sqlite geospatial lookups. This will speed up imports,
+    /// after the index is built. It'll be faster for planet scale imports, or frequent imports
+    /// but will use 10GB of memory and takes a few minutes to build. mod_spatialite is not required
+    /// if this is specified.
+    #[clap(long, short)]
+    pip_tree: Option<PathBuf>,
+
     // ============================ OSM-specific options ===================================
     /// Path to an OSMExpress file to import.
     #[clap(long, short)]
@@ -44,18 +50,18 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     let mut handles = vec![];
 
-    // Create the index
-    let index = AirmailIndex::create(&args.index)?;
-
     // Setup the import pipeline
-    let mut import_builder = ImporterBuilder::new(&args.wof_db);
+    let mut import_builder = ImporterBuilder::new(&args.index, &args.wof_db)?;
     if let Some(admin_cache) = args.admin_cache {
         import_builder = import_builder.admin_cache(&admin_cache);
+    }
+    if let Some(pip_tree) = args.pip_tree {
+        import_builder = import_builder.pip_tree_cache(&pip_tree);
     }
     let importer = import_builder.build().await?;
 
     // Send POIs from the OSM parser to the importer
-    let (poi_sender, poi_receiver) = crossbeam::channel::bounded(4096);
+    let (poi_sender, poi_receiver) = crossbeam::channel::bounded(16384);
 
     // Spawn the OSM parser
     handles.push(spawn_blocking(move || {
@@ -64,7 +70,7 @@ async fn main() -> Result<()> {
 
     // Spawn the importer
     handles.push(spawn(async move {
-        importer.run_import(index, "osm", poi_receiver).await
+        importer.run_import("osm", poi_receiver).await
     }));
 
     // Wait for the first thing to finish

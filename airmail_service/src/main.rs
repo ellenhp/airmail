@@ -60,7 +60,7 @@ async fn search(
         .map(|s| s.parse().unwrap())
         .unwrap_or(false);
 
-    let bbox = params.get("bbox").map(|s| parse_bbox(s)).flatten();
+    let bbox = params.get("bbox").and_then(|s| parse_bbox(s));
 
     let start = std::time::Instant::now();
 

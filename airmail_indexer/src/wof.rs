@@ -1,6 +1,6 @@
 use anyhow::Result;
 use log::debug;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
     Pool, Sqlite,
@@ -122,22 +122,57 @@ impl WhosOnFirst {
 
         Ok(rows)
     }
+
+    /// Retrieve a flat representation of all polygons in the database.
+    /// This call can be 10GB+ of data.
+    pub async fn all_polygons(&self) -> Result<Vec<PipWithGeometry>> {
+        // Geometry is stored as spatialite blob, so decode to WKB (geopackage compatible).
+        let rows = sqlx::query_as::<_, PipWithGeometry>(
+            r"
+                SELECT
+                    place.source,
+                    place.id,
+                    place.class,
+                    place.type,
+                    AsGPB(shard.geom) as geom
+                FROM shard
+                LEFT JOIN place USING (source, id)
+                WHERE place.source IS NOT NULL
+                AND (
+                    place.type != 'planet'
+                    AND place.type != 'marketarea'
+                    AND place.type != 'county'
+                    AND place.type != 'timezone'
+                )
+            ",
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows)
+    }
 }
 
+/// A key-value pair from the WhosOnFirst database.
 #[derive(Debug, Clone, Deserialize, sqlx::FromRow)]
 pub struct WofKV {
     key: String,
     value: String,
 }
 
-#[derive(Debug, Clone, Deserialize, sqlx::FromRow)]
+/// A concise representation of a place in the WhosOnFirst database.
+#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
 pub struct ConcisePipResponse {
-    // #[allow(dead_code)]
-    // pub source: String,
+    /// WOF data source, usually wof
+    pub source: String,
+
+    /// WOF ID of the place
     pub id: String,
-    // #[allow(dead_code)]
-    // pub class: String,
-    #[serde(rename = "type")]
+
+    /// High level bucket of human activity - https://whosonfirst.org/docs/categories/
+    /// POINT-OF-VIEW > CLASS > CATEGORY
+    pub class: String,
+
     pub r#type: String,
 }
 
@@ -156,6 +191,25 @@ pub struct PipLangsResponse {
     pub langs: Option<String>,
 }
 
+/// Represents a place in the WhosOnFirst database with a geometry.
+#[derive(sqlx::FromRow)]
+pub struct PipWithGeometry {
+    /// WOF data source, usually wof
+    pub source: String,
+
+    /// WOF ID of the place
+    pub id: String,
+
+    /// High level bucket of human activity - https://whosonfirst.org/docs/categories/
+    /// POINT-OF-VIEW > CLASS > CATEGORY
+    pub class: String,
+
+    pub r#type: String,
+
+    pub geom: geozero::wkb::Decode<geo_types::Geometry<f64>>,
+}
+
+/// Convert from a list of key-value pairs to a PipLangsResponse.
 impl From<Vec<WofKV>> for PipLangsResponse {
     fn from(value: Vec<WofKV>) -> Self {
         let mut langs = None;
@@ -165,5 +219,20 @@ impl From<Vec<WofKV>> for PipLangsResponse {
             }
         }
         Self { langs }
+    }
+}
+
+/// Deconstruct a PipWithGeometry into a geometry and a concise response.
+impl From<PipWithGeometry> for (Option<geo_types::Geometry<f64>>, ConcisePipResponse) {
+    fn from(value: PipWithGeometry) -> Self {
+        (
+            value.geom.geometry,
+            ConcisePipResponse {
+                source: value.source,
+                id: value.id,
+                class: value.class,
+                r#type: value.r#type,
+            },
+        )
     }
 }
