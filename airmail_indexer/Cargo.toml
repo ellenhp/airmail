@@ -40,12 +40,9 @@ regex = "1.10.3"
 deunicode = "1.4.2"
 log = "0.4.20"
 geo = "0.27.0"
-rand = "0.8.5"
-subprocess = "0.2.9"
 rustyline = "13.0.0"
 num_cpus = "1.16.0"
 lru = "0.12.2"
-osmflat = "0.1.0"
 lingua = { version = "1.6.2", default-features = false, features = [
     "english",
     "chinese",
