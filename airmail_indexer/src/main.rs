@@ -1,12 +1,14 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::pedantic)]
 
-use airmail_indexer::ImporterBuilder;
+use airmail_indexer::{error::IndexerError, ImporterBuilder};
 use anyhow::Result;
 use clap::Parser;
 use env_logger::Env;
 use futures_util::future::join_all;
 use log::warn;
+use openstreetmap::OpenStreetMapsLoader;
+use osmx::Database;
 use std::path::PathBuf;
 use tokio::{select, spawn, task::spawn_blocking};
 
@@ -63,12 +65,15 @@ async fn main() -> Result<()> {
     }
     let importer = import_builder.build().await?;
 
-    // Send POIs from the OSM parser to the importer
+    // Send POIs from the OSM parser to the importer.
     let (poi_sender, poi_receiver) = crossbeam::channel::bounded(16384);
 
     // Spawn the OSM parser
     handles.push(spawn_blocking(move || {
-        openstreetmap::parse_osm(&args.osmx, &poi_sender)
+        // Setup OSM
+        let osm_db = Database::open(args.osmx).map_err(IndexerError::from)?;
+        let osm = OpenStreetMapsLoader::new(&osm_db, poi_sender)?;
+        osm.parse_osm()
     }));
 
     // Spawn the importer

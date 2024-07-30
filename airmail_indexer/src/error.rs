@@ -10,6 +10,9 @@ pub enum IndexerError {
 
     #[error("no langs found")]
     NoLangsFound,
+
+    #[error("node missing location")]
+    NodeMissingLocation,
 }
 
 impl From<Box<dyn std::error::Error>> for IndexerError {
