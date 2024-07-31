@@ -73,6 +73,7 @@ rstar = { version = "0.12.0", features = ["serde"] }
 geo-types = { version = "0.7.11", features = ["use-rstar_0_12"] }
 bincode = { version = "1.3.3" }
 geozero = { version = "0.13.0", features = ["with-geo", "with-gpkg"] }
+osmpbf = "0.3.4"
 
 [features]
 default = ["remote_index"]

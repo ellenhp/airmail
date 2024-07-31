@@ -3,18 +3,21 @@
 
 use airmail_indexer::{error::IndexerError, ImporterBuilder};
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use env_logger::Env;
 use futures_util::future::join_all;
 use log::warn;
 use openstreetmap::OSMExpressLoader;
+use osm_pbf::OsmPbf;
 use osmx::Database;
 use std::path::PathBuf;
 use tokio::{select, spawn, task::spawn_blocking};
 
 mod openstreetmap;
+mod osm_pbf;
 
 #[derive(Debug, Parser)]
+#[clap(version = env!("CARGO_PKG_VERSION"), author = env!("CARGO_PKG_AUTHORS"))]
 struct Args {
     /// Path to the Who's On First Spatialite database. Used for populating
     /// administrative areas, which are often missing or wrong in OSM.
@@ -43,10 +46,24 @@ struct Args {
     #[clap(long, short)]
     pip_tree: Option<PathBuf>,
 
-    // ============================ OSM-specific options ===================================
-    /// Path to an `OSMExpress` file to import.
-    #[clap(long, short)]
-    osmx: PathBuf,
+    /// The loader to use for importing data.
+    #[clap(subcommand)]
+    loader: Loader,
+}
+
+#[derive(Subcommand, Clone, Debug, Eq, PartialEq)]
+#[command(arg_required_else_help = true)]
+enum Loader {
+    LoadOsmx {
+        /// Path to an `OSMExpress` file to import.
+        path: PathBuf,
+    },
+
+    /// Path to an OSM PBF file to import.
+    LoadOsmPbf {
+        /// Path to an OSM PBF file to import.
+        path: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -70,10 +87,24 @@ async fn main() -> Result<()> {
 
     // Spawn the OSM parser
     handles.push(spawn_blocking(move || {
-        // Setup OSM
-        let osm_db = Database::open(args.osmx).map_err(IndexerError::from)?;
-        let osm = OSMExpressLoader::new(&osm_db, poi_sender)?;
-        osm.parse_osm()
+        match args.loader {
+            Loader::LoadOsmx { path } => {
+                // Setup OSM
+                let osm_db = Database::open(path).map_err(IndexerError::from)?;
+                let osm = OSMExpressLoader::new(&osm_db, poi_sender)?;
+                osm.parse_osm().map_err(|e| {
+                    warn!("Error parsing OSM: {}", e);
+                    e
+                })
+            }
+            Loader::LoadOsmPbf { path } => {
+                let osm = OsmPbf::new(&path, poi_sender);
+                osm.parse_osm().map_err(|e| {
+                    warn!("Error parsing OSM: {}", e);
+                    e
+                })
+            }
+        }
     }));
 
     // Spawn the importer

@@ -91,21 +91,6 @@ impl<'db> OSMExpressLoader<'db> {
     //     Some((location.lat(), location.lon()))
     // }
 
-    fn valid_tags(tags: &HashMap<String, String>) -> bool {
-        if tags.is_empty() {
-            return false;
-        }
-        if tags.contains_key("highway")
-            || tags.contains_key("natural")
-            || tags.contains_key("boundary")
-            || tags.contains_key("admin_level")
-        {
-            return false;
-        }
-
-        true
-    }
-
     fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
         tag_iterator: I,
     ) -> HashMap<String, String> {
@@ -123,13 +108,13 @@ impl<'db> OSMExpressLoader<'db> {
         let mut interesting = 0;
         let locations = self.locations()?;
 
-        info!("Processing nodes");
+        info!("Loading OSM nodes");
         {
             for (node_id, node) in self.transaction.nodes().map_err(IndexerError::from)?.iter() {
                 total += 1;
                 if interesting % 10000 == 0 {
                     debug!(
-                        "Processed interesting/total: {}/{} nodes, queue size: {}",
+                        "Loaded OSM nodes interesting/total: {}/{} nodes, queue size: {}",
                         interesting,
                         total,
                         self.sender.len()
@@ -137,17 +122,12 @@ impl<'db> OSMExpressLoader<'db> {
                 }
 
                 let tags = Self::tags(node.tags());
-                if Self::valid_tags(&tags) {
-                    let location = locations
-                        .get(node_id)
-                        .ok_or(IndexerError::NodeMissingLocation)?;
+                let location = locations
+                    .get(node_id)
+                    .ok_or(IndexerError::NodeMissingLocation)?;
 
-                    let poi = OsmPoi {
-                        tags,
-                        location: (location.lat(), location.lon()),
-                    };
-
-                    if let Some(poi_to_indexer) = poi.into() {
+                if let Some(interesting_poi) = OsmPoi::new(tags, (location.lat(), location.lon())) {
+                    if let Some(poi_to_indexer) = interesting_poi.into() {
                         self.sender.send(poi_to_indexer).map_err(|e| {
                             warn!("Error from sender: {}", e);
                             e
@@ -158,24 +138,22 @@ impl<'db> OSMExpressLoader<'db> {
             }
         }
 
-        info!("Processing ways");
+        info!("Loading OSM ways");
         {
             for (_way_id, way) in self.transaction.ways().map_err(IndexerError::from)?.iter() {
                 if interesting % 10000 == 0 {
                     debug!(
-                        "Processed interesting/total: {}/{} nodes, queue size: {}",
+                        "Loaded OSM ways interesting/total: {}/{} nodes, queue size: {}",
                         interesting,
                         total,
                         self.sender.len()
                     );
                 }
                 // Fetching tags is slow
-                let tags = Self::tags(way.tags());
-                if Self::valid_tags(&tags) {
-                    if let Some(location) = Self::mid_point_on_way(&way, &locations) {
-                        let poi = OsmPoi { tags, location };
-
-                        if let Some(poi_to_indexer) = poi.into() {
+                if let Some(location) = Self::mid_point_on_way(&way, &locations) {
+                    let tags = Self::tags(way.tags());
+                    if let Some(interesting_poi) = OsmPoi::new(tags, location) {
+                        if let Some(poi_to_indexer) = interesting_poi.into() {
                             self.sender.send(poi_to_indexer).map_err(|e| {
                                 warn!("Error from sender: {}", e);
                                 e
@@ -196,6 +174,27 @@ impl<'db> OSMExpressLoader<'db> {
 pub struct OsmPoi {
     tags: HashMap<String, String>,
     location: (f64, f64),
+}
+
+impl OsmPoi {
+    pub fn new(tags: HashMap<String, String>, location: (f64, f64)) -> Option<Self> {
+        if tags.is_empty() {
+            return None;
+        }
+        if tags.contains_key("highway")
+            || tags.contains_key("natural")
+            || tags.contains_key("boundary")
+            || tags.contains_key("admin_level")
+        {
+            return None;
+        }
+
+        Some(Self { tags, location })
+    }
+
+    pub fn index_poi(self) -> Option<ToIndexPoi> {
+        self.into()
+    }
 }
 
 impl From<OsmPoi> for Option<ToIndexPoi> {
