@@ -5,19 +5,23 @@ use airmail::{
 use anyhow::Result;
 use crossbeam::channel::{Receiver, Sender};
 use futures_util::future::join_all;
+use lingua::{IsoCode639_3, Language};
 use log::{info, trace, warn};
-use redb::Database;
 use std::{
     path::{Path, PathBuf},
+    str::FromStr,
     sync::Arc,
 };
-use tokio::{spawn, task::spawn_blocking};
+use tokio::{
+    spawn,
+    task::{spawn_blocking, JoinHandle},
+};
 
 use crate::{
+    cache::{IndexerCache, WofCacheItem},
     pip_tree::PipTree,
-    populate_admin_areas,
+    query_pip,
     wof::{ConcisePipResponse, WhosOnFirst},
-    WofCacheItem, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
 };
 
 pub struct ImporterBuilder {
@@ -51,21 +55,13 @@ impl ImporterBuilder {
     }
 
     pub async fn build(self) -> Result<Importer> {
-        let admin_cache = if let Some(admin_cache) = self.admin_cache_path {
+        let admin_cache_path = if let Some(admin_cache) = self.admin_cache_path {
             admin_cache
         } else {
             std::env::temp_dir().join("admin_cache.db")
         };
 
-        let db = Database::create(&admin_cache)?;
-        {
-            let txn = db.begin_write()?;
-            {
-                txn.open_table(TABLE_AREAS)?;
-                txn.open_table(TABLE_NAMES)?;
-            }
-            txn.commit()?;
-        }
+        let admin_cache = IndexerCache::new(&admin_cache_path)?;
 
         let wof_db = WhosOnFirst::new(&self.wof_db_path).await?;
 
@@ -75,13 +71,13 @@ impl ImporterBuilder {
             None
         };
 
-        Importer::new(self.index, db, wof_db, pip_tree).await
+        Importer::new(self.index, admin_cache, wof_db, pip_tree).await
     }
 }
 
 pub struct Importer {
     index: AirmailIndex,
-    admin_cache: Arc<Database>,
+    indexer_cache: Arc<IndexerCache>,
     wof_db: WhosOnFirst,
     pip_tree: Option<PipTree<ConcisePipResponse>>,
 }
@@ -89,13 +85,13 @@ pub struct Importer {
 impl Importer {
     pub async fn new(
         index: AirmailIndex,
-        admin_cache: Database,
+        indexer_cache: IndexerCache,
         wof_db: WhosOnFirst,
         pip_tree: Option<PipTree<ConcisePipResponse>>,
     ) -> Result<Self> {
         Ok(Self {
             index,
-            admin_cache: Arc::new(admin_cache),
+            indexer_cache: Arc::new(indexer_cache),
             wof_db,
             pip_tree,
         })
@@ -107,48 +103,21 @@ impl Importer {
             crossbeam::channel::bounded(1024);
         let (to_index_sender, to_index_receiver): (Sender<SchemafiedPoi>, Receiver<SchemafiedPoi>) =
             crossbeam::channel::bounded(1024);
-        let mut handles = vec![];
+        let mut handles: Vec<JoinHandle<Result<()>>> = vec![];
 
-        let admin_cache = self.admin_cache.clone();
-
+        // Listen for items to cache
+        let admin_cache = self.indexer_cache.clone();
         handles.push(spawn_blocking(move || {
-            let mut write = admin_cache.begin_write().unwrap();
-            let mut count = 0;
-            loop {
-                count += 1;
-                if count % 5000 == 0 {
-                    write.commit().unwrap();
-                    write = admin_cache.begin_write().unwrap();
-                }
-                match to_cache_receiver.recv() {
-                    Ok(WofCacheItem::Names(admin, names)) => {
-                        let mut table = write.open_table(TABLE_NAMES).unwrap();
-                        let packed = names.join("\0");
-                        table.insert(admin, packed.as_str()).unwrap();
-                    }
-                    Ok(WofCacheItem::Langs(admin, langs)) => {
-                        let mut table = write.open_table(TABLE_LANGS).unwrap();
-                        let packed = langs.join("\0");
-                        table.insert(admin, packed.as_str()).unwrap();
-                    }
-                    Ok(WofCacheItem::Admins(s2cell, admins)) => {
-                        let mut table = write.open_table(TABLE_AREAS).unwrap();
-                        let packed = admins
-                            .iter()
-                            .flat_map(|id| id.to_le_bytes())
-                            .collect::<Vec<_>>();
-                        table.insert(s2cell, packed.as_slice()).unwrap();
-                    }
-                    Err(_) => break,
-                }
+            while let Ok(cache_item) = to_cache_receiver.recv() {
+                admin_cache.buffered_write_item(cache_item)?;
             }
+            Ok(())
         }));
 
+        // Listen for items to index
         let mut writer = self.index.writer()?;
-
         handles.push(spawn_blocking(move || {
             let start = std::time::Instant::now();
-
             let mut count = 0;
             loop {
                 {
@@ -171,7 +140,9 @@ impl Importer {
                     break;
                 }
             }
-            writer.commit().unwrap();
+            writer.commit()?;
+
+            Ok(())
         }));
 
         // Spawn processing workers
@@ -179,18 +150,15 @@ impl Importer {
             let no_admin_receiver = receiver.clone();
             let to_index_sender = to_index_sender.clone();
             let to_cache_sender = to_cache_sender.clone();
-            let admin_cache = self.admin_cache.clone();
+            let indexer_cache = self.indexer_cache.clone();
             let wof_db = self.wof_db.clone();
             let pip_tree = self.pip_tree.clone();
 
             handles.push(spawn(async move {
-                let mut read = admin_cache.begin_read().unwrap();
                 let mut counter = 0;
-                while let Ok(mut poi) = no_admin_receiver.recv() {
+                while let Ok(poi) = no_admin_receiver.recv() {
                     counter += 1;
                     if counter % 1000 == 0 {
-                        read = admin_cache.begin_read().unwrap();
-
                         trace!(
                             "Cache queue, index queue: {}, {}",
                             to_cache_sender.len(),
@@ -198,24 +166,26 @@ impl Importer {
                         );
                     }
 
-                    match populate_admin_areas(
-                        &read,
+                    match Self::populate_admin_areas(
+                        poi,
+                        &indexer_cache,
                         to_cache_sender.clone(),
-                        &mut poi,
                         &wof_db,
                         &pip_tree,
                     )
                     .await
                     {
-                        Ok(()) => {
-                            let poi = SchemafiedPoi::from(poi);
-                            to_index_sender.send(poi).unwrap();
+                        Ok(poi) => {
+                            let schemafied_poi = SchemafiedPoi::from(poi);
+                            to_index_sender.send(schemafied_poi).unwrap();
                         }
                         Err(err) => {
                             warn!("Failed to populate admin areas, {}", err);
                         }
                     }
                 }
+
+                Ok(())
             }));
         }
         drop(to_index_sender);
@@ -226,5 +196,27 @@ impl Importer {
         info!("Indexing complete");
 
         Ok(())
+    }
+
+    async fn populate_admin_areas(
+        mut poi: ToIndexPoi,
+        indexer_cache: &IndexerCache,
+        to_cache_sender: Sender<WofCacheItem>,
+        wof_db: &WhosOnFirst,
+        pip_tree: &Option<PipTree<ConcisePipResponse>>,
+    ) -> Result<ToIndexPoi> {
+        let pip_response =
+            query_pip::query_pip(indexer_cache, to_cache_sender, poi.s2cell, wof_db, pip_tree)
+                .await?;
+        for admin in pip_response.admin_names {
+            poi.admins.push(admin);
+        }
+        for lang in pip_response.admin_langs {
+            if let Ok(iso) = IsoCode639_3::from_str(&lang) {
+                poi.languages.push(Language::from_iso_code_639_3(&iso))
+            }
+        }
+
+        Ok(poi)
     }
 }

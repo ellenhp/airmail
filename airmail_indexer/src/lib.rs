@@ -1,3 +1,4 @@
+mod cache;
 pub mod error;
 mod importer;
 mod pip_tree;
@@ -8,19 +9,6 @@ mod wof;
 mod wof_tests;
 
 pub use importer::{Importer, ImporterBuilder};
-
-use airmail::poi::ToIndexPoi;
-use anyhow::Result;
-use crossbeam::channel::Sender;
-use lingua::{IsoCode639_3, Language};
-use pip_tree::PipTree;
-use redb::{ReadTransaction, TableDefinition};
-use std::str::FromStr;
-use wof::{ConcisePipResponse, WhosOnFirst};
-
-pub(crate) const TABLE_AREAS: TableDefinition<u64, &[u8]> = TableDefinition::new("admin_areas");
-pub(crate) const TABLE_NAMES: TableDefinition<u64, &str> = TableDefinition::new("admin_names");
-pub(crate) const TABLE_LANGS: TableDefinition<u64, &str> = TableDefinition::new("admin_langs");
 
 const COUNTRIES: [u64; 214] = [
     85632343, 85632573, 85632229, 85632529, 85632405, 85632773, 85632281, 85632715, 85632505,
@@ -48,30 +36,3 @@ const COUNTRIES: [u64; 214] = [
     85632187, 85632569, 85632317, 85632763, 85632263, 85632681, 85633259, 1, 85632733, 1729945891,
     1729945893, 1729989201, 85632499, 85633813, 85632559, 85632243,
 ];
-
-pub(crate) enum WofCacheItem {
-    Names(u64, Vec<String>),
-    Langs(u64, Vec<String>),
-    Admins(u64, Vec<u64>),
-}
-
-pub(crate) async fn populate_admin_areas(
-    read: &'_ ReadTransaction<'_>,
-    to_cache_sender: Sender<WofCacheItem>,
-    poi: &mut ToIndexPoi,
-    wof_db: &WhosOnFirst,
-    pip_tree: &Option<PipTree<ConcisePipResponse>>,
-) -> Result<()> {
-    let pip_response =
-        query_pip::query_pip(read, to_cache_sender, poi.s2cell, wof_db, pip_tree).await?;
-    for admin in pip_response.admin_names {
-        poi.admins.push(admin);
-    }
-    for lang in pip_response.admin_langs {
-        if let Ok(iso) = IsoCode639_3::from_str(&lang) {
-            poi.languages.push(Language::from_iso_code_639_3(&iso))
-        }
-    }
-
-    Ok(())
-}

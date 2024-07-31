@@ -3,14 +3,13 @@ use std::collections::HashSet;
 use anyhow::Result;
 use crossbeam::channel::Sender;
 use futures_util::future::join_all;
-use redb::{ReadTransaction, ReadableTable};
 use serde::Deserialize;
 
 use crate::{
-    error::IndexerError,
+    cache::{IndexerCache, WofCacheItem},
     pip_tree::PipTree,
     wof::{ConcisePipResponse, PipLangsResponse, WhosOnFirst},
-    WofCacheItem, COUNTRIES, TABLE_AREAS, TABLE_LANGS, TABLE_NAMES,
+    COUNTRIES,
 };
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -30,7 +29,7 @@ struct AdminIds {
 
 async fn query_pip_inner(
     s2cell: u64,
-    read: &'_ ReadTransaction<'_>,
+    indexer_cache: &IndexerCache,
     to_cache_sender: Sender<WofCacheItem>,
     wof_db: &WhosOnFirst,
     pip_tree: &Option<PipTree<ConcisePipResponse>>,
@@ -43,26 +42,7 @@ async fn query_pip_inner(
         cell
     };
 
-    let ids = {
-        let mut ids: Vec<u64> = Vec::new();
-        let txn = read;
-        let table = txn.open_table(TABLE_AREAS)?;
-        if let Some(admin_ids) = table.get(&cell.0)? {
-            for admin_id in admin_ids.value().chunks(8) {
-                ids.push(u64::from_le_bytes([
-                    admin_id[0],
-                    admin_id[1],
-                    admin_id[2],
-                    admin_id[3],
-                    admin_id[4],
-                    admin_id[5],
-                    admin_id[6],
-                    admin_id[7],
-                ]));
-            }
-        }
-        ids
-    };
+    let ids = indexer_cache.query_area(cell.0)?;
     if !ids.is_empty() {
         let country = ids.iter().find(|id| COUNTRIES.contains(*id)).cloned();
         return Ok(AdminIds {
@@ -110,34 +90,6 @@ async fn query_pip_inner(
             .cloned(),
         all_admin_ids: response_ids,
     })
-}
-
-fn query_names_cache(read: &'_ ReadTransaction<'_>, admin: u64) -> Result<Vec<String>> {
-    let txn = read;
-    let table = txn.open_table(TABLE_NAMES)?;
-    if let Some(names_ref) = table.get(admin)? {
-        let names = names_ref.value().to_string();
-        let names = names
-            .split('\0')
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
-        return Ok(names);
-    }
-    Err(IndexerError::NoNamesFound.into())
-}
-
-fn query_languages_cache(read: &'_ ReadTransaction<'_>, admin: u64) -> Result<Vec<String>> {
-    let txn = read;
-    let table = txn.open_table(TABLE_LANGS)?;
-    if let Some(langs_ref) = table.get(admin)? {
-        let langs = langs_ref.value().to_string();
-        let langs = langs
-            .split('\0')
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
-        return Ok(langs);
-    }
-    Err(IndexerError::NoLangsFound.into())
 }
 
 async fn query_names(admin_id: u64, wof_db: &WhosOnFirst) -> Option<(u64, Vec<String>)> {
@@ -189,13 +141,20 @@ async fn query_langs(country_id: u64, wof_db: &WhosOnFirst) -> Option<(u64, Vec<
 }
 
 pub(crate) async fn query_pip(
-    read: &'_ ReadTransaction<'_>,
+    indexer_cache: &IndexerCache,
     to_cache_sender: Sender<WofCacheItem>,
     s2cell: u64,
     wof_db: &WhosOnFirst,
     pip_tree: &Option<PipTree<ConcisePipResponse>>,
 ) -> Result<PipResponse> {
-    let wof_ids = query_pip_inner(s2cell, read, to_cache_sender.clone(), wof_db, pip_tree).await?;
+    let wof_ids = query_pip_inner(
+        s2cell,
+        indexer_cache,
+        to_cache_sender.clone(),
+        wof_db,
+        pip_tree,
+    )
+    .await?;
     let mut response = PipResponse::default();
     let mut admin_name_futures = vec![];
     let mut lang_futures = vec![];
@@ -207,7 +166,7 @@ pub(crate) async fn query_pip(
             continue;
         }
 
-        if let Ok(names) = query_names_cache(read, admin_id) {
+        if let Ok(names) = indexer_cache.query_names_cache(admin_id) {
             response.admin_names.extend(names);
         } else {
             admin_name_futures.push(query_names(admin_id, wof_db));
@@ -216,7 +175,7 @@ pub(crate) async fn query_pip(
 
     // Query languages for the country
     if let Some(country_id) = wof_ids.country {
-        if let Ok(langs) = query_languages_cache(read, country_id) {
+        if let Ok(langs) = indexer_cache.query_languages_cache(country_id) {
             response.admin_langs.extend(langs);
         } else {
             lang_futures.push(query_langs(country_id, wof_db));

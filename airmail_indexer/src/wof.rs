@@ -19,6 +19,8 @@ impl WhosOnFirst {
     /// Opens a connection to the WhosOnFirst database.
     /// Requires the SQLite mod_spatialite extension to be loaded.
     pub async fn new(path: &Path) -> Result<Self> {
+        debug!("Opening WhosOnFirst database at {:?}", path);
+
         let opts = SqliteConnectOptions::new()
             .filename(path)
             .journal_mode(SqliteJournalMode::Wal)
@@ -39,8 +41,6 @@ impl WhosOnFirst {
             .max_connections(connections)
             .connect_with(opts)
             .await?;
-
-        debug!("Connected to WhosOnFirst database at {:?}", path);
 
         Ok(Self { pool })
     }
