@@ -7,10 +7,16 @@ use std::{
 use airmail::poi::ToIndexPoi;
 use anyhow::Result;
 use crossbeam::channel::Sender;
-use log::{info, warn};
+use log::{debug, info, warn};
 use osmpbf::{Element, ElementReader};
 
 use crate::openstreetmap::OsmPoi;
+
+/// An OpenStreetMap PBF file loader.
+///
+/// OSM PBF contains nodes, ways and relations. This loader extracts points of interest from
+/// nodes, dense nodes and ways. The location of a node or way may be present in the data, or
+/// may require a lookup from a node map.
 
 pub struct OsmPbf {
     osm_pbf: PathBuf,
@@ -25,17 +31,47 @@ impl OsmPbf {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     pub fn parse_osm(self) -> Result<()> {
-        info!("Parsing OSM PBF file: {}", self.osm_pbf.display());
-        let reader = ElementReader::from_path(&self.osm_pbf)?;
+        info!("Generating OSM node map from: {}", self.osm_pbf.display());
+
+        // Create a Hashmap of nodes to lat/lon, enabling quick lookup of node locations,
+        // as ways may not contain the location data.
+        let node_map: Vec<(i64, (f64, f64))> = ElementReader::from_path(&self.osm_pbf)?
+            .par_map_reduce(
+                |element| match element {
+                    Element::Node(node) => {
+                        let location = (node.lat(), node.lon());
+                        vec![(node.id(), location)]
+                    }
+                    Element::DenseNode(node) => {
+                        let location = (node.lat(), node.lon());
+                        vec![(node.id(), location)]
+                    }
+                    _ => Vec::new(),
+                },
+                Vec::new,
+                |mut a, b| {
+                    if b.is_empty() {
+                        return a;
+                    }
+                    a.extend(b);
+                    a
+                },
+            )?;
+
+        let node_map: HashMap<i64, (f64, f64)> = node_map.into_iter().collect();
         let count_ways = AtomicUsize::new(0);
         let count_nodes = AtomicUsize::new(0);
         let count_dense_nodes = AtomicUsize::new(0);
 
-        // Extract points of interest
-        let pois = reader.par_map_reduce(
+        debug!("Parsing POIs");
+
+        // Extract points of interest. Par_map_reduce is used to paralleliase the extraction of
+        // POIs from the OSM PBF file.
+        let pois = ElementReader::from_path(&self.osm_pbf)?.par_map_reduce(
             |element| match element {
-                // A dense node is a point.
+                // A dense node is a POI (with tags), and has the location embedded in the data.
                 Element::DenseNode(dn) => {
                     let tags = dn
                         .tags()
@@ -51,9 +87,8 @@ impl OsmPbf {
                         vec![]
                     }
                 }
-                // A node is a point.
-                // Depending on the format, unlikely to contain any interesting information, likely
-                // where the actual geometry is contained for a way.
+                // A node is unlikely to be a POI (with tags and a location), but is instead the
+                // location.
                 Element::Node(node) => {
                     let tags = node
                         .tags()
@@ -69,13 +104,23 @@ impl OsmPbf {
                     }
                 }
                 // A way is a polyline or polygon.
-                // Depending on the format, the actual geometry might be contained
-                // in the nodes and so isn't of interest
                 Element::Way(way) => {
-                    let location = way
+                    // Attempt to get the location from the way from the underlying way data,
+                    // this requires the way is stored with the option LocationsOnWays enabled.
+                    let mut location = way
                         .node_locations()
                         .next()
                         .map(|location| (location.lat(), location.lon()));
+
+                    // If the location is not present in the way data, attempt to get the location
+                    // from the node_map we previously built.
+                    if location.is_none() {
+                        location = way
+                            .refs()
+                            .next()
+                            .and_then(|node_id| node_map.get(&node_id).copied());
+                    }
+
                     if let Some(location) = location {
                         let tags = way
                             .tags()
@@ -106,6 +151,9 @@ impl OsmPbf {
                 a
             },
         )?;
+
+        // Reduce some memory usage
+        drop(node_map);
 
         let count_ways = count_ways.load(Ordering::Relaxed);
         let count_nodes = count_nodes.load(Ordering::Relaxed);
