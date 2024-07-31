@@ -7,12 +7,12 @@ use crossbeam::channel::Sender;
 use log::{debug, info, warn};
 use osmx::{Database, Locations, Transaction, Way};
 
-pub struct OpenStreetMapsLoader<'db> {
+pub struct OSMExpressLoader<'db> {
     sender: Sender<ToIndexPoi>,
     transaction: Transaction<'db>,
 }
 
-impl<'db> OpenStreetMapsLoader<'db> {
+impl<'db> OSMExpressLoader<'db> {
     pub fn new(db: &'db Database, sender: Sender<ToIndexPoi>) -> Result<Self> {
         // Share the transaction within the loader
         let transaction = Transaction::begin(db).map_err(IndexerError::from)?;

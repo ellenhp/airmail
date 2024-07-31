@@ -7,7 +7,7 @@ use clap::Parser;
 use env_logger::Env;
 use futures_util::future::join_all;
 use log::warn;
-use openstreetmap::OpenStreetMapsLoader;
+use openstreetmap::OSMExpressLoader;
 use osmx::Database;
 use std::path::PathBuf;
 use tokio::{select, spawn, task::spawn_blocking};
@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
     handles.push(spawn_blocking(move || {
         // Setup OSM
         let osm_db = Database::open(args.osmx).map_err(IndexerError::from)?;
-        let osm = OpenStreetMapsLoader::new(&osm_db, poi_sender)?;
+        let osm = OSMExpressLoader::new(&osm_db, poi_sender)?;
         osm.parse_osm()
     }));
 
