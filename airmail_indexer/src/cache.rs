@@ -11,14 +11,12 @@ use anyhow::Result;
 use log::{trace, warn};
 use redb::{Database, ReadableTable, TableDefinition};
 
-use crate::error::IndexerError;
-
 const TABLE_AREAS: TableDefinition<u64, &[u8]> = TableDefinition::new("admin_areas");
 const TABLE_NAMES: TableDefinition<u64, &str> = TableDefinition::new("admin_names");
 const TABLE_LANGS: TableDefinition<u64, &str> = TableDefinition::new("admin_langs");
 const TABLE_NODE_LOCATION: TableDefinition<i64, (f64, f64)> =
     TableDefinition::new("admin_node_location");
-pub const BUFFER_SIZE: usize = 5000;
+pub const BUFFER_SIZE: usize = 25000;
 
 /// A cache for storing administrative area information.
 pub struct IndexerCache {
@@ -69,7 +67,7 @@ impl IndexerCache {
     }
 
     /// Lookup an admin id in the cache and return the names
-    pub fn query_names_cache(&self, admin: u64) -> Result<Vec<String>> {
+    pub fn query_names_cache(&self, admin: u64) -> Result<Option<Vec<String>>> {
         let txn = self.database.begin_read()?;
         let table = txn.open_table(TABLE_NAMES)?;
         if let Some(names_ref) = table.get(admin)? {
@@ -78,13 +76,13 @@ impl IndexerCache {
                 .split('\0')
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>();
-            return Ok(names);
+            return Ok(Some(names));
         }
-        Err(IndexerError::NoNamesFound.into())
+        Ok(None)
     }
 
     /// Lookup an admin id in the cache and return the languages
-    pub fn query_languages_cache(&self, admin: u64) -> Result<Vec<String>> {
+    pub fn query_languages_cache(&self, admin: u64) -> Result<Option<Vec<String>>> {
         let txn = self.database.begin_read()?;
         let table = txn.open_table(TABLE_LANGS)?;
         if let Some(langs_ref) = table.get(admin)? {
@@ -93,9 +91,9 @@ impl IndexerCache {
                 .split('\0')
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>();
-            return Ok(langs);
+            return Ok(Some(langs));
         }
-        Err(IndexerError::NoLangsFound.into())
+        Ok(None)
     }
 
     /// Lookup a node id in the cache and return the location
@@ -105,7 +103,6 @@ impl IndexerCache {
         if let Some(location) = table.get(node_id)? {
             return Ok(Some(location.value()));
         }
-
         Ok(None)
     }
 
@@ -168,12 +165,16 @@ impl IndexerCache {
         self.flush_buffer(&mut buffer)
     }
 
-    pub fn buffer_size(&self, size: usize) {
+    /// Set the buffer size for the cache and flush the buffer
+    pub fn buffer_size(&self, size: usize) -> Result<()> {
         self.buffer_size.store(size, Ordering::Relaxed);
+        self.flush()
     }
 
-    pub fn buffer_size_default(&self) {
+    /// Reset the buffer size to the default value
+    pub fn buffer_size_default(&self) -> Result<()> {
         self.buffer_size.store(BUFFER_SIZE, Ordering::Relaxed);
+        self.flush()
     }
 }
 

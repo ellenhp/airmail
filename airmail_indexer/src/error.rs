@@ -5,12 +5,6 @@ pub enum IndexerError {
     #[error("unable to import OSMX file")]
     OsmxImport,
 
-    #[error("no names found")]
-    NoNamesFound,
-
-    #[error("no langs found")]
-    NoLangsFound,
-
     #[error("node missing location")]
     NodeMissingLocation,
 }

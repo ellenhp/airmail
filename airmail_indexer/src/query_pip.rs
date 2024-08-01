@@ -166,7 +166,7 @@ pub(crate) async fn query_pip(
             continue;
         }
 
-        if let Ok(names) = indexer_cache.query_names_cache(admin_id) {
+        if let Ok(Some(names)) = indexer_cache.query_names_cache(admin_id) {
             response.admin_names.extend(names);
         } else {
             admin_name_futures.push(query_names(admin_id, wof_db));
@@ -175,7 +175,7 @@ pub(crate) async fn query_pip(
 
     // Query languages for the country
     if let Some(country_id) = wof_ids.country {
-        if let Ok(langs) = indexer_cache.query_languages_cache(country_id) {
+        if let Ok(Some(langs)) = indexer_cache.query_languages_cache(country_id) {
             response.admin_langs.extend(langs);
         } else {
             lang_futures.push(query_langs(country_id, wof_db));
