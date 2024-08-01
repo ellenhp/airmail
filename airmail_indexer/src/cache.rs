@@ -1,11 +1,14 @@
 use std::{
     collections::VecDeque,
     path::Path,
-    sync::{Arc, RwLock},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, RwLock,
+    },
 };
 
 use anyhow::Result;
-use log::warn;
+use log::{trace, warn};
 use redb::{Database, ReadableTable, TableDefinition};
 
 use crate::error::IndexerError;
@@ -13,26 +16,32 @@ use crate::error::IndexerError;
 const TABLE_AREAS: TableDefinition<u64, &[u8]> = TableDefinition::new("admin_areas");
 const TABLE_NAMES: TableDefinition<u64, &str> = TableDefinition::new("admin_names");
 const TABLE_LANGS: TableDefinition<u64, &str> = TableDefinition::new("admin_langs");
-const BUFFER_SIZE: usize = 5000;
+const TABLE_NODE_LOCATION: TableDefinition<i64, (f64, f64)> =
+    TableDefinition::new("admin_node_location");
+pub const BUFFER_SIZE: usize = 5000;
 
 /// A cache for storing administrative area information.
 pub struct IndexerCache {
     database: Database,
+    buffer_size: AtomicUsize,
     buffer: Arc<RwLock<VecDeque<WofCacheItem>>>,
 }
 
 impl IndexerCache {
     /// Initialise a new indexer cache
     pub fn new(redb_path: &Path) -> Result<Self> {
+        trace!("Opening cache database at {:?}", redb_path);
         let database = Database::create(redb_path)?;
         let txn = database.begin_write()?;
         txn.open_table(TABLE_AREAS)?;
         txn.open_table(TABLE_NAMES)?;
         txn.open_table(TABLE_LANGS)?;
+        txn.open_table(TABLE_NODE_LOCATION)?;
         txn.commit()?;
 
         Ok(Self {
             database,
+            buffer_size: AtomicUsize::new(BUFFER_SIZE),
             buffer: Arc::new(RwLock::new(VecDeque::new())),
         })
     }
@@ -89,13 +98,24 @@ impl IndexerCache {
         Err(IndexerError::NoLangsFound.into())
     }
 
+    /// Lookup a node id in the cache and return the location
+    pub fn query_node_location(&self, node_id: i64) -> Result<Option<(f64, f64)>> {
+        let txn = self.database.begin_read()?;
+        let table = txn.open_table(TABLE_NODE_LOCATION)?;
+        if let Some(location) = table.get(node_id)? {
+            return Ok(Some(location.value()));
+        }
+
+        Ok(None)
+    }
+
     /// Write an item to the cache, items will be written to a buffer
     /// and flushed to the database when the buffer is full.
     pub fn buffered_write_item(&self, item: WofCacheItem) -> Result<()> {
         let mut buffer = self.buffer.write().unwrap();
         buffer.push_back(item);
 
-        if buffer.len() >= BUFFER_SIZE {
+        if buffer.len() >= self.buffer_size.load(Ordering::Relaxed) {
             self.flush_buffer(&mut buffer)?;
         }
         Ok(())
@@ -107,26 +127,35 @@ impl IndexerCache {
             return Ok(());
         }
 
+        trace!("Flushing cache buffer");
+
         let write = self.database.begin_write()?;
-        for item in buffer.drain(..) {
-            match item {
-                WofCacheItem::Names(admin, names) => {
-                    let mut table = write.open_table(TABLE_NAMES)?;
-                    let packed = names.join("\0");
-                    table.insert(admin, packed.as_str())?;
-                }
-                WofCacheItem::Langs(admin, langs) => {
-                    let mut table = write.open_table(TABLE_LANGS)?;
-                    let packed = langs.join("\0");
-                    table.insert(admin, packed.as_str())?;
-                }
-                WofCacheItem::Admins(s2cell, admins) => {
-                    let mut table = write.open_table(TABLE_AREAS)?;
-                    let packed = admins
-                        .iter()
-                        .flat_map(|id| id.to_le_bytes())
-                        .collect::<Vec<_>>();
-                    table.insert(s2cell, packed.as_slice())?;
+        {
+            let mut names_table = write.open_table(TABLE_NAMES)?;
+            let mut langs_table = write.open_table(TABLE_LANGS)?;
+            let mut areas_table = write.open_table(TABLE_AREAS)?;
+            let mut locations_tabls = write.open_table(TABLE_NODE_LOCATION)?;
+
+            for item in buffer.drain(..) {
+                match item {
+                    WofCacheItem::Names(admin, names) => {
+                        let packed = names.join("\0");
+                        names_table.insert(admin, packed.as_str())?;
+                    }
+                    WofCacheItem::Langs(admin, langs) => {
+                        let packed = langs.join("\0");
+                        langs_table.insert(admin, packed.as_str())?;
+                    }
+                    WofCacheItem::Admins(s2cell, admins) => {
+                        let packed = admins
+                            .iter()
+                            .flat_map(|id| id.to_le_bytes())
+                            .collect::<Vec<_>>();
+                        areas_table.insert(s2cell, packed.as_slice())?;
+                    }
+                    WofCacheItem::NodeLocation(node_id, location) => {
+                        locations_tabls.insert(node_id, location)?;
+                    }
                 }
             }
         }
@@ -137,6 +166,14 @@ impl IndexerCache {
     fn flush(&self) -> Result<()> {
         let mut buffer = self.buffer.write().unwrap();
         self.flush_buffer(&mut buffer)
+    }
+
+    pub fn buffer_size(&self, size: usize) {
+        self.buffer_size.store(size, Ordering::Relaxed);
+    }
+
+    pub fn buffer_size_default(&self) {
+        self.buffer_size.store(BUFFER_SIZE, Ordering::Relaxed);
     }
 }
 
@@ -153,4 +190,5 @@ pub enum WofCacheItem {
     Names(u64, Vec<String>),
     Langs(u64, Vec<String>),
     Admins(u64, Vec<u64>),
+    NodeLocation(i64, (f64, f64)),
 }

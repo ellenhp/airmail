@@ -1,9 +1,9 @@
-mod cache;
+pub mod cache;
 pub mod error;
-mod importer;
-mod pip_tree;
-mod query_pip;
-mod wof;
+pub mod importer;
+pub mod pip_tree;
+pub mod query_pip;
+pub mod wof;
 
 #[cfg(test)]
 mod wof_tests;

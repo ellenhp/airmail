@@ -113,9 +113,11 @@ impl AirmailIndex {
 
     pub fn create(index_dir: &Path) -> Result<Self> {
         if !index_dir.exists() {
+            trace!("Creating index at {:?}", index_dir);
             std::fs::create_dir_all(index_dir)?;
         }
 
+        trace!("Opening index at {:?}", index_dir);
         let schema = Self::schema();
         let tantivy_index =
             tantivy::Index::open_or_create(MmapDirectory::open(index_dir)?, schema)?;

@@ -191,11 +191,15 @@ impl Importer {
         drop(to_index_sender);
         drop(to_cache_sender);
 
-        info!("Waiting for indexing to finish");
+        trace!("Waiting for indexing to finish");
         join_all(handles).await;
         info!("Indexing complete");
 
         Ok(())
+    }
+
+    pub fn indexer_cache(&self) -> Arc<IndexerCache> {
+        self.indexer_cache.clone()
     }
 
     async fn populate_admin_areas(

@@ -86,6 +86,7 @@ async fn main() -> Result<()> {
     let (poi_sender, poi_receiver) = crossbeam::channel::bounded(16384);
 
     // Spawn the OSM parser
+    let indexer_cache = importer.indexer_cache();
     handles.push(spawn_blocking(move || {
         match args.loader {
             Loader::LoadOsmx { path } => {
@@ -98,7 +99,7 @@ async fn main() -> Result<()> {
                 })
             }
             Loader::LoadOsmPbf { path } => {
-                let osm = OsmPbf::new(&path, poi_sender);
+                let osm = OsmPbf::new(&path, poi_sender, indexer_cache);
                 osm.parse_osm().map_err(|e| {
                     warn!("Error parsing OSM: {}", e);
                     e

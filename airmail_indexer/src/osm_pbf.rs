@@ -1,10 +1,14 @@
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
 };
 
 use airmail::poi::ToIndexPoi;
+use airmail_indexer::cache::{IndexerCache, WofCacheItem};
 use anyhow::Result;
 use crossbeam::channel::Sender;
 use log::{debug, info, warn};
@@ -15,52 +19,67 @@ use crate::openstreetmap::OsmPoi;
 /// An OpenStreetMap PBF file loader.
 ///
 /// OSM PBF contains nodes, ways and relations. This loader extracts points of interest from
-/// nodes, dense nodes and ways. The location of a node or way may be present in the data, or
-/// may require a lookup from a node map.
-
+/// nodes and ways. The location of a node or way may be present in the data, or
+/// may require a lookup from other nodes. To prevent a full scan, the location of all nodes
+/// is cached.
 pub struct OsmPbf {
-    osm_pbf: PathBuf,
+    pbf_path: PathBuf,
     sender: Sender<ToIndexPoi>,
+    indexer_cache: Arc<IndexerCache>,
 }
 
 impl OsmPbf {
-    pub fn new(osm_pbf: &Path, sender: Sender<ToIndexPoi>) -> Self {
+    pub fn new(
+        osm_pbf_path: &Path,
+        sender: Sender<ToIndexPoi>,
+        indexer_cache: Arc<IndexerCache>,
+    ) -> Self {
         Self {
-            osm_pbf: osm_pbf.to_path_buf(),
+            pbf_path: osm_pbf_path.to_path_buf(),
             sender,
+            indexer_cache,
         }
     }
 
     #[allow(clippy::too_many_lines)]
     pub fn parse_osm(self) -> Result<()> {
-        info!("Generating OSM node map from: {}", self.osm_pbf.display());
+        info!("Generating OSM node map from: {}", self.pbf_path.display());
 
-        // Create a Hashmap of nodes to lat/lon, enabling quick lookup of node locations,
-        // as ways may not contain the location data.
-        let node_map: Vec<(i64, (f64, f64))> = ElementReader::from_path(&self.osm_pbf)?
-            .par_map_reduce(
-                |element| match element {
-                    Element::Node(node) => {
-                        let location = (node.lat(), node.lon());
-                        vec![(node.id(), location)]
-                    }
-                    Element::DenseNode(node) => {
-                        let location = (node.lat(), node.lon());
-                        vec![(node.id(), location)]
-                    }
-                    _ => Vec::new(),
-                },
-                Vec::new,
-                |mut a, b| {
-                    if b.is_empty() {
-                        return a;
-                    }
-                    a.extend(b);
-                    a
-                },
-            )?;
+        // Increase buffer to reduce writes to disk
+        self.indexer_cache.buffer_size(10_000_000);
 
-        let node_map: HashMap<i64, (f64, f64)> = node_map.into_iter().collect();
+        // Store a map of nodes to their locations for quick lookups in the second pass.
+        let cached_count = ElementReader::from_path(&self.pbf_path)?.par_map_reduce(
+            |element| match element {
+                Element::DenseNode(node) => {
+                    if self
+                        .indexer_cache
+                        .query_node_location(node.id())
+                        .ok()
+                        .is_none()
+                    {
+                        let location = (node.lat(), node.lon());
+                        let _ = self
+                            .indexer_cache
+                            .buffered_write_item(WofCacheItem::NodeLocation(node.id(), location))
+                            .map_err(|e| {
+                                warn!("Error writing node location to cache: {}", e);
+                            });
+                    }
+                    1
+                }
+                _ => 0,
+            },
+            || 0_u64,
+            |a, b| a + b,
+        )?;
+
+        // Revert buffer size to default
+        self.indexer_cache.buffer_size_default();
+
+        info!("{} node locations are cached", cached_count);
+
+        // let node_map: HashMap<i64, (f64, f64)> = node_map.into_iter().collect();
         let count_ways = AtomicUsize::new(0);
         let count_nodes = AtomicUsize::new(0);
         let count_dense_nodes = AtomicUsize::new(0);
@@ -69,7 +88,7 @@ impl OsmPbf {
 
         // Extract points of interest. Par_map_reduce is used to paralleliase the extraction of
         // POIs from the OSM PBF file.
-        let pois = ElementReader::from_path(&self.osm_pbf)?.par_map_reduce(
+        let pois = ElementReader::from_path(&self.pbf_path)?.par_map_reduce(
             |element| match element {
                 // A dense node is a POI (with tags), and has the location embedded in the data.
                 Element::DenseNode(dn) => {
@@ -87,22 +106,7 @@ impl OsmPbf {
                         vec![]
                     }
                 }
-                // A node is unlikely to be a POI (with tags and a location), but is instead the
-                // location.
-                Element::Node(node) => {
-                    let tags = node
-                        .tags()
-                        .map(|(k, v)| (k.to_string(), v.to_string()))
-                        .collect::<HashMap<_, _>>();
-                    if let Some(interesting_poi) =
-                        OsmPoi::new(tags, (node.lat(), node.lon())).and_then(OsmPoi::index_poi)
-                    {
-                        count_nodes.fetch_add(1, Ordering::Relaxed);
-                        vec![interesting_poi]
-                    } else {
-                        vec![]
-                    }
-                }
+
                 // A way is a polyline or polygon.
                 Element::Way(way) => {
                     // Attempt to get the location from the way from the underlying way data,
@@ -118,7 +122,10 @@ impl OsmPbf {
                         location = way
                             .refs()
                             .next()
-                            .and_then(|node_id| node_map.get(&node_id).copied());
+                            .and_then(|node_id| {
+                                self.indexer_cache.query_node_location(node_id).ok()
+                            })
+                            .flatten();
                     }
 
                     if let Some(location) = location {
@@ -140,7 +147,10 @@ impl OsmPbf {
                 }
 
                 // Ignored
-                Element::Relation(_) => vec![],
+                Element::Relation(_) |
+
+                // Seems to be unused, as dense node is used instead
+                Element::Node(_) => vec![],
             },
             Vec::new,
             |mut a, mut b| {
@@ -151,9 +161,6 @@ impl OsmPbf {
                 a
             },
         )?;
-
-        // Reduce some memory usage
-        drop(node_map);
 
         let count_ways = count_ways.load(Ordering::Relaxed);
         let count_nodes = count_nodes.load(Ordering::Relaxed);

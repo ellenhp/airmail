@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::debug;
+use log::trace;
 use serde::{Deserialize, Serialize};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
@@ -19,7 +19,7 @@ impl WhosOnFirst {
     /// Opens a connection to the WhosOnFirst database.
     /// Requires the SQLite mod_spatialite extension to be loaded.
     pub async fn new(path: &Path) -> Result<Self> {
-        debug!("Opening WhosOnFirst database at {:?}", path);
+        trace!("Opening WhosOnFirst database at {:?}", path);
 
         let opts = SqliteConnectOptions::new()
             .filename(path)
