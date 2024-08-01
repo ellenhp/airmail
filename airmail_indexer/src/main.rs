@@ -7,13 +7,14 @@ use clap::{Parser, Subcommand};
 use env_logger::Env;
 use futures_util::future::join_all;
 use log::warn;
-use openstreetmap::OSMExpressLoader;
+use osm_osmx::OSMExpressLoader;
 use osm_pbf::OsmPbf;
 use osmx::Database;
 use std::path::PathBuf;
 use tokio::{select, spawn, task::spawn_blocking};
 
-mod openstreetmap;
+mod osm;
+mod osm_osmx;
 mod osm_pbf;
 
 #[derive(Debug, Parser)]

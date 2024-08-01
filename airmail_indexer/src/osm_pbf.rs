@@ -14,7 +14,7 @@ use crossbeam::channel::Sender;
 use log::{debug, info, warn};
 use osmpbf::{Element, ElementReader};
 
-use crate::openstreetmap::OsmPoi;
+use crate::osm::OsmPoi;
 
 /// An OpenStreetMap PBF file loader.
 ///
