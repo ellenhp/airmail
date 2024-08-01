@@ -24,6 +24,7 @@ use crate::openstreetmap::OsmPoi;
 /// is cached.
 pub struct OsmPbf {
     pbf_path: PathBuf,
+    nodes_already_cached: bool,
     sender: Sender<ToIndexPoi>,
     indexer_cache: Arc<IndexerCache>,
 }
@@ -31,57 +32,27 @@ pub struct OsmPbf {
 impl OsmPbf {
     pub fn new(
         osm_pbf_path: &Path,
+        nodes_already_cached: bool,
         sender: Sender<ToIndexPoi>,
         indexer_cache: Arc<IndexerCache>,
     ) -> Self {
         Self {
             pbf_path: osm_pbf_path.to_path_buf(),
+            nodes_already_cached,
             sender,
             indexer_cache,
         }
     }
 
-    #[allow(clippy::too_many_lines)]
     pub fn parse_osm(self) -> Result<()> {
         info!("Generating OSM node map from: {}", self.pbf_path.display());
 
-        // Increase buffer to reduce writes to disk
-        self.indexer_cache.buffer_size(10_000_000);
-
-        // Store a map of nodes to their locations for quick lookups in the second pass.
-        let cached_count = ElementReader::from_path(&self.pbf_path)?.par_map_reduce(
-            |element| match element {
-                Element::DenseNode(node) => {
-                    if self
-                        .indexer_cache
-                        .query_node_location(node.id())
-                        .ok()
-                        .is_none()
-                    {
-                        let location = (node.lat(), node.lon());
-                        let _ = self
-                            .indexer_cache
-                            .buffered_write_item(WofCacheItem::NodeLocation(node.id(), location))
-                            .map_err(|e| {
-                                warn!("Error writing node location to cache: {}", e);
-                            });
-                    }
-                    1
-                }
-                _ => 0,
-            },
-            || 0_u64,
-            |a, b| a + b,
-        )?;
-
-        // Revert buffer size to default
-        self.indexer_cache.buffer_size_default();
-
-        info!("{} node locations are cached", cached_count);
+        if !self.nodes_already_cached {
+            self.cache_nodes_for_ways()?;
+        }
 
         // let node_map: HashMap<i64, (f64, f64)> = node_map.into_iter().collect();
         let count_ways = AtomicUsize::new(0);
-        let count_nodes = AtomicUsize::new(0);
         let count_dense_nodes = AtomicUsize::new(0);
 
         debug!("Parsing POIs");
@@ -101,13 +72,14 @@ impl OsmPbf {
                         OsmPoi::new(tags, (dn.lat(), dn.lon())).and_then(OsmPoi::index_poi)
                     {
                         count_dense_nodes.fetch_add(1, Ordering::Relaxed);
-                        vec![interesting_poi]
+                        let _ = self.sender.send(interesting_poi);
+                        1
                     } else {
-                        vec![]
+                        0
                     }
                 }
 
-                // A way is a polyline or polygon.
+                // A way is a polyline or polygon, like a road.
                 Element::Way(way) => {
                     // Attempt to get the location from the way from the underlying way data,
                     // this requires the way is stored with the option LocationsOnWays enabled.
@@ -137,12 +109,13 @@ impl OsmPbf {
                             OsmPoi::new(tags, location).and_then(OsmPoi::index_poi)
                         {
                             count_ways.fetch_add(1, Ordering::Relaxed);
-                            vec![interesting_poi]
+                            let _ = self.sender.send(interesting_poi);
+                            1
                         } else {
-                            vec![]
+                            0
                         }
                     } else {
-                        vec![]
+                        0
                     }
                 }
 
@@ -150,37 +123,61 @@ impl OsmPbf {
                 Element::Relation(_) |
 
                 // Seems to be unused, as dense node is used instead
-                Element::Node(_) => vec![],
+                Element::Node(_) => 0,
             },
-            Vec::new,
-            |mut a, mut b| {
-                if b.is_empty() {
-                    return a;
-                }
-                a.append(&mut b);
-                a
-            },
+            || 0_u64,
+            |a, b| a + b,
         )?;
 
         let count_ways = count_ways.load(Ordering::Relaxed);
-        let count_nodes = count_nodes.load(Ordering::Relaxed);
         let count_dense_nodes = count_dense_nodes.load(Ordering::Relaxed);
 
         info!(
-            "Found {} pois, made up of {} dense nodes, {} nodes and {} ways",
-            pois.len(),
-            count_dense_nodes,
-            count_nodes,
-            count_ways
+            "Loaded {} interesting pois, made up of {} dense nodes,  and {} ways",
+            pois, count_dense_nodes, count_ways
         );
-
-        for poi in pois {
-            self.sender.send(poi)?;
-        }
 
         if count_ways == 0 {
             warn!("No ways found in OSM PBF file. Ensure your pbf file has locations present, see Google: LocationsOnWays");
         }
+
+        Ok(())
+    }
+
+    fn cache_nodes_for_ways(&self) -> Result<()> {
+        // Increase buffer to reduce writes to disk
+        self.indexer_cache.buffer_size(10_000_000)?;
+
+        // Store a map of nodes to their locations for quick lookups in the second pass.
+        let cached_count = ElementReader::from_path(&self.pbf_path)?.par_map_reduce(
+            |element| match element {
+                Element::DenseNode(node) => {
+                    if self
+                        .indexer_cache
+                        .query_node_location(node.id())
+                        .ok()
+                        .is_none()
+                    {
+                        let location = (node.lat(), node.lon());
+                        let _ = self
+                            .indexer_cache
+                            .buffered_write_item(WofCacheItem::NodeLocation(node.id(), location))
+                            .map_err(|e| {
+                                warn!("Error writing node location to cache: {}", e);
+                            });
+                    }
+                    1
+                }
+                _ => 0,
+            },
+            || 0_u64,
+            |a, b| a + b,
+        )?;
+
+        // Revert buffer size to default
+        self.indexer_cache.buffer_size_default()?;
+
+        info!("{} node locations are cached", cached_count);
 
         Ok(())
     }

@@ -63,6 +63,10 @@ enum Loader {
     LoadOsmPbf {
         /// Path to an OSM PBF file to import.
         path: PathBuf,
+
+        /// If the nodes are known to be present in the cache (after first run), don't re-add nor check.
+        #[clap(long, short)]
+        nodes_already_cached: bool,
     },
 }
 
@@ -90,7 +94,6 @@ async fn main() -> Result<()> {
     handles.push(spawn_blocking(move || {
         match args.loader {
             Loader::LoadOsmx { path } => {
-                // Setup OSM
                 let osm_db = Database::open(path).map_err(IndexerError::from)?;
                 let osm = OSMExpressLoader::new(&osm_db, poi_sender)?;
                 osm.parse_osm().map_err(|e| {
@@ -98,8 +101,11 @@ async fn main() -> Result<()> {
                     e
                 })
             }
-            Loader::LoadOsmPbf { path } => {
-                let osm = OsmPbf::new(&path, poi_sender, indexer_cache);
+            Loader::LoadOsmPbf {
+                path,
+                nodes_already_cached,
+            } => {
+                let osm = OsmPbf::new(&path, nodes_already_cached, poi_sender, indexer_cache);
                 osm.parse_osm().map_err(|e| {
                     warn!("Error parsing OSM: {}", e);
                     e
