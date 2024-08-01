@@ -30,19 +30,17 @@ struct Args {
     #[clap(long, short)]
     index: PathBuf,
 
-    /// Path to a administrative area cache db. This is a redb file that
-    /// contains a cache of point-in-polygon lookups into the pelias spatial
-    /// server. This is technically optional but we'll just create one in a
+    /// Path where an indexing cache will be stored. This is a redb file that
+    /// contains a cache of expensive operations. It is technically optional but we'll just create one in a
     /// temporary directory if you don't specify it. Keeping a cache around can
-    /// speed up subsequent imports by like 5-10x so it's worth it.
+    /// speed up imports by like 5-10x+ so it's worth it.
     #[clap(long, short)]
     admin_cache: Option<PathBuf>,
 
     /// Path to `WhosOnFirst` spatial index for point-in-polygon lookups. If this is specified
     /// we'll use the spatial index instead of sqlite geospatial lookups. This will speed up imports,
-    /// after the index is built. It'll be faster for planet scale imports, or frequent imports
-    /// but will use 10GB of memory and takes a few minutes to build. `mod_spatialite` is not required
-    /// if this is specified.
+    /// after the index is first built. It'll be faster for planet scale imports, or frequent imports,
+    /// but it will use 10GB of memory and takes a few minutes to build.
     #[clap(long, short)]
     pip_tree: Option<PathBuf>,
 
@@ -73,6 +71,7 @@ enum Loader {
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+
     let args = Args::parse();
     let mut handles = vec![];
 
@@ -91,26 +90,24 @@ async fn main() -> Result<()> {
 
     // Spawn the OSM parser
     let indexer_cache = importer.indexer_cache();
-    handles.push(spawn_blocking(move || {
-        match args.loader {
-            Loader::LoadOsmx { path } => {
-                let osm_db = Database::open(path).map_err(IndexerError::from)?;
-                let osm = OSMExpressLoader::new(&osm_db, poi_sender)?;
-                osm.parse_osm().map_err(|e| {
-                    warn!("Error parsing OSM: {}", e);
-                    e
-                })
-            }
-            Loader::LoadOsmPbf {
-                path,
-                nodes_already_cached,
-            } => {
-                let osm = OsmPbf::new(&path, nodes_already_cached, poi_sender, indexer_cache);
-                osm.parse_osm().map_err(|e| {
-                    warn!("Error parsing OSM: {}", e);
-                    e
-                })
-            }
+    handles.push(spawn_blocking(move || match args.loader {
+        Loader::LoadOsmx { path } => {
+            let osm_db = Database::open(path).map_err(IndexerError::from)?;
+            let osm = OSMExpressLoader::new(&osm_db, poi_sender)?;
+            osm.parse_osm().map_err(|e| {
+                warn!("Error parsing OSM: {}", e);
+                e
+            })
+        }
+        Loader::LoadOsmPbf {
+            path,
+            nodes_already_cached,
+        } => {
+            let osm = OsmPbf::new(&path, nodes_already_cached, poi_sender, indexer_cache);
+            osm.parse_osm().map_err(|e| {
+                warn!("Error parsing OSM: {}", e);
+                e
+            })
         }
     }));
 

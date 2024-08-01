@@ -91,17 +91,6 @@ impl<'db> OSMExpressLoader<'db> {
     //     Some((location.lat(), location.lon()))
     // }
 
-    fn tags<'a, I: Iterator<Item = (&'a str, &'a str)>>(
-        tag_iterator: I,
-    ) -> HashMap<String, String> {
-        let mut tags = HashMap::new();
-        for (key, value) in tag_iterator {
-            tags.insert(key.to_string(), value.to_string());
-        }
-
-        tags
-    }
-
     /// Parse an `OSMExpress` file and send POIs for indexing.
     pub(crate) fn parse_osm(self) -> Result<()> {
         let mut total = 0;
@@ -121,10 +110,11 @@ impl<'db> OSMExpressLoader<'db> {
                     );
                 }
 
-                let tags = Self::tags(node.tags());
                 let location = locations
                     .get(node_id)
                     .ok_or(IndexerError::NodeMissingLocation)?;
+
+                let tags = node.tags().collect::<HashMap<_, _>>();
 
                 if let Some(interesting_poi) = OsmPoi::new(tags, (location.lat(), location.lon())) {
                     if let Some(poi_to_indexer) = interesting_poi.into() {
@@ -151,7 +141,7 @@ impl<'db> OSMExpressLoader<'db> {
                 }
                 // Fetching tags is slow
                 if let Some(location) = Self::mid_point_on_way(&way, &locations) {
-                    let tags = Self::tags(way.tags());
+                    let tags = way.tags().collect::<HashMap<_, _>>();
                     if let Some(interesting_poi) = OsmPoi::new(tags, location) {
                         if let Some(poi_to_indexer) = interesting_poi.into() {
                             self.sender.send(poi_to_indexer).map_err(|e| {
@@ -177,7 +167,8 @@ pub struct OsmPoi {
 }
 
 impl OsmPoi {
-    pub fn new(tags: HashMap<String, String>, location: (f64, f64)) -> Option<Self> {
+    /// Create a new `OsmPoi` from a set of tags and a location.
+    pub fn new(tags: HashMap<&str, &str>, location: (f64, f64)) -> Option<Self> {
         if tags.is_empty() {
             return None;
         }
@@ -188,6 +179,11 @@ impl OsmPoi {
         {
             return None;
         }
+
+        let tags = tags
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect();
 
         Some(Self { tags, location })
     }

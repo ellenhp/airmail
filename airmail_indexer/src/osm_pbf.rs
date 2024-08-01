@@ -65,14 +65,13 @@ impl OsmPbf {
                 Element::DenseNode(dn) => {
                     let tags = dn
                         .tags()
-                        .map(|(k, v)| (k.to_string(), v.to_string()))
                         .collect::<HashMap<_, _>>();
 
                     if let Some(interesting_poi) =
                         OsmPoi::new(tags, (dn.lat(), dn.lon())).and_then(OsmPoi::index_poi)
                     {
                         count_dense_nodes.fetch_add(1, Ordering::Relaxed);
-                        let _ = self.sender.send(interesting_poi);
+                        self.sender.send(interesting_poi).expect("sender failed");
                         1
                     } else {
                         0
@@ -103,13 +102,12 @@ impl OsmPbf {
                     if let Some(location) = location {
                         let tags = way
                             .tags()
-                            .map(|(k, v)| (k.to_string(), v.to_string()))
                             .collect::<HashMap<_, _>>();
                         if let Some(interesting_poi) =
                             OsmPoi::new(tags, location).and_then(OsmPoi::index_poi)
                         {
                             count_ways.fetch_add(1, Ordering::Relaxed);
-                            let _ = self.sender.send(interesting_poi);
+                            self.sender.send(interesting_poi).expect("sender failed");
                             1
                         } else {
                             0
