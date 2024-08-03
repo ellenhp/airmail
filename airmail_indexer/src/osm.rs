@@ -1,6 +1,7 @@
-use std::collections::HashMap;
-
 use airmail::poi::ToIndexPoi;
+use geo::{Centroid, Coord, LineString, Polygon};
+use log::debug;
+use std::collections::HashMap;
 
 #[allow(clippy::module_name_repetitions)]
 pub struct OsmPoi {
@@ -9,8 +10,24 @@ pub struct OsmPoi {
 }
 
 impl OsmPoi {
-    /// Create a new `OsmPoi` from a set of tags and a location.
-    pub fn new(tags: HashMap<&str, &str>, location: (f64, f64)) -> Option<Self> {
+    /// Create a new `OsmPoi` from a node.
+    pub fn new_from_node(tags: HashMap<&str, &str>, point: (f64, f64)) -> Option<Self> {
+        let tags = Self::validate_tags(tags)?;
+        Some(Self {
+            tags,
+            location: point,
+        })
+    }
+
+    /// Create a new `OsmPoi` from a way.
+    pub fn new_from_way(tags: HashMap<&str, &str>, points: &[(f64, f64)]) -> Option<Self> {
+        let tags = Self::validate_tags(tags)?;
+        let location = Self::way_centroid(points)?;
+        Some(Self { tags, location })
+    }
+
+    /// Validate the tags of a point of interest.
+    fn validate_tags(tags: HashMap<&str, &str>) -> Option<HashMap<String, String>> {
         if tags.is_empty() {
             return None;
         }
@@ -27,12 +44,53 @@ impl OsmPoi {
             .map(|(k, v)| (k.to_string(), v.to_string()))
             .collect();
 
-        Some(Self { tags, location })
+        Some(tags)
     }
 
     pub fn index_poi(self) -> Option<ToIndexPoi> {
         self.into()
     }
+
+    /// Get the centroid of the way
+    ///
+    /// The centroid is useful for building locations (closed line strings) and
+    /// other POIs, but for roads and other linear features it will be off the line.
+    fn way_centroid(points: &[(f64, f64)]) -> Option<(f64, f64)> {
+        // Lookup each position
+        let node_positions: Vec<Coord> = points
+            .iter()
+            .map(|point| Coord::from((point.0, point.1)))
+            .collect();
+
+        if node_positions.is_empty() {
+            debug!("Empty node_positions");
+        }
+        let linestring = LineString::new(node_positions);
+        let polygon = Polygon::new(linestring, vec![]);
+        let centroid = polygon.centroid();
+        if centroid.is_none() {
+            debug!("No centroid for way");
+        }
+        let centroid = centroid?;
+        Some((centroid.x(), centroid.y()))
+    }
+
+    // /// As an extension of way_centroid, linear features will ideally have a mid point
+    // /// on the line. This is a faster approach than the centroid, but still requires
+    // /// all nodes to be fetched, but only one node to resolve.
+    // fn mid_point_on_way(way: &Way, locations: &Locations) -> Option<(f64, f64)> {
+    //     // Fetch all nodes, driving the iterator to completion at once
+    //     let positions = way.nodes().collect::<Vec<_>>();
+
+    //     // Find the mid point, on the line. So the position will be on the line,
+    //     // which might be off the line somewhere.
+    //     let mid_position = positions.get(positions.len() / 2)?;
+
+    //     // Lookup each position
+    //     let location = locations.get(*mid_position)?;
+
+    //     Some((location.lat(), location.lon()))
+    // }
 }
 
 impl From<OsmPoi> for Option<ToIndexPoi> {

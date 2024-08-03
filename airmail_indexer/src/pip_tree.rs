@@ -117,15 +117,11 @@ where
     /// Find all polygons containing a given point.
     pub async fn point_in_polygon(&self, lng: f64, lat: f64) -> Result<Vec<T>> {
         let self_c = self.clone();
-        let handle = spawn_blocking(move || {
-            let polygons = self_c
-                .geo_point_in_polygon(Point::new(lng, lat))
-                .unwrap_or_default();
+        let polygons = self_c
+            .geo_point_in_polygon(Point::new(lng, lat))
+            .unwrap_or_default();
 
-            Ok(polygons)
-        });
-
-        handle.await?
+        Ok(polygons)
     }
 
     /// Find all polygons within a given bounding box.

@@ -8,7 +8,7 @@ use env_logger::Env;
 use futures_util::future::join_all;
 use log::warn;
 use osm_osmx::OSMExpressLoader;
-use osm_pbf::OsmPbf;
+use osm_pbf::{OsmPbf, ParseOsmTypes};
 use osmx::Database;
 use std::path::PathBuf;
 use tokio::{select, spawn, task::spawn_blocking};
@@ -66,6 +66,10 @@ enum Loader {
         /// If the nodes are known to be present in the cache (after first run), don't re-add nor check.
         #[clap(long, short)]
         nodes_already_cached: bool,
+
+        /// Types to ignore during parsing.
+        #[clap(long)]
+        ignore: Vec<ParseOsmTypes>,
     },
 }
 
@@ -103,8 +107,15 @@ async fn main() -> Result<()> {
         Loader::LoadOsmPbf {
             path,
             nodes_already_cached,
+            ignore,
         } => {
-            let osm = OsmPbf::new(&path, nodes_already_cached, poi_sender, indexer_cache);
+            let osm = OsmPbf::new(
+                &path,
+                nodes_already_cached,
+                ignore,
+                poi_sender,
+                indexer_cache,
+            );
             osm.parse_osm().map_err(|e| {
                 warn!("Error parsing OSM: {}", e);
                 e
