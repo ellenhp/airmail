@@ -27,10 +27,8 @@ impl WhosOnFirst {
             .pragma("cache_size", "2000")
             .pragma("synchronous", "OFF")
             .pragma("temp_store", "MEMORY")
-            // .pragma("mmap_size", "1073741824") // 1GB, virtual memory
             .pragma("foreign_keys", "OFF")
             .pragma("recursive_triggers", "OFF")
-            // .pragma("page_size", "32768")
             .pragma("locking_mode", "NORMAL")
             .extension("mod_spatialite");
 

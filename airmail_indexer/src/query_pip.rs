@@ -161,7 +161,6 @@ pub(crate) async fn query_pip(
 
     // Query names for the admin areas
     for admin_id in wof_ids.all_admin_ids {
-        // This check was at the end, but I think it should be here as the ID has already been looked up
         if COUNTRIES.contains(&admin_id) {
             continue;
         }
