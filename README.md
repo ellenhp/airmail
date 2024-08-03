@@ -77,13 +77,13 @@ docker compose up airmail_service
 apt-get install -y libssl-dev capnproto clang pkg-config libzstd-dev libsqlite3-mod-spatialite
 
 # Run indexer
-cargo run --bin indexer \
+cargo run --bin indexer -- \
 --wof-db /data/whosonfirst-data-admin-latest.spatial.db \
 --index /data/index/ \
 load-osm-pbf /data/australia-oceania-latest.osm.pbf
 
 # Run service
-cargo run --bin airmail_service \
+cargo run --bin airmail_service -- \
 --index /data/index/
 ```
 
