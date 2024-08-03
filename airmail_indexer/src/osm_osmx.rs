@@ -4,6 +4,7 @@ use airmail::poi::ToIndexPoi;
 use airmail_indexer::error::IndexerError;
 use anyhow::Result;
 use crossbeam::channel::Sender;
+use geo::{Centroid, Coord, LineString, Polygon};
 use log::{debug, info, warn};
 use osmx::{Database, Locations, Transaction, Way};
 
@@ -30,65 +31,50 @@ impl<'db> OSMExpressLoader<'db> {
         Ok(locations)
     }
 
-    // /// Option 1 - Get the centroid of the way
-    // ///
-    // /// This is slow as it requires all nodes to be fetched, then all locations to be
-    // /// fetched. This is a lot of seeks and reads.
-    // fn way_centroid(&self, way: &Way) -> Option<(f64, f64)> {
-    //     let locations = self.locations().ok()?;
-
-    //     // Fetch all nodes, driving the iterator to completion at once
-    //     let positions = way.nodes().collect::<Vec<_>>();
-
-    //     // Lookup each position
-    //     let node_positions: Vec<Coord> = positions
-    //         .iter()
-    //         .filter_map(|node| {
-    //             let node = locations.get(*node)?;
-    //             Some(Coord::from((node.lon(), node.lat())))
-    //         })
-    //         .collect();
-
-    //     if node_positions.is_empty() {
-    //         debug!("Empty node_positions");
-    //     }
-    //     let linestring = LineString::new(node_positions);
-    //     let polygon = Polygon::new(linestring, vec![]);
-    //     let centroid = polygon.centroid();
-    //     if centroid.is_none() {
-    //         debug!("No centroid for way");
-    //     }
-    //     let centroid = centroid?;
-    //     Some((centroid.x(), centroid.y()))
-    // }
-
-    /// Option 2 - Get the middle point on the way
+    /// Way geometry approach - Get the centroid of the way
     ///
-    /// The slowest call is the iterator, since we need to know all nodes.
-    /// Which drives a single seek cursor over the nodes table.
-    fn mid_point_on_way(way: &Way, locations: &Locations) -> Option<(f64, f64)> {
+    /// This requires all nodes to be fetched, then all locations to be
+    /// resolved from sqlite. The centroid is useful for building locations (closed line strings) and
+    /// other POIs, but for roads and other linear features it will be off the line.
+    fn way_centroid(way: &Way, locations: &Locations) -> Option<(f64, f64)> {
         // Fetch all nodes, driving the iterator to completion at once
         let positions = way.nodes().collect::<Vec<_>>();
 
-        // Find the mid point, on the line. So the position will be on the line,
-        // which might be off the line somewhere.
-        let mid_position = positions.get(positions.len() / 2)?;
-
         // Lookup each position
-        let location = locations.get(*mid_position)?;
+        let node_positions: Vec<Coord> = positions
+            .iter()
+            .filter_map(|node| {
+                let node = locations.get(*node)?;
+                Some(Coord::from((node.lon(), node.lat())))
+            })
+            .collect();
 
-        Some((location.lat(), location.lon()))
+        if node_positions.is_empty() {
+            debug!("Empty node_positions");
+        }
+        let linestring = LineString::new(node_positions);
+        let polygon = Polygon::new(linestring, vec![]);
+        let centroid = polygon.centroid();
+        if centroid.is_none() {
+            debug!("No centroid for way");
+        }
+        let centroid = centroid?;
+        Some((centroid.x(), centroid.y()))
     }
 
-    // /// Option 3 - Get the first point on the way
-    // ///
-    // /// This is the fastest as it only requires a single seek and read.
-    // fn first_point_on_way(way: &Way, locations: &Locations) -> Option<(f64, f64)> {
-    //     // Fetch first node position on the way
-    //     let first_node = way.nodes().next()?;
+    // /// As an extension of way_centroid, linear features will ideally have a mid point
+    // /// on the line. This is a faster approach than the centroid, but still requires
+    // /// all nodes to be fetched, but only one node to resolve.
+    // fn mid_point_on_way(way: &Way, locations: &Locations) -> Option<(f64, f64)> {
+    //     // Fetch all nodes, driving the iterator to completion at once
+    //     let positions = way.nodes().collect::<Vec<_>>();
+
+    //     // Find the mid point, on the line. So the position will be on the line,
+    //     // which might be off the line somewhere.
+    //     let mid_position = positions.get(positions.len() / 2)?;
 
     //     // Lookup each position
-    //     let location = locations.get(first_node)?;
+    //     let location = locations.get(*mid_position)?;
 
     //     Some((location.lat(), location.lon()))
     // }
@@ -141,8 +127,9 @@ impl<'db> OSMExpressLoader<'db> {
                         self.sender.len()
                     );
                 }
-                // Fetching tags is slow
-                if let Some(location) = Self::mid_point_on_way(&way, &locations) {
+
+                // Retrieving/iterating the tags is costly, so we only do it if we have a location
+                if let Some(location) = Self::way_centroid(&way, &locations) {
                     let tags = way.tags().collect::<HashMap<_, _>>();
                     if let Some(interesting_poi) = OsmPoi::new(tags, location) {
                         if let Some(poi_to_indexer) = interesting_poi.into() {
