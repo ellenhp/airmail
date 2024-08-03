@@ -363,6 +363,7 @@ impl AirmailIndex {
             )
             .await;
 
+        #[cfg(feature = "invasive_logging")]
         trace!("Search query: {:?}", &query);
 
         // Perform the search and then resolve the returned documents

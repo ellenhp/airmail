@@ -55,3 +55,4 @@ thiserror = "1.0.63"
 
 [features]
 remote_index = ["tantivy/quickwit"]
+invasive_logging = []

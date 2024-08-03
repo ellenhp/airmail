@@ -9,6 +9,7 @@ use axum::{
 };
 use deunicode::deunicode;
 use geo::{Coord, Rect};
+#[cfg(feature = "invasive_logging")]
 use log::debug;
 use serde::{Deserialize, Serialize};
 
@@ -70,16 +71,18 @@ pub async fn search(
     let leniency = params.leniency.unwrap_or_default();
     let bbox = params.bbox.clone().and_then(|s| parse_bbox(&s));
 
-    let start = std::time::Instant::now();
-
     let results = index.search(&query, leniency, tags, bbox, &[]).await?;
 
-    debug!(
-        "Query: {:?} produced: {} results found in {:?}",
-        params,
-        results.len(),
-        start.elapsed()
-    );
+    #[cfg(feature = "invasive_logging")]
+    {
+        let start = std::time::Instant::now();
+        debug!(
+            "Query: {:?} produced: {} results found in {:?}",
+            params,
+            results.len(),
+            start.elapsed()
+        );
+    }
 
     let response = Response {
         metadata: MetadataResponse { query: params },

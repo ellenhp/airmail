@@ -22,5 +22,6 @@ anyhow = "1.0.86"
 thiserror = "1.0.63"
 
 [features]
-remote_index = ["airmail/remote_index"]
 default = ["remote_index"]
+remote_index = []
+invasive_logging = ["airmail/invasive_logging"]
