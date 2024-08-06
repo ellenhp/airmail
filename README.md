@@ -67,7 +67,7 @@ indexer --wof-db /data/whosonfirst-data-admin-latest.spatial.db \
 load-osm-pbf /data/australia-oceania-latest.osm.pbf
 
 # Launch the service
-docker compose up airmail_service
+docker compose up airmail
 ```
 
 ### Option 2 - From Source
