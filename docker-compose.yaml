@@ -1,0 +1,39 @@
+name: airmail
+
+services:
+  osmx:
+    image: osmx:latest
+    build:
+      context: airmail_indexer
+      dockerfile: ./Dockerfile.osmx
+    stop_signal: KILL
+    restart: "no"
+    volumes:
+      - ./data:/data:z
+    command: expand /data/australia-latest.osm.pbf /data/australia-latest.osm.osmx
+
+  indexer:
+    image: indexer:latest
+    build:
+      context: ./
+      dockerfile: ./airmail_indexer/Dockerfile
+    stop_signal: KILL
+    restart: "no"
+    volumes:
+      - ./data:/data:z
+    command: indexer --wof-db /data/whosonfirst-data-admin-latest.spatial.db --index /data/index/ --admin-cache /data/admin-cache load-osm-pbf /data/australia-oceania-latest.osm.pbf
+
+  airmail:
+    image: airmail:latest
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    environment:
+      AIRMAIL_BIND: "0.0.0.0:3000"
+    stop_signal: KILL
+    restart: "no"
+    volumes:
+      - ./data:/data:z
+    ports:
+      - 3000:3000
+    command: --index /data/index/

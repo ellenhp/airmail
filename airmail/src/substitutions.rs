@@ -122,7 +122,7 @@ pub fn permute_road(road: &str, language: &Language) -> Result<Vec<String>, Box<
         .split_ascii_whitespace()
         .map(|s| s.to_string())
         .collect();
-    apply_subs(&vec![], &road_tokens, sub_dict)
+    apply_subs(&[], &road_tokens, sub_dict)
 }
 
 #[cfg(test)]

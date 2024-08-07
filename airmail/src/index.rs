@@ -1,9 +1,10 @@
+use std::path::Path;
 use std::sync::Arc;
 
-use futures_util::future::join_all;
+use anyhow::Result;
 use geo::Rect;
 use itertools::Itertools;
-use log::debug;
+use log::{trace, warn};
 use s2::region::RegionCoverer;
 use std::collections::BTreeMap;
 use tantivy::schema::Value;
@@ -16,7 +17,7 @@ use tantivy::{
     },
     schema::{
         IndexRecordOption, NumericOptions, OwnedValue, Schema, TextFieldIndexing, TextOptions,
-        Value as _, STORED,
+        STORED,
     },
     Searcher, TantivyDocument, Term,
 };
@@ -24,6 +25,7 @@ use tantivy_uffd::RemoteDirectory;
 use tokio::task::spawn_blocking;
 use unicode_segmentation::UnicodeSegmentation;
 
+use crate::error::AirmailError;
 use crate::{
     poi::{AirmailPoi, SchemafiedPoi},
     query::all_subsequences,
@@ -63,8 +65,8 @@ impl AirmailIndex {
             .set_indexed()
             .set_stored()
             .set_fast();
-        assert_eq!(s2cell_parent_index_options.fieldnorms(), false);
-        assert_eq!(s2cell_index_options.fieldnorms(), false);
+        assert!(!s2cell_parent_index_options.fieldnorms());
+        assert!(!s2cell_index_options.fieldnorms());
 
         let _ = schema_builder.add_text_field(FIELD_CONTENT, text_options.clone());
         let _ = schema_builder.add_text_field(FIELD_INDEXED_TAG, tag_options);
@@ -109,7 +111,13 @@ impl AirmailIndex {
         self.tantivy_index.schema().get_field(FIELD_TAGS).unwrap()
     }
 
-    pub fn create(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn create(index_dir: &Path) -> Result<Self> {
+        if !index_dir.exists() {
+            trace!("Creating index at {:?}", index_dir);
+            std::fs::create_dir_all(index_dir)?;
+        }
+
+        trace!("Opening index at {:?}", index_dir);
         let schema = Self::schema();
         let tantivy_index =
             tantivy::Index::open_or_create(MmapDirectory::open(index_dir)?, schema)?;
@@ -119,7 +127,7 @@ impl AirmailIndex {
         })
     }
 
-    pub fn new(index_dir: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(index_dir: &str) -> Result<Self> {
         let tantivy_index = tantivy::Index::open_in_dir(index_dir)?;
         Ok(Self {
             tantivy_index: Arc::new(tantivy_index),
@@ -127,7 +135,7 @@ impl AirmailIndex {
         })
     }
 
-    pub fn new_remote(base_url: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new_remote(base_url: &str) -> Result<Self> {
         let tantivy_index =
             tantivy::Index::open(RemoteDirectory::<{ 2 * 1024 * 1024 }>::new(base_url))?;
         Ok(Self {
@@ -136,7 +144,7 @@ impl AirmailIndex {
         })
     }
 
-    pub fn writer(&mut self) -> Result<AirmailIndexWriter, Box<dyn std::error::Error>> {
+    pub fn writer(&mut self) -> Result<AirmailIndexWriter> {
         let tantivy_writer = self
             .tantivy_index
             .writer::<TantivyDocument>(2_000_000_000)?;
@@ -147,7 +155,7 @@ impl AirmailIndex {
         Ok(writer)
     }
 
-    pub async fn merge(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn merge(&mut self) -> Result<()> {
         let ids = self.tantivy_index.searchable_segment_ids()?;
         self.tantivy_index
             .writer::<TantivyDocument>(2_000_000_000)?
@@ -156,7 +164,7 @@ impl AirmailIndex {
         Ok(())
     }
 
-    pub async fn num_docs(&self) -> Result<u64, Box<dyn std::error::Error>> {
+    pub async fn num_docs(&self) -> Result<u64> {
         let index = self.tantivy_index.clone();
         let count = spawn_blocking(move || {
             if let Ok(tantivy_reader) = index.reader() {
@@ -165,7 +173,7 @@ impl AirmailIndex {
                 None
             }
         });
-        Ok(count.await?.ok_or("Error getting count")?)
+        Ok(count.await?.ok_or(AirmailError::UnableToCount)?)
     }
 
     async fn construct_query(
@@ -244,37 +252,35 @@ impl AirmailIndex {
                         boost,
                     )));
                 }
-            } else {
-                if possible_query.len() >= 8 && lenient {
-                    let query = if tokens.ends_with(&[possible_query]) {
-                        FuzzyTermQuery::new_prefix(term, 1, true)
-                    } else {
-                        FuzzyTermQuery::new(term, 1, true)
-                    };
-                    if self.is_remote {
-                        let searcher = searcher.clone();
-                        let query = query.clone();
-                        spawn_blocking(move || {
-                            let _ = searcher.search(&query, &Count);
-                        });
-                    }
-                    mandatory_queries.push(Box::new(BoostQuery::new(Box::new(query), boost)));
+            } else if possible_query.len() >= 8 && lenient {
+                let query = if tokens.ends_with(&[possible_query]) {
+                    FuzzyTermQuery::new_prefix(term, 1, true)
                 } else {
-                    let query: Box<dyn Query> =
-                        if self.is_remote || !lenient || !tokens.ends_with(&[possible_query]) {
-                            Box::new(TermQuery::new(term, IndexRecordOption::Basic))
-                        } else {
-                            Box::new(FuzzyTermQuery::new_prefix(term, 0, false))
-                        };
-                    if self.is_remote {
-                        let searcher = searcher.clone();
-                        let query = query.box_clone();
-                        spawn_blocking(move || {
-                            let _ = searcher.search(&query, &Count);
-                        });
-                    }
-                    mandatory_queries.push(Box::new(BoostQuery::new(query, boost)));
+                    FuzzyTermQuery::new(term, 1, true)
                 };
+                if self.is_remote {
+                    let searcher = searcher.clone();
+                    let query = query.clone();
+                    spawn_blocking(move || {
+                        let _ = searcher.search(&query, &Count);
+                    });
+                }
+                mandatory_queries.push(Box::new(BoostQuery::new(Box::new(query), boost)));
+            } else {
+                let query: Box<dyn Query> =
+                    if self.is_remote || !lenient || !tokens.ends_with(&[possible_query]) {
+                        Box::new(TermQuery::new(term, IndexRecordOption::Basic))
+                    } else {
+                        Box::new(FuzzyTermQuery::new_prefix(term, 0, false))
+                    };
+                if self.is_remote {
+                    let searcher = searcher.clone();
+                    let query = query.box_clone();
+                    spawn_blocking(move || {
+                        let _ = searcher.search(&query, &Count);
+                    });
+                }
+                mandatory_queries.push(Box::new(BoostQuery::new(query, boost)));
             }
         }
 
@@ -328,7 +334,7 @@ impl AirmailIndex {
             ]));
         }
 
-        return Box::new(final_query);
+        Box::new(final_query)
     }
 
     /// This is public because I don't want one big mega-crate but its API should not be considered even remotely stable.
@@ -339,76 +345,73 @@ impl AirmailIndex {
         tags: Option<Vec<String>>,
         bbox: Option<Rect<f64>>,
         boost_regions: &[(f32, Rect<f64>)],
-    ) -> Result<Vec<(AirmailPoi, f32)>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<(AirmailPoi, f32)>> {
         let tantivy_reader = self.tantivy_index.reader()?;
         let searcher = tantivy_reader.searcher();
         let query_string = query.trim().replace("'s", "s");
 
         let start = std::time::Instant::now();
-        let (top_docs, searcher) = {
-            let query = self
-                .construct_query(
-                    &searcher,
-                    &query_string,
-                    tags,
-                    bbox,
-                    &boost_regions,
-                    request_leniency,
-                )
-                .await;
 
-            #[cfg(feature = "invasive_logging")]
-            {
-                dbg!(&query);
+        let query = self
+            .construct_query(
+                &searcher,
+                &query_string,
+                tags,
+                bbox,
+                boost_regions,
+                request_leniency,
+            )
+            .await;
+
+        #[cfg(feature = "invasive_logging")]
+        trace!("Search query: {:?}", &query);
+
+        // Perform the search and then resolve the returned documents
+        let top_docs: Result<Vec<(f32, TantivyDocument)>> = spawn_blocking(move || {
+            let doc_addresses = searcher.search(&query, &TopDocs::with_limit(10))?;
+            let mut docs = vec![];
+            for (score, doc_address) in doc_addresses {
+                if let Ok(doc) = searcher.doc::<TantivyDocument>(doc_address) {
+                    docs.push((score, doc));
+                }
             }
 
-            let (top_docs, searcher) = spawn_blocking(move || {
-                (searcher.search(&query, &TopDocs::with_limit(10)), searcher)
+            Ok(docs)
+        })
+        .await?;
+
+        let top_docs = top_docs.map_err(|e| {
+            warn!("Search failed: {:?}", e);
+            e
+        })?;
+
+        trace!(
+            "Search took {:?} and yielded {} results",
+            start.elapsed(),
+            top_docs.len()
+        );
+
+        let results = top_docs
+            .into_iter()
+            .flat_map(|(score, doc)| {
+                let source = doc
+                    .get_first(self.field_source())
+                    .map(|value| value.as_str().unwrap_or_default().to_string())
+                    .unwrap_or_default();
+                let s2cell = doc.get_first(self.field_s2cell())?.as_u64()?;
+                let cellid = s2::cellid::CellID(s2cell);
+                let latlng = s2::latlng::LatLng::from(cellid);
+                let tags: Vec<(String, String)> = doc
+                    .get_first(self.field_tags())?
+                    .as_object()?
+                    .map(|(k, v)| (k.to_string(), v.as_str().unwrap_or_default().to_string()))
+                    .collect();
+
+                AirmailPoi::new(source, latlng.lat.deg(), latlng.lng.deg(), tags)
+                    .ok()
+                    .map(|poi| (poi, score))
             })
-            .await?;
-            let top_docs = top_docs?;
-            debug!(
-                "Search took {:?} and yielded {} results",
-                start.elapsed(),
-                top_docs.len()
-            );
-            (top_docs, searcher)
-        };
-
-        let mut scores = Vec::new();
-        let mut futures = Vec::new();
-        for (score, doc_id) in top_docs {
-            let searcher = searcher.clone();
-            let doc = spawn_blocking(move || searcher.doc::<TantivyDocument>(doc_id));
-            scores.push(score);
-            futures.push(doc);
-        }
-        let mut results = Vec::new();
-        let top_docs = join_all(futures).await;
-        for (score, doc_future) in scores.iter().zip(top_docs) {
-            let doc = doc_future??;
-            let source = doc
-                .get_first(self.field_source())
-                .map(|value| value.as_str().unwrap().to_string())
-                .unwrap_or_default();
-            let s2cell = doc
-                .get_first(self.field_s2cell())
-                .unwrap()
-                .as_u64()
-                .unwrap();
-            let cellid = s2::cellid::CellID(s2cell);
-            let latlng = s2::latlng::LatLng::from(cellid);
-            let tags: Vec<(String, String)> = doc
-                .get_first(self.field_tags())
-                .unwrap()
-                .as_object()
-                .unwrap()
-                .map(|(k, v)| (k.to_string(), v.as_str().unwrap().to_string()))
-                .collect();
-
-            let poi = AirmailPoi::new(source, latlng.lat.deg(), latlng.lng.deg(), tags)?;
-            results.push((poi, *score));
-        }
+            .collect::<Vec<_>>();
 
         Ok(results)
     }
@@ -424,16 +427,12 @@ impl AirmailIndexWriter {
         doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), value);
     }
 
-    pub async fn add_poi(
-        &mut self,
-        poi: SchemafiedPoi,
-        source: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn add_poi(&mut self, poi: SchemafiedPoi, source: &str) -> Result<()> {
         let mut doc = TantivyDocument::default();
         for content in poi.content {
             self.process_field(&mut doc, &content);
         }
-        doc.add_text(self.schema.get_field(FIELD_SOURCE).unwrap(), source);
+        doc.add_text(self.schema.get_field(FIELD_SOURCE)?, source);
 
         let indexed_keys = [
             "natural", "amenity", "shop", "leisure", "tourism", "historic", "cuisine",
@@ -446,29 +445,29 @@ impl AirmailIndexWriter {
                     .any(|prefix| key.starts_with(prefix))
             {
                 doc.add_text(
-                    self.schema.get_field(FIELD_INDEXED_TAG).unwrap(),
+                    self.schema.get_field(FIELD_INDEXED_TAG)?,
                     format!("{}={}", key, value).as_str(),
                 );
             }
         }
         doc.add_object(
-            self.schema.get_field(FIELD_TAGS).unwrap(),
+            self.schema.get_field(FIELD_TAGS)?,
             poi.tags
                 .iter()
                 .map(|(k, v)| (k.to_string(), OwnedValue::Str(v.to_string())))
                 .collect::<BTreeMap<String, OwnedValue>>(),
         );
 
-        doc.add_u64(self.schema.get_field(FIELD_S2CELL).unwrap(), poi.s2cell);
+        doc.add_u64(self.schema.get_field(FIELD_S2CELL)?, poi.s2cell);
         for parent in poi.s2cell_parents {
-            doc.add_u64(self.schema.get_field(FIELD_S2CELL_PARENTS).unwrap(), parent);
+            doc.add_u64(self.schema.get_field(FIELD_S2CELL_PARENTS)?, parent);
         }
         self.tantivy_writer.add_document(doc)?;
 
         Ok(())
     }
 
-    pub fn commit(mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn commit(mut self) -> Result<()> {
         self.tantivy_writer.commit()?;
         Ok(())
     }
