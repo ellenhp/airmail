@@ -23,5 +23,5 @@ thiserror = "1.0.63"
 
 [features]
 default = ["remote_index"]
-remote_index = []
+remote_index = ["airmail/remote_index"]
 invasive_logging = ["airmail/invasive_logging"]
