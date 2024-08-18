@@ -1,6 +1,6 @@
 # 📫 Airmail 📫
 
-Airmail is an extremely lightweight geocoder[^1] written in pure Rust. Built on top of [tantivy](https://github.com/quickwit-oss/tantivy), it offers a low memory footprint and fast indexing (index the planet in under 3 hours!). Airmail aims to support international queries in several languages, but in practice it's still very early days and there are definitely bugs preventing correct behavior.
+Airmail is an extremely lightweight geocoder[^1] written in pure Rust. Built on top of [tantivy](https://github.com/quickwit-oss/tantivy), it offers a low memory footprint and fast performance. Airmail aims to support international queries in several languages, but in practice it's still very early days and there are definitely bugs preventing correct behavior.
 
 [^1]: A geocoder is a search engine for places. When you type in "vegan donut shop" into your maps app of choice, a geocoder is what shows you nearby places that fit your query.
 
@@ -10,18 +10,18 @@ Airmail's killer feature is the ability to query remote indices, e.g. on S3. Thi
 
 ## Roadmap
 
-- [x] English/North American query parser for addresses, place names, and place name queries with locality or neighborhood.
 - [x] Index OpenStreetMap data, from osmx or pbf file.
 - [ ] Index OpenAddresses data (not currently used in demo).
 - [ ] Index WhosOnFirst data.
 - [x] API server.
 - [x] Address queries.
 - [x] Named POI queries.
+- [ ] Administrative area (city, province/state, country etc) queries.
 - [x] Prefix queries.
 - [x] Query remote indices.
 - [x] Support and test planet-scale indices.
 - [x] International address queries.
-- [x] Categorical search, e.g. "coffee shop seattle".
+- [ ] Categorical search, e.g. "coffee shop seattle".
 - [x] Typo tolerance (limited to >=8 character input tokens)
 - [x] Bounding box restriction.
 - [ ] Focus point queries.
@@ -33,7 +33,7 @@ This guide will create an index with a chosen geographical region (or the planet
 
 ### Requirements
 
-- Rust environment, or Docker with Docker Compose.
+- Rust environment, Docker with Docker Compose, or Podman with Podman Compose.
 - ~16GB memory and 10-100GB of free space.
 
 ### Clone the Repo
@@ -48,7 +48,7 @@ mkdir ./data
 
 ### Fetch Data
 
-It's likely a good idea to build a smaller region first, and then planet if you have the need and space. This guide references Australia, but you can use any region.
+It's a good idea to build a smaller region first, and then planet if you have the need and space. This guide references Australia, but you can use any region.
 
 1. Download OSM probuf file (.pbf file) for the target region of interest. See: <https://download.geofabrik.de> or <https://download.bbbike.org/osm/planet/> and place into `./data` folder.
 2. Download Who's On First (SpatiaLite format). For planet see: <https://geocode.earth/data/whosonfirst/combined/> and <https://data.geocode.earth/wof/dist/spatial/whosonfirst-data-admin-latest.spatial.db.bz2>
