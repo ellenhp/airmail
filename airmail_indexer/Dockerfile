@@ -1,4 +1,4 @@
-FROM rust:1.76
+FROM rust:1.81
 
 RUN apt-get update && apt-get install -y libssl-dev capnproto clang pkg-config libzstd-dev libsqlite3-mod-spatialite && rm -rf /var/lib/apt/lists/*
 
