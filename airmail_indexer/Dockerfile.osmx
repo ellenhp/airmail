@@ -14,7 +14,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install 
 WORKDIR /usr/src/
 RUN git clone --recurse-submodules https://github.com/protomaps/OSMExpress.git
 WORKDIR /usr/src/OSMExpress
-RUN git checkout 24cdc6cca55f45b4019e2d490c2321c366ca3362
+RUN git checkout 331020a9e027c42c29baa423adeb726332ca2105
 
 
 RUN cmake -DCMAKE_BUILD_TYPE=Release .
