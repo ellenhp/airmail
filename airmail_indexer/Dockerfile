@@ -9,6 +9,6 @@ COPY ./airmail_service ./airmail_service
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 
-RUN cargo install --path ./airmail_indexer
+RUN cargo install --locked --path ./airmail_indexer
 
 WORKDIR /var/airmail

@@ -9,7 +9,7 @@ COPY ./airmail_service ./airmail_service
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 
-RUN cargo install --path ./airmail_service
+RUN cargo install --locked --path ./airmail_service
 
 WORKDIR /app
 
