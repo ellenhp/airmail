@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::Result;
-use crossbeam::channel::Sender;
+use async_channel::Sender;
 use futures_util::future::join_all;
 use serde::Deserialize;
 
@@ -80,7 +80,7 @@ async fn query_pip_inner(
     {
         to_cache_sender
             .send(WofCacheItem::Admins(cell.0, response_ids.clone()))
-            .unwrap();
+            .await?;
     }
 
     Ok(AdminIds {
@@ -185,14 +185,14 @@ pub(crate) async fn query_pip(
     for (admin_id, names) in join_all(admin_name_futures).await.into_iter().flatten() {
         to_cache_sender
             .send(WofCacheItem::Names(admin_id, names.clone()))
-            .unwrap();
+            .await?;
         response.admin_names.extend(names);
     }
 
     for (country_id, langs) in join_all(lang_futures).await.into_iter().flatten() {
         to_cache_sender
             .send(WofCacheItem::Langs(country_id, langs.clone()))
-            .unwrap();
+            .await?;
         response.admin_langs.extend(langs);
     }
 

@@ -10,8 +10,8 @@ use std::{
 use airmail::poi::ToIndexPoi;
 use airmail_indexer::cache::{IndexerCache, WofCacheItem};
 use anyhow::Result;
+use async_channel::Sender;
 use clap::ValueEnum;
-use crossbeam::channel::Sender;
 use log::{info, warn};
 use osmpbf::{Element, ElementReader};
 
@@ -77,7 +77,9 @@ impl OsmPbf {
                         .and_then(OsmPoi::index_poi)
                     {
                         count_dense_nodes.fetch_add(1, Ordering::Relaxed);
-                        self.sender.send(interesting_poi).expect("sender failed");
+                        self.sender
+                            .send_blocking(interesting_poi)
+                            .expect("sender failed");
                         1
                     } else {
                         0
@@ -96,7 +98,9 @@ impl OsmPbf {
                             .and_then(OsmPoi::index_poi)
                     {
                         count_nodes.fetch_add(1, Ordering::Relaxed);
-                        self.sender.send(interesting_poi).expect("sender failed");
+                        self.sender
+                            .send_blocking(interesting_poi)
+                            .expect("sender failed");
                         1
                     } else {
                         0
@@ -138,7 +142,9 @@ impl OsmPbf {
                             OsmPoi::new_from_way(tags, &way_points).and_then(OsmPoi::index_poi)
                         {
                             count_ways.fetch_add(1, Ordering::Relaxed);
-                            self.sender.send(interesting_poi).expect("sender failed");
+                            self.sender
+                                .send_blocking(interesting_poi)
+                                .expect("sender failed");
                             1
                         } else {
                             0

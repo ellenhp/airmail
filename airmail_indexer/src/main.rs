@@ -11,7 +11,7 @@ use osm_osmx::OSMExpressLoader;
 use osm_pbf::{OsmPbf, ParseOsmTypes};
 use osmx::Database;
 use std::path::PathBuf;
-use tokio::{select, spawn, task::spawn_blocking};
+use tokio::{select, spawn};
 
 mod osm;
 mod osm_osmx;
@@ -25,11 +25,9 @@ struct Args {
     #[clap(long, short)]
     wof_db: PathBuf,
 
-    /// Path to the Airmail index to import into. This should be either an empty
-    /// directory or a directory containing an existing index created with the
-    /// same version of airmail (unless you really know what you're doing).
+    // Path to store the airmail index intermediate db.
     #[clap(long, short)]
-    index: PathBuf,
+    index_db: String,
 
     /// Path where an indexing cache will be stored. This is a redb file that
     /// contains a cache of expensive operations. It is technically optional but we'll just create one in a
@@ -81,28 +79,31 @@ async fn main() -> Result<()> {
     let mut handles = vec![];
 
     // Setup the import pipeline
-    let mut import_builder = ImporterBuilder::new(&args.index, &args.wof_db)?;
+    let mut import_builder = ImporterBuilder::new(&args.index_db, &args.wof_db).await?;
     if let Some(admin_cache) = args.admin_cache {
         import_builder = import_builder.admin_cache(&admin_cache);
     }
     if let Some(pip_tree) = args.pip_tree {
         import_builder = import_builder.pip_tree_cache(&pip_tree);
     }
-    let importer = import_builder.build().await?;
+    let mut importer = import_builder.build().await?;
 
     // Send POIs from the OSM parser to the importer.
-    let (poi_sender, poi_receiver) = crossbeam::channel::bounded(16384);
+    let (poi_sender, poi_receiver) = async_channel::bounded(16384);
+
+    let indexer_cache = importer.indexer_cache();
+
+    // Spawn the importer
+    handles.push(spawn(
+        async move { importer.run_import(poi_receiver).await },
+    ));
 
     // Spawn the OSM parser
-    let indexer_cache = importer.indexer_cache();
-    handles.push(spawn_blocking(move || match args.loader {
+    match args.loader {
         Loader::LoadOsmx { path } => {
             let osm_db = Database::open(path).map_err(IndexerError::from)?;
             let osm = OSMExpressLoader::new(&osm_db, poi_sender)?;
-            osm.parse_osm().map_err(|e| {
-                warn!("Error parsing OSM: {}", e);
-                e
-            })
+            osm.parse_osm().await?
         }
         Loader::LoadOsmPbf {
             path,
@@ -116,17 +117,9 @@ async fn main() -> Result<()> {
                 poi_sender,
                 indexer_cache,
             );
-            osm.parse_osm().map_err(|e| {
-                warn!("Error parsing OSM: {}", e);
-                e
-            })
+            osm.parse_osm()?
         }
-    }));
-
-    // Spawn the importer
-    handles.push(spawn(async move {
-        importer.run_import("osm", poi_receiver).await
-    }));
+    }
 
     // Wait for the first thing to finish
     select! {

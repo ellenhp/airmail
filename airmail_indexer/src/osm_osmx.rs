@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use airmail::poi::ToIndexPoi;
 use airmail_indexer::error::IndexerError;
 use anyhow::Result;
-use crossbeam::channel::Sender;
-use log::{debug, info, warn};
+use async_channel::Sender;
+use log::{debug, info};
 use osmx::{Database, Locations, Transaction};
 
 use crate::osm::OsmPoi;
@@ -31,7 +31,7 @@ impl<'db> OSMExpressLoader<'db> {
     }
 
     /// Parse an `OSMExpress` file and send POIs for indexing.
-    pub(crate) fn parse_osm(self) -> Result<()> {
+    pub(crate) async fn parse_osm(self) -> Result<()> {
         let mut total = 0;
         let mut interesting = 0;
         let locations = self.locations()?;
@@ -59,10 +59,7 @@ impl<'db> OSMExpressLoader<'db> {
                     OsmPoi::new_from_node(tags, (location.lat(), location.lon()))
                 {
                     if let Some(poi_to_indexer) = interesting_poi.into() {
-                        self.sender.send(poi_to_indexer).map_err(|e| {
-                            warn!("Error from sender: {}", e);
-                            e
-                        })?;
+                        self.sender.send(poi_to_indexer).await?;
                         interesting += 1;
                     }
                 }
@@ -99,10 +96,7 @@ impl<'db> OSMExpressLoader<'db> {
                     let tags = way.tags().collect::<HashMap<_, _>>();
                     if let Some(interesting_poi) = OsmPoi::new_from_way(tags, &way_points) {
                         if let Some(poi_to_indexer) = interesting_poi.into() {
-                            self.sender.send(poi_to_indexer).map_err(|e| {
-                                warn!("Error from sender: {}", e);
-                                e
-                            })?;
+                            self.sender.send(poi_to_indexer).await?;
                             interesting += 1;
                         }
                     }

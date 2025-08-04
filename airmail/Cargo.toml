@@ -8,9 +8,6 @@ edition = "2021"
 [dependencies]
 levenshtein_automata = "0.2.1"
 s2 = "0.0.12"
-tantivy = "0.22.0"
-tantivy-common = "0.7.0"
-tantivy-fst = "0.4.0"
 tempfile = "3.9.0"
 log = "0.4.20"
 serde_json = "1"
@@ -20,7 +17,6 @@ lru = "0.12.2"
 async-trait = "0.1.77"
 tokio = { version = "1.36.0", features = ["full"] }
 nix = { version = "0.27", features = ["ioctl", "mman"] }
-userfaultfd = { version = "0.8.1", features = ["linux4_14", "linux5_7"] }
 futures-util = "0.3.30"
 deunicode = "1.4.3"
 itertools = "0.12.1"
@@ -49,10 +45,17 @@ unicode-segmentation = "1.11.0"
 lazy_static = "1.4.0"
 regex = "1.10.3"
 geo = "0.27.0"
-tantivy-uffd = "0.1.1"
 anyhow = "1.0.86"
 thiserror = "1.0.63"
+roaring = "0.11.2"
+zeekstd = "0.5.1"
+fst = "0.4.7"
+
+[dependencies.sqlx]
+version = "0.8"
+features = ["runtime-tokio", "postgres"]
 
 [features]
-remote_index = ["tantivy/quickwit"]
+default = ["build_index"]
 invasive_logging = []
+build_index = []

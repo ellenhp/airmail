@@ -66,6 +66,7 @@ impl ToIndexPoi {
     }
 }
 
+#[derive(Debug)]
 pub struct SchemafiedPoi {
     pub content: Vec<String>,
     pub s2cell: u64,

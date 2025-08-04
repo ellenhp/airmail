@@ -1,439 +1,76 @@
-use std::path::Path;
-use std::sync::Arc;
-
-use anyhow::Result;
-use geo::Rect;
-use itertools::Itertools;
-use log::{trace, warn};
-use s2::region::RegionCoverer;
-use std::collections::BTreeMap;
-use tantivy::schema::Value;
-use tantivy::{
-    collector::{Count, TopDocs},
-    directory::MmapDirectory,
-    query::{
-        BooleanQuery, BoostQuery, FuzzyTermQuery, Occur, PhrasePrefixQuery, PhraseQuery, Query,
-        TermQuery,
-    },
-    schema::{
-        IndexRecordOption, NumericOptions, OwnedValue, Schema, TextFieldIndexing, TextOptions,
-        STORED,
-    },
-    Searcher, TantivyDocument, Term,
-};
-use tantivy_uffd::RemoteDirectory;
-use tokio::task::spawn_blocking;
-use unicode_segmentation::UnicodeSegmentation;
-
-use crate::error::AirmailError;
-use crate::{
-    poi::{AirmailPoi, SchemafiedPoi},
-    query::all_subsequences,
+use std::{
+    collections::{HashMap, HashSet},
+    io::{self, Cursor},
+    path::Path,
+    str::FromStr,
+    sync::Arc,
 };
 
-// Field name keys.
-pub const FIELD_CONTENT: &str = "content";
-pub const FIELD_INDEXED_TAG: &str = "indexed_tag";
-pub const FIELD_SOURCE: &str = "source";
-pub const FIELD_S2CELL: &str = "s2cell";
-pub const FIELD_S2CELL_PARENTS: &str = "s2cell_parents";
-pub const FIELD_CATEGORY_JSON: &str = "category";
-pub const FIELD_TAGS: &str = "tags";
+use fst::raw::Fst;
+use log::error;
+use roaring::{RoaringBitmap, RoaringTreemap};
+use sqlx::{migrate::Migrator, PgPool};
+use tokio::sync::Mutex;
+use zeekstd::{EncodeOptions, Encoder};
 
-#[derive(Clone)]
-pub struct AirmailIndex {
-    tantivy_index: Arc<tantivy::Index>,
-    is_remote: bool,
+use crate::poi::SchemafiedPoi;
+
+use std::f64::consts::PI;
+
+fn get_quadkey(lat: f64, lng: f64, zoom: u32) -> u64 {
+    let x = (lng + 180.0) / 360.0 * (1 << zoom) as f64;
+    let x = x.floor() as u32;
+
+    let lat_rad = lat.to_radians();
+    let y = (1.0 - (lat_rad.tan() + (1.0 / lat_rad.cos()).ln() / PI) / 2.0 * (1 << zoom) as f64);
+    let y = y.floor() as u32;
+
+    let mut quadkey = 0_u64;
+
+    for i in (1..=zoom).rev() {
+        let mask = 1 << (i - 1);
+        let mut digit = 0;
+
+        if x & mask != 0 {
+            digit += 1;
+        }
+        if y & mask != 0 {
+            digit += 2;
+        }
+
+        quadkey = (quadkey << 2) | digit;
+    }
+
+    quadkey
 }
 
-impl AirmailIndex {
-    fn schema() -> tantivy::schema::Schema {
-        let mut schema_builder = Schema::builder();
-        let text_options = TextOptions::default().set_indexing_options(
-            TextFieldIndexing::default()
-                .set_fieldnorms(false)
-                .set_index_option(IndexRecordOption::WithFreqsAndPositions),
-        );
-        let tag_options = TextOptions::default().set_indexing_options(
-            TextFieldIndexing::default()
-                .set_fieldnorms(false)
-                .set_tokenizer("raw")
-                .set_index_option(IndexRecordOption::Basic),
-        );
-        let s2cell_parent_index_options = NumericOptions::default().set_indexed();
-        let s2cell_index_options = NumericOptions::default()
-            .set_indexed()
-            .set_stored()
-            .set_fast();
-        assert!(!s2cell_parent_index_options.fieldnorms());
-        assert!(!s2cell_index_options.fieldnorms());
+pub struct AirmailIndex {}
 
-        let _ = schema_builder.add_text_field(FIELD_CONTENT, text_options.clone());
-        let _ = schema_builder.add_text_field(FIELD_INDEXED_TAG, tag_options);
-        let _ = schema_builder.add_text_field(FIELD_SOURCE, text_options.clone());
-        let _ = schema_builder.add_u64_field(FIELD_S2CELL, s2cell_index_options);
-        let _ = schema_builder.add_u64_field(FIELD_S2CELL_PARENTS, s2cell_parent_index_options);
-        let _ = schema_builder.add_json_field(FIELD_TAGS, STORED);
-        let _ = schema_builder.add_text_field(FIELD_CATEGORY_JSON, STORED);
-        schema_builder.build()
-    }
-
-    fn field_content(&self) -> tantivy::schema::Field {
-        self.tantivy_index
-            .schema()
-            .get_field(FIELD_CONTENT)
-            .unwrap()
-    }
-
-    fn field_indexed_tag(&self) -> tantivy::schema::Field {
-        self.tantivy_index
-            .schema()
-            .get_field(FIELD_INDEXED_TAG)
-            .unwrap()
-    }
-
-    fn field_source(&self) -> tantivy::schema::Field {
-        self.tantivy_index.schema().get_field(FIELD_SOURCE).unwrap()
-    }
-
-    fn field_s2cell(&self) -> tantivy::schema::Field {
-        self.tantivy_index.schema().get_field(FIELD_S2CELL).unwrap()
-    }
-
-    fn field_s2cell_parents(&self) -> tantivy::schema::Field {
-        self.tantivy_index
-            .schema()
-            .get_field(FIELD_S2CELL_PARENTS)
-            .unwrap()
-    }
-
-    fn field_tags(&self) -> tantivy::schema::Field {
-        self.tantivy_index.schema().get_field(FIELD_TAGS).unwrap()
-    }
-
-    pub fn create(index_dir: &Path) -> Result<Self> {
-        if !index_dir.exists() {
-            trace!("Creating index at {:?}", index_dir);
-            std::fs::create_dir_all(index_dir)?;
-        }
-
-        trace!("Opening index at {:?}", index_dir);
-        let schema = Self::schema();
-        let tantivy_index =
-            tantivy::Index::open_or_create(MmapDirectory::open(index_dir)?, schema)?;
-        Ok(Self {
-            tantivy_index: Arc::new(tantivy_index),
-            is_remote: false,
-        })
-    }
-
-    pub fn new(index_dir: &str) -> Result<Self> {
-        let tantivy_index = tantivy::Index::open_in_dir(index_dir)?;
-        Ok(Self {
-            tantivy_index: Arc::new(tantivy_index),
-            is_remote: false,
-        })
-    }
-
-    pub fn new_remote(base_url: &str) -> Result<Self> {
-        let tantivy_index =
-            tantivy::Index::open(RemoteDirectory::<{ 2 * 1024 * 1024 }>::new(base_url))?;
-        Ok(Self {
-            tantivy_index: Arc::new(tantivy_index),
-            is_remote: true,
-        })
-    }
-
-    pub fn writer(&mut self) -> Result<AirmailIndexWriter> {
-        let tantivy_writer = self
-            .tantivy_index
-            .writer::<TantivyDocument>(2_000_000_000)?;
-        let writer = AirmailIndexWriter {
-            tantivy_writer,
-            schema: self.tantivy_index.schema(),
-        };
-        Ok(writer)
-    }
-
-    pub async fn merge(&mut self) -> Result<()> {
-        let ids = self.tantivy_index.searchable_segment_ids()?;
-        self.tantivy_index
-            .writer::<TantivyDocument>(2_000_000_000)?
-            .merge(&ids)
-            .await?;
-        Ok(())
-    }
-
-    pub async fn num_docs(&self) -> Result<u64> {
-        let index = self.tantivy_index.clone();
-        let count = spawn_blocking(move || {
-            if let Ok(tantivy_reader) = index.reader() {
-                Some(tantivy_reader.searcher().num_docs())
-            } else {
-                None
-            }
-        });
-        Ok(count.await?.ok_or(AirmailError::UnableToCount)?)
-    }
-
-    async fn construct_query(
-        &self,
-        searcher: &Searcher,
-        query: &str,
-        tags: Option<Vec<String>>,
-        bbox: Option<Rect<f64>>,
-        _boost_regions: &[(f32, Rect<f64>)],
-        lenient: bool,
-    ) -> Box<dyn Query> {
-        let mut queries: Vec<Box<dyn Query>> = Vec::new();
-        let mut mandatory_queries: Vec<Box<dyn Query>> = Vec::new();
-
-        let tokens: Vec<String> = query
-            .split_word_bounds()
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
-        for subsequence in all_subsequences(&tokens) {
-            let possible_query = subsequence.join(" ");
-            if possible_query
-                .chars()
-                .all(|c| c.is_whitespace() || c.is_ascii_punctuation())
-            {
-                continue;
-            }
-
-            let non_alphabetic = possible_query
-                .chars()
-                .filter(|c| c.is_numeric() || c.is_whitespace())
-                .count();
-            let total_chars = possible_query.chars().count();
-            let term = Term::from_field_text(self.field_content(), &possible_query);
-            let mut boost = 1.05f32.powf(possible_query.len() as f32);
-            // Anecdotally, numbers in queries are usually important.
-            if total_chars - non_alphabetic < 3 && non_alphabetic > 0 {
-                boost *= 3.0;
-            }
-            if subsequence.len() > 1 {
-                if self.is_remote {
-                    let searcher = searcher.clone();
-                    let subsequence = subsequence.clone();
-                    let content_field = self.field_content();
-                    spawn_blocking(move || {
-                        let _ = searcher.search(
-                            &PhraseQuery::new(
-                                subsequence
-                                    .iter()
-                                    .map(|s| Term::from_field_text(content_field, s))
-                                    .collect(),
-                            ),
-                            &Count,
-                        );
-                    });
-                }
-
-                if self.is_remote {
-                    queries.push(Box::new(BoostQuery::new(
-                        Box::new(PhraseQuery::new(
-                            subsequence
-                                .iter()
-                                .map(|s| Term::from_field_text(self.field_content(), s))
-                                .collect(),
-                        )),
-                        boost,
-                    )));
-                } else {
-                    queries.push(Box::new(BoostQuery::new(
-                        Box::new(PhrasePrefixQuery::new(
-                            subsequence
-                                .iter()
-                                .map(|s| Term::from_field_text(self.field_content(), s))
-                                .collect(),
-                        )),
-                        boost,
-                    )));
-                }
-            } else if possible_query.len() >= 8 && lenient {
-                let query = if tokens.ends_with(&[possible_query]) {
-                    FuzzyTermQuery::new_prefix(term, 1, true)
-                } else {
-                    FuzzyTermQuery::new(term, 1, true)
-                };
-                if self.is_remote {
-                    let searcher = searcher.clone();
-                    let query = query.clone();
-                    spawn_blocking(move || {
-                        let _ = searcher.search(&query, &Count);
-                    });
-                }
-                mandatory_queries.push(Box::new(BoostQuery::new(Box::new(query), boost)));
-            } else {
-                let query: Box<dyn Query> =
-                    if self.is_remote || !lenient || !tokens.ends_with(&[possible_query]) {
-                        Box::new(TermQuery::new(term, IndexRecordOption::Basic))
-                    } else {
-                        Box::new(FuzzyTermQuery::new_prefix(term, 0, false))
-                    };
-                if self.is_remote {
-                    let searcher = searcher.clone();
-                    let query = query.box_clone();
-                    spawn_blocking(move || {
-                        let _ = searcher.search(&query, &Count);
-                    });
-                }
-                mandatory_queries.push(Box::new(BoostQuery::new(query, boost)));
-            }
-        }
-
-        if let Some(tags) = tags {
-            for tag in &tags {
-                let term = Term::from_field_text(self.field_indexed_tag(), tag);
-                let query: Box<dyn Query> =
-                    Box::new(TermQuery::new(term, IndexRecordOption::Basic));
-                mandatory_queries.push(query);
-            }
-        }
-
-        let optional = BooleanQuery::union(queries);
-        let required = BooleanQuery::intersection(mandatory_queries);
-        let final_query = BooleanQuery::new(vec![
-            (Occur::Should, Box::new(optional)),
-            (Occur::Must, Box::new(required)),
-        ]);
-
-        if let Some(bbox) = bbox {
-            let region = s2::rect::Rect::from_degrees(
-                bbox.min().y,
-                bbox.min().x,
-                bbox.max().y,
-                bbox.max().x,
-            );
-            let covering_cells = {
-                let coverer = RegionCoverer {
-                    min_level: 0,
-                    max_level: 16,
-                    level_mod: 1,
-                    max_cells: 64,
-                };
-                let mut cellunion = coverer.covering(&region);
-                cellunion.normalize();
-                cellunion.0.iter().map(|c| c.0).collect_vec()
-            };
-            let covering_disjunction_clauses = covering_cells
-                .iter()
-                .map(|c| {
-                    let term = Term::from_field_u64(self.field_s2cell_parents(), *c);
-                    let query: Box<dyn Query> =
-                        Box::new(TermQuery::new(term, IndexRecordOption::Basic));
-                    query
-                })
-                .collect_vec();
-            let covering_query = BooleanQuery::union(covering_disjunction_clauses);
-            return Box::new(BooleanQuery::intersection(vec![
-                Box::new(covering_query),
-                Box::new(final_query),
-            ]));
-        }
-
-        Box::new(final_query)
-    }
-
-    /// This is public because I don't want one big mega-crate but its API should not be considered even remotely stable.
-    pub async fn search(
-        &self,
-        query: &str,
-        request_leniency: bool,
-        tags: Option<Vec<String>>,
-        bbox: Option<Rect<f64>>,
-        boost_regions: &[(f32, Rect<f64>)],
-    ) -> Result<Vec<(AirmailPoi, f32)>> {
-        let tantivy_reader = self.tantivy_index.reader()?;
-        let searcher = tantivy_reader.searcher();
-        let query_string = query.trim().replace("'s", "s");
-
-        let start = std::time::Instant::now();
-
-        let query = self
-            .construct_query(
-                &searcher,
-                &query_string,
-                tags,
-                bbox,
-                boost_regions,
-                request_leniency,
-            )
-            .await;
-
-        #[cfg(feature = "invasive_logging")]
-        trace!("Search query: {:?}", &query);
-
-        // Perform the search and then resolve the returned documents
-        let top_docs: Result<Vec<(f32, TantivyDocument)>> = spawn_blocking(move || {
-            let doc_addresses = searcher.search(&query, &TopDocs::with_limit(10))?;
-            let mut docs = vec![];
-            for (score, doc_address) in doc_addresses {
-                if let Ok(doc) = searcher.doc::<TantivyDocument>(doc_address) {
-                    docs.push((score, doc));
-                }
-            }
-
-            Ok(docs)
-        })
-        .await?;
-
-        let top_docs = top_docs.map_err(|e| {
-            warn!("Search failed: {:?}", e);
-            e
-        })?;
-
-        trace!(
-            "Search took {:?} and yielded {} results",
-            start.elapsed(),
-            top_docs.len()
-        );
-
-        let results = top_docs
-            .into_iter()
-            .flat_map(|(score, doc)| {
-                let source = doc
-                    .get_first(self.field_source())
-                    .map(|value| value.as_str().unwrap_or_default().to_string())
-                    .unwrap_or_default();
-                let s2cell = doc.get_first(self.field_s2cell())?.as_u64()?;
-                let cellid = s2::cellid::CellID(s2cell);
-                let latlng = s2::latlng::LatLng::from(cellid);
-                let tags: Vec<(String, String)> = doc
-                    .get_first(self.field_tags())?
-                    .as_object()?
-                    .map(|(k, v)| (k.to_string(), v.as_str().unwrap_or_default().to_string()))
-                    .collect();
-
-                AirmailPoi::new(source, latlng.lat.deg(), latlng.lng.deg(), tags)
-                    .ok()
-                    .map(|poi| (poi, score))
-            })
-            .collect::<Vec<_>>();
-
-        Ok(results)
-    }
+#[cfg(feature = "build_index")]
+pub struct AirmailIndexBuilder {
+    // pool: PgPool,
+    keyword_index: HashMap<String, RoaringBitmap>,
 }
 
-pub struct AirmailIndexWriter {
-    tantivy_writer: tantivy::IndexWriter,
-    schema: Schema,
-}
+impl AirmailIndexBuilder {
+    pub async fn create(url: &str) -> Result<AirmailIndexBuilder, anyhow::Error> {
+        // let options = sqlx::postgres::PgConnectOptions::from_str(url)?;
+        // let pool = PgPool::connect_with(options).await?;
 
-impl AirmailIndexWriter {
-    fn process_field(&self, doc: &mut TantivyDocument, value: &str) {
-        doc.add_text(self.schema.get_field(FIELD_CONTENT).unwrap(), value);
+        // let m = Migrator::new(Path::new("./airmail/migrations")).await?;
+        // m.run(&pool).await?;
+
+        // sqlx::query!("TRUNCATE poi CASCADE").execute(&pool).await?;
+
+        Ok(AirmailIndexBuilder {
+            // pool,
+            keyword_index: HashMap::new(),
+        })
     }
 
-    pub fn add_poi(&mut self, poi: SchemafiedPoi, source: &str) -> Result<()> {
-        let mut doc = TantivyDocument::default();
-        for content in poi.content {
-            self.process_field(&mut doc, &content);
-        }
-        doc.add_text(self.schema.get_field(FIELD_SOURCE)?, source);
-
+    pub async fn insert_poi(&mut self, poi: &SchemafiedPoi) -> Result<(), anyhow::Error> {
+        let mut keywords = HashSet::new();
+        keywords.extend(poi.content.iter().cloned());
         let indexed_keys = [
             "natural", "amenity", "shop", "leisure", "tourism", "historic", "cuisine",
         ];
@@ -444,31 +81,149 @@ impl AirmailIndexWriter {
                     .iter()
                     .any(|prefix| key.starts_with(prefix))
             {
-                doc.add_text(
-                    self.schema.get_field(FIELD_INDEXED_TAG)?,
-                    format!("{}={}", key, value).as_str(),
-                );
+                keywords.insert(format!("{key}={value}"));
             }
         }
-        doc.add_object(
-            self.schema.get_field(FIELD_TAGS)?,
-            poi.tags
-                .iter()
-                .map(|(k, v)| (k.to_string(), OwnedValue::Str(v.to_string())))
-                .collect::<BTreeMap<String, OwnedValue>>(),
-        );
+        let cell = s2::cell::Cell::from(s2::cellid::CellID(poi.s2cell));
+        let latlng = s2::latlng::LatLng::from(cell.center());
 
-        doc.add_u64(self.schema.get_field(FIELD_S2CELL)?, poi.s2cell);
-        for parent in poi.s2cell_parents {
-            doc.add_u64(self.schema.get_field(FIELD_S2CELL_PARENTS)?, parent);
+        for keyword in &keywords {
+            if !self.keyword_index.contains_key(keyword) {
+                self.keyword_index
+                    .insert(keyword.clone(), RoaringBitmap::new());
+            }
+
+            let quadkey = get_quadkey(latlng.lat.deg(), latlng.lng.deg(), 12);
+            let quadkey_u32: u32 = quadkey.try_into().expect("Quadkey overflow");
+            // for cell in &s2_cells {
+            if let Some(bitmap) = self.keyword_index.get_mut(keyword) {
+                bitmap.insert(quadkey_u32);
+            } else {
+                error!("Logic error: Roaring bitmap not initialized.")
+            }
+            // }
         }
-        self.tantivy_writer.add_document(doc)?;
+
+        // let mut txn = self.pool.begin().await?;
+        // let mut keyword_index_new_entries = HashMap::new();
+
+        // let mut keywords = HashSet::new();
+        // keywords.extend(poi.content.iter().cloned());
+        // for (key, value) in &poi.tags {
+        //     keywords.insert(format!("{key}={value}"));
+        // }
+        // let mut s2_cells: Vec<i64> = poi.s2cell_parents.iter().map(|cell| *cell as i64).collect();
+        // s2_cells.push(poi.s2cell as i64);
+
+        // // Create a POI
+        // let poi_id: i32 = sqlx::query!("INSERT INTO poi DEFAULT VALUES RETURNING id")
+        //     .fetch_one(&mut *txn)
+        //     .await?
+        //     .id;
+
+        // // Ensure the existence of its S2 cells and link them
+        // for cell_id in s2_cells {
+        //     // Link POI to S2 cell
+        //     sqlx::query!(
+        //         "INSERT INTO poi_s2_cells (poi_id, cell_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        //         poi_id,
+        //         cell_id
+        //     )
+        //     .execute(&mut *txn)
+        //     .await?;
+        // }
+
+        // // Ensure the existence of its keywords and link them
+        // for keyword in keywords {
+        //     // Insert keyword if it doesn't exist
+        //     // sqlx::query!(
+        //     //     "INSERT INTO keywords (word) VALUES ($1) ON CONFLICT DO NOTHING",
+        //     //     keyword
+        //     // )
+        //     // .execute(&mut *txn)
+        //     // .await?;
+
+        //     let keyword_id = {
+        //         let mut keyword_index = self.keyword_index;
+        //         if let Some(id) = keyword_index.1.get(&keyword) {
+        //             *id
+        //         } else {
+        //             // Get the keyword ID
+        //             // let keyword_id: i32 =
+        //             //     sqlx::query!("SELECT id FROM keywords WHERE word = $1", keyword)
+        //             //         .fetch_one(&mut *txn)
+        //             //         .await?
+        //             //         .id;
+        //             let keyword_id = keyword_index.0;
+        //             keyword_index.0 += 1;
+        //             keyword_index_new_entries.insert(keyword.clone(), keyword_id);
+        //             keyword_id
+        //         }
+        //     };
+
+        //     // Link POI to keyword
+        //     sqlx::query!(
+        //         "INSERT INTO poi_keywords (poi_id, keyword_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        //         poi_id,
+        //         keyword_id
+        //     )
+        //     .execute(&mut *txn)
+        //     .await?;
+        // }
+        // txn.commit().await?;
 
         Ok(())
     }
 
-    pub fn commit(mut self) -> Result<()> {
-        self.tantivy_writer.commit()?;
-        Ok(())
+    pub async fn collect_keyword_set(&self) {
+        let mut buf = Vec::new();
+        for (_, bitmap) in &self.keyword_index {
+            bitmap
+                .serialize_into(&mut buf)
+                .expect("Failed to serialize");
+        }
+
+        let compressed = Vec::new();
+
+        let mut encoder = EncodeOptions::new()
+            .frame_size_policy(zeekstd::FrameSizePolicy::Uncompressed(10_000_000))
+            .compression_level(22)
+            .into_encoder(compressed)
+            .unwrap();
+        let mut cursor = Cursor::new(buf);
+        io::copy(&mut cursor, &mut encoder).unwrap();
+        // End compression and write the seek table to the end of the seekable
+
+        dbg!(encoder.finish().unwrap());
+        dbg!(self
+            .keyword_index
+            .iter()
+            .map(|(_keyword, bitmap)| bitmap.serialized_size())
+            .sum::<usize>());
+        dbg!(self
+            .keyword_index
+            .iter()
+            .map(|(_keyword, bitmap)| bitmap.serialized_size())
+            .count());
+
+        let mut builder = fst::SetBuilder::memory();
+        let mut all_keywords: Vec<String> = self.keyword_index.keys().cloned().collect();
+        all_keywords.sort();
+        builder.extend_iter(all_keywords.iter()).unwrap();
+        let fst = builder.into_inner().unwrap();
+        dbg!(fst.len());
+
+        let compressed_fst = Vec::new();
+
+        let mut encoder = EncodeOptions::new()
+            .frame_size_policy(zeekstd::FrameSizePolicy::Uncompressed(10_000_000))
+            .compression_level(22)
+            .into_encoder(compressed_fst)
+            .unwrap();
+        let mut cursor = Cursor::new(fst);
+        io::copy(&mut cursor, &mut encoder).unwrap();
+        // End compression and write the seek table to the end of the seekable
+
+        dbg!(encoder.finish().unwrap());
     }
 }
