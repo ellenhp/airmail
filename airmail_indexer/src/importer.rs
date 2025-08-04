@@ -12,7 +12,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
-use tokio::{spawn, sync::Mutex, task::JoinHandle};
+use tokio::{spawn, task::JoinHandle};
 
 use crate::{
     cache::{IndexerCache, WofCacheItem},

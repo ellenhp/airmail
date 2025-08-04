@@ -1,20 +1,15 @@
 use std::{
     collections::{HashMap, HashSet},
     io::{self, Cursor},
-    path::Path,
-    str::FromStr,
-    sync::Arc,
 };
 
-use fst::raw::Fst;
 use log::error;
-use roaring::{RoaringBitmap, RoaringTreemap};
-use sqlx::{migrate::Migrator, PgPool};
-use tokio::sync::Mutex;
-use zeekstd::{EncodeOptions, Encoder};
+use roaring::RoaringBitmap;
+use zeekstd::EncodeOptions;
 
 use crate::poi::SchemafiedPoi;
 
+use s2::{cell::Cell, cellid::CellID, latlng::LatLng};
 use std::f64::consts::PI;
 
 fn get_quadkey(lat: f64, lng: f64, zoom: u32) -> u64 {
@@ -22,7 +17,7 @@ fn get_quadkey(lat: f64, lng: f64, zoom: u32) -> u64 {
     let x = x.floor() as u32;
 
     let lat_rad = lat.to_radians();
-    let y = (1.0 - (lat_rad.tan() + (1.0 / lat_rad.cos()).ln() / PI) / 2.0 * (1 << zoom) as f64);
+    let y = 1.0 - (lat_rad.tan() + (1.0 / lat_rad.cos()).ln() / PI) / 2.0 * (1 << zoom) as f64;
     let y = y.floor() as u32;
 
     let mut quadkey = 0_u64;
@@ -84,8 +79,8 @@ impl AirmailIndexBuilder {
                 keywords.insert(format!("{key}={value}"));
             }
         }
-        let cell = s2::cell::Cell::from(s2::cellid::CellID(poi.s2cell));
-        let latlng = s2::latlng::LatLng::from(cell.center());
+        let cell = Cell::from(CellID(poi.s2cell));
+        let latlng = LatLng::from(cell.center());
 
         for keyword in &keywords {
             if !self.keyword_index.contains_key(keyword) {
@@ -200,11 +195,7 @@ impl AirmailIndexBuilder {
             .iter()
             .map(|(_keyword, bitmap)| bitmap.serialized_size())
             .sum::<usize>());
-        dbg!(self
-            .keyword_index
-            .iter()
-            .map(|(_keyword, bitmap)| bitmap.serialized_size())
-            .count());
+        dbg!(self.keyword_index.iter().count());
 
         let mut builder = fst::SetBuilder::memory();
         let mut all_keywords: Vec<String> = self.keyword_index.keys().cloned().collect();
