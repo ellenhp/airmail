@@ -1,12 +1,9 @@
-use airmail::{
-    index::AirmailIndexBuilder,
-    poi::{SchemafiedPoi, ToIndexPoi},
-};
+use airmail::poi::{SchemafiedPoi, ToIndexPoi};
 use anyhow::Result;
 use async_channel::{Receiver, Sender};
 use futures_util::future::join_all;
 use lingua::{IsoCode639_3, Language};
-use log::{info, trace, warn};
+use log::{debug, info, trace, warn};
 use std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -22,19 +19,14 @@ use crate::{
 };
 
 pub struct ImporterBuilder {
-    builder: AirmailIndexBuilder,
     admin_cache_path: Option<PathBuf>,
     wof_db_path: PathBuf,
     pip_tree_path: Option<PathBuf>,
 }
 
 impl ImporterBuilder {
-    pub async fn new(airmail_index_url: &str, wof_db_path: &Path) -> Result<Self> {
-        // Create the index
-        let builder = AirmailIndexBuilder::create(airmail_index_url).await?;
-
+    pub async fn new(wof_db_path: &Path) -> Result<Self> {
         Ok(Self {
-            builder,
             admin_cache_path: None,
             wof_db_path: wof_db_path.to_path_buf(),
             pip_tree_path: None,
@@ -68,12 +60,11 @@ impl ImporterBuilder {
             None
         };
 
-        Importer::new(self.builder, admin_cache, wof_db, pip_tree).await
+        Importer::new(admin_cache, wof_db, pip_tree).await
     }
 }
 
 pub struct Importer {
-    builder: AirmailIndexBuilder,
     indexer_cache: Arc<IndexerCache>,
     wof_db: WhosOnFirst,
     pip_tree: Option<PipTree<ConcisePipResponse>>,
@@ -81,20 +72,22 @@ pub struct Importer {
 
 impl Importer {
     pub async fn new(
-        builder: AirmailIndexBuilder,
         indexer_cache: IndexerCache,
         wof_db: WhosOnFirst,
         pip_tree: Option<PipTree<ConcisePipResponse>>,
     ) -> Result<Self> {
         Ok(Self {
-            builder: builder,
             indexer_cache: Arc::new(indexer_cache),
             wof_db,
             pip_tree,
         })
     }
 
-    pub async fn run_import(&mut self, receiver: Receiver<ToIndexPoi>) -> Result<()> {
+    pub async fn run_import<F: AsyncFnMut(SchemafiedPoi) -> ()>(
+        &mut self,
+        receiver: Receiver<ToIndexPoi>,
+        mut process_fn: F,
+    ) -> Result<()> {
         let (to_cache_sender, to_cache_receiver): (Sender<WofCacheItem>, Receiver<WofCacheItem>) =
             async_channel::bounded(1024);
         let (to_index_sender, to_index_receiver): (Sender<SchemafiedPoi>, Receiver<SchemafiedPoi>) =
@@ -156,7 +149,7 @@ impl Importer {
         drop(to_index_sender);
         drop(to_cache_sender);
 
-        info!("Listening for items to index.");
+        debug!("Listening for items to index.");
         let mut count = 0usize;
         let start = std::time::Instant::now();
         loop {
@@ -173,14 +166,7 @@ impl Importer {
             }
 
             if let Ok(poi) = to_index_receiver.recv().await {
-                let mut attempts = 0;
-                while let Err(err) = self.builder.insert_poi(&poi).await {
-                    attempts += 1;
-                    if attempts >= 5 {
-                        warn!("Failed to insert POI after {attempts} attempts: {err}");
-                        break;
-                    }
-                }
+                process_fn(poi).await;
             } else {
                 break;
             }
@@ -189,9 +175,6 @@ impl Importer {
         trace!("Waiting for indexing to finish");
         join_all(handles).await;
         info!("Indexing complete");
-
-        self.builder.collect_keyword_set().await;
-
         Ok(())
     }
 

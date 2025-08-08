@@ -2,8 +2,6 @@ use anyhow::Result;
 use lingua::Language;
 use serde::{Deserialize, Serialize};
 
-use crate::substitutions::permute_road;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AirmailPoi {
     pub source: String,
@@ -74,18 +72,45 @@ pub struct SchemafiedPoi {
     pub tags: Vec<(String, String)>,
 }
 
+fn prefix_strings<I: IntoIterator<Item = String>>(prefix: &str, strings: I) -> Vec<String> {
+    return strings
+        .into_iter()
+        .map(|s| format!("{}:{}", prefix, s))
+        .collect();
+}
+
 impl From<ToIndexPoi> for SchemafiedPoi {
     fn from(poi: ToIndexPoi) -> Self {
         let mut content = Vec::new();
-        content.extend(poi.names);
-        content.extend(poi.house_number);
+        content.extend(prefix_strings("name", poi.names));
+        content.extend(prefix_strings("house_num", poi.house_number));
         if let Some(road) = poi.road {
             for lang in poi.languages {
-                content.extend(permute_road(&road, &lang).expect("Failed to permute road"));
+                content.extend(prefix_strings(
+                    &format!("road:{}", lang.iso_code_639_3()),
+                    vec![road.clone()],
+                ));
             }
         }
-        content.extend(poi.unit);
-        content.extend(poi.admins);
+        content.extend(prefix_strings("unit", poi.unit));
+        content.extend(prefix_strings("admins", poi.admins));
+
+        let indexed_keys = [
+            "natural", "amenity", "shop", "leisure", "tourism", "historic", "cuisine",
+        ];
+        let indexed_key_prefixes = ["diet:"];
+        for (key, value) in &poi.tags {
+            if indexed_keys.contains(&key.as_str())
+                || indexed_key_prefixes
+                    .iter()
+                    .any(|prefix| key.starts_with(prefix))
+            {
+                content.extend(prefix_strings(
+                    "tag",
+                    value.split(";").map(|v| format!("{key}={v}")),
+                ));
+            }
+        }
 
         let mut s2cell_parents = Vec::new();
         let cell = s2::cellid::CellID(poi.s2cell);

@@ -35,14 +35,14 @@ impl OsmPbf {
     pub fn new(
         osm_pbf_path: &Path,
         nodes_already_cached: bool,
-        ignore: Vec<ParseOsmTypes>,
+        ignore: &[ParseOsmTypes],
         sender: Sender<ToIndexPoi>,
         indexer_cache: Arc<IndexerCache>,
     ) -> Self {
         Self {
             pbf_path: osm_pbf_path.to_path_buf(),
             nodes_already_cached,
-            ignore,
+            ignore: ignore.to_vec(),
             sender,
             indexer_cache,
         }

@@ -1,11 +1,8 @@
-use std::{
-    collections::{HashMap, HashSet},
-    io::{self, Cursor},
-};
+use std::{collections::HashMap, str::FromStr};
 
 use log::error;
 use roaring::RoaringBitmap;
-use zeekstd::EncodeOptions;
+use sqlx::{postgres::PgConnectOptions, query, Connection, PgConnection};
 
 use crate::poi::SchemafiedPoi;
 
@@ -43,178 +40,112 @@ pub struct AirmailIndex {}
 
 #[cfg(feature = "build_index")]
 pub struct AirmailIndexBuilder {
-    // pool: PgPool,
+    conn: PgConnection,
     keyword_index: HashMap<String, RoaringBitmap>,
+    keyword_frequencies: HashMap<String, usize>,
+    keyword_indices: HashMap<String, usize>,
+    keywords: Vec<String>,
 }
 
 impl AirmailIndexBuilder {
-    pub async fn create(url: &str) -> Result<AirmailIndexBuilder, anyhow::Error> {
-        // let options = sqlx::postgres::PgConnectOptions::from_str(url)?;
-        // let pool = PgPool::connect_with(options).await?;
+    pub async fn create(db_url: &str) -> Result<AirmailIndexBuilder, anyhow::Error> {
+        let mut conn = PgConnection::connect_with(&PgConnectOptions::from_str(db_url)?).await?;
 
-        // let m = Migrator::new(Path::new("./airmail/migrations")).await?;
-        // m.run(&pool).await?;
-
-        // sqlx::query!("TRUNCATE poi CASCADE").execute(&pool).await?;
+        query!("SET synchronous_commit TO OFF")
+            .execute(&mut conn)
+            .await?;
 
         Ok(AirmailIndexBuilder {
-            // pool,
+            conn,
             keyword_index: HashMap::new(),
+            keyword_frequencies: HashMap::new(),
+            keyword_indices: HashMap::new(),
+            keywords: Vec::new(),
         })
     }
 
-    pub async fn insert_poi(&mut self, poi: &SchemafiedPoi) -> Result<(), anyhow::Error> {
-        let mut keywords = HashSet::new();
-        keywords.extend(poi.content.iter().cloned());
-        let indexed_keys = [
-            "natural", "amenity", "shop", "leisure", "tourism", "historic", "cuisine",
-        ];
-        let indexed_key_prefixes = ["diet:"];
-        for (key, value) in &poi.tags {
-            if indexed_keys.contains(&key.as_str())
-                || indexed_key_prefixes
-                    .iter()
-                    .any(|prefix| key.starts_with(prefix))
-            {
-                keywords.insert(format!("{key}={value}"));
-            }
-        }
+    pub async fn collect_vocabulary(&mut self, poi: &SchemafiedPoi) -> Result<(), anyhow::Error> {
         let cell = Cell::from(CellID(poi.s2cell));
         let latlng = LatLng::from(cell.center());
 
-        for keyword in &keywords {
+        let quadkey = get_quadkey(latlng.lat.deg(), latlng.lng.deg(), 12);
+        let quadkey_u32: u32 = quadkey.try_into().expect("Quadkey overflow");
+
+        for keyword in &poi.content {
             if !self.keyword_index.contains_key(keyword) {
                 self.keyword_index
                     .insert(keyword.clone(), RoaringBitmap::new());
             }
+            if !self.keyword_frequencies.contains_key(keyword) {
+                self.keyword_frequencies.insert(keyword.clone(), 0);
+            }
 
-            let quadkey = get_quadkey(latlng.lat.deg(), latlng.lng.deg(), 12);
-            let quadkey_u32: u32 = quadkey.try_into().expect("Quadkey overflow");
-            // for cell in &s2_cells {
             if let Some(bitmap) = self.keyword_index.get_mut(keyword) {
                 bitmap.insert(quadkey_u32);
             } else {
                 error!("Logic error: Roaring bitmap not initialized.")
             }
-            // }
+            if let Some(frequency) = self.keyword_frequencies.get_mut(keyword) {
+                *frequency += 1;
+            } else {
+                error!("Logic error: Frequency not initialized.")
+            }
         }
+        Ok(())
+    }
 
-        // let mut txn = self.pool.begin().await?;
-        // let mut keyword_index_new_entries = HashMap::new();
+    pub async fn process_vocabulary(&mut self) -> Result<(), anyhow::Error> {
+        let mut vocab: Vec<String> = self.keyword_index.keys().cloned().collect();
+        vocab.sort_by_cached_key(|keyword| usize::MAX - self.keyword_frequencies[keyword]);
 
-        // let mut keywords = HashSet::new();
-        // keywords.extend(poi.content.iter().cloned());
-        // for (key, value) in &poi.tags {
-        //     keywords.insert(format!("{key}={value}"));
-        // }
-        // let mut s2_cells: Vec<i64> = poi.s2cell_parents.iter().map(|cell| *cell as i64).collect();
-        // s2_cells.push(poi.s2cell as i64);
+        // Vocab is effectively one-based so the 0 index can be used as a signal to stop.
+        vocab.insert(0, "".to_string());
+        self.keywords = vocab;
+        for (idx, keyword) in self.keywords.iter().enumerate() {
+            self.keyword_indices.insert(keyword.clone(), idx);
+            query!(
+                "INSERT INTO vocabulary (id, word) VALUES ($1, $2);",
+                idx as i32,
+                keyword
+            )
+            .execute(&mut self.conn)
+            .await?;
+        }
+        Ok(())
+    }
 
-        // // Create a POI
-        // let poi_id: i32 = sqlx::query!("INSERT INTO poi DEFAULT VALUES RETURNING id")
-        //     .fetch_one(&mut *txn)
-        //     .await?
-        //     .id;
+    pub async fn clear_db(&mut self) -> Result<(), anyhow::Error> {
+        query!("DELETE FROM poi;",).execute(&mut self.conn).await?;
+        query!("DELETE FROM vocabulary;",)
+            .execute(&mut self.conn)
+            .await?;
+        Ok(())
+    }
 
-        // // Ensure the existence of its S2 cells and link them
-        // for cell_id in s2_cells {
-        //     // Link POI to S2 cell
-        //     sqlx::query!(
-        //         "INSERT INTO poi_s2_cells (poi_id, cell_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-        //         poi_id,
-        //         cell_id
-        //     )
-        //     .execute(&mut *txn)
-        //     .await?;
-        // }
+    pub async fn insert_poi(&mut self, poi: &SchemafiedPoi) -> Result<(), anyhow::Error> {
+        let cell = Cell::from(CellID(poi.s2cell));
+        let latlng = LatLng::from(cell.center());
+        let quadkey = get_quadkey(latlng.lat.deg(), latlng.lng.deg(), 12);
+        let quadkey_u32: u32 = quadkey.try_into().expect("Quadkey overflow");
+        let keyword_indices: Vec<i32> = poi
+            .content
+            .iter()
+            .map(|keyword| self.keyword_indices[keyword].try_into().unwrap())
+            .collect();
 
-        // // Ensure the existence of its keywords and link them
-        // for keyword in keywords {
-        //     // Insert keyword if it doesn't exist
-        //     // sqlx::query!(
-        //     //     "INSERT INTO keywords (word) VALUES ($1) ON CONFLICT DO NOTHING",
-        //     //     keyword
-        //     // )
-        //     // .execute(&mut *txn)
-        //     // .await?;
-
-        //     let keyword_id = {
-        //         let mut keyword_index = self.keyword_index;
-        //         if let Some(id) = keyword_index.1.get(&keyword) {
-        //             *id
-        //         } else {
-        //             // Get the keyword ID
-        //             // let keyword_id: i32 =
-        //             //     sqlx::query!("SELECT id FROM keywords WHERE word = $1", keyword)
-        //             //         .fetch_one(&mut *txn)
-        //             //         .await?
-        //             //         .id;
-        //             let keyword_id = keyword_index.0;
-        //             keyword_index.0 += 1;
-        //             keyword_index_new_entries.insert(keyword.clone(), keyword_id);
-        //             keyword_id
-        //         }
-        //     };
-
-        //     // Link POI to keyword
-        //     sqlx::query!(
-        //         "INSERT INTO poi_keywords (poi_id, keyword_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-        //         poi_id,
-        //         keyword_id
-        //     )
-        //     .execute(&mut *txn)
-        //     .await?;
-        // }
-        // txn.commit().await?;
+        query!(
+            "INSERT INTO poi (s2cell, quadkey, keywords) VALUES ($1, $2, $3);",
+            poi.s2cell as i64,
+            quadkey_u32 as i32,
+            &keyword_indices
+        )
+        .execute(&mut self.conn)
+        .await?;
 
         Ok(())
     }
 
-    pub async fn collect_keyword_set(&self) {
-        let mut buf = Vec::new();
-        for (_, bitmap) in &self.keyword_index {
-            bitmap
-                .serialize_into(&mut buf)
-                .expect("Failed to serialize");
-        }
-
-        let compressed = Vec::new();
-
-        let mut encoder = EncodeOptions::new()
-            .frame_size_policy(zeekstd::FrameSizePolicy::Uncompressed(10_000_000))
-            .compression_level(22)
-            .into_encoder(compressed)
-            .unwrap();
-        let mut cursor = Cursor::new(buf);
-        io::copy(&mut cursor, &mut encoder).unwrap();
-        // End compression and write the seek table to the end of the seekable
-
-        dbg!(encoder.finish().unwrap());
-        dbg!(self
-            .keyword_index
-            .iter()
-            .map(|(_keyword, bitmap)| bitmap.serialized_size())
-            .sum::<usize>());
-        dbg!(self.keyword_index.iter().count());
-
-        let mut builder = fst::SetBuilder::memory();
-        let mut all_keywords: Vec<String> = self.keyword_index.keys().cloned().collect();
-        all_keywords.sort();
-        builder.extend_iter(all_keywords.iter()).unwrap();
-        let fst = builder.into_inner().unwrap();
-        dbg!(fst.len());
-
-        let compressed_fst = Vec::new();
-
-        let mut encoder = EncodeOptions::new()
-            .frame_size_policy(zeekstd::FrameSizePolicy::Uncompressed(10_000_000))
-            .compression_level(22)
-            .into_encoder(compressed_fst)
-            .unwrap();
-        let mut cursor = Cursor::new(fst);
-        io::copy(&mut cursor, &mut encoder).unwrap();
-        // End compression and write the seek table to the end of the seekable
-
-        dbg!(encoder.finish().unwrap());
+    pub fn get_vocab(&self) -> Vec<String> {
+        self.keywords.clone()
     }
 }
